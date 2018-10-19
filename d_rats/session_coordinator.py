@@ -1,6 +1,7 @@
 #!/usr/bin/python
 #
 # Copyright 2008 Dan Smith <dsmith@danplanet.com>
+# Updated 2018 Jonathan Kelley <jonkelley@gmail.com>
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -130,7 +131,7 @@ class FileBaseThread(SessionThread):
 
 class FileRecvThread(FileBaseThread):
     progress_key = "recv_size"
-    
+
     def worker(self, path):
         fn = self.session.recv_file(path)
         if fn:
@@ -255,7 +256,7 @@ class SocketThread(SessionThread):
             if rd:
                 print "Sending radio data (%i)" % len(rd)
                 sock.sendall(rd)
-        
+
         print "Closing session"
 
         self.session.close()
@@ -265,7 +266,7 @@ class SocketThread(SessionThread):
             pass
 
         print "*** Socket thread exiting"
-                
+
 
 
 
@@ -313,7 +314,7 @@ class SessionCoordinator(gobject.GObject):
             session = self.sm.sessions[id]
         except Exception, e:
             print "Session `%i' not found: %s" % (id, e)
-            return        
+            return
 
         if self.sthreads.has_key(id):
             del self.sthreads[id]
@@ -419,7 +420,7 @@ class SessionCoordinator(gobject.GObject):
         if isinstance(thread, SessionThread):
             del self.sthreads[id]
         else:
-            self._emit("session-ended", id, "Ended", None) 
+            self._emit("session-ended", id, "Ended", None)
 
     def session_cb(self, data, reason, session):
         t = str(session.__class__.__name__).replace("Session", "")
@@ -451,7 +452,7 @@ class SessionCoordinator(gobject.GObject):
         t.setDaemon(True)
         t.start()
         print "Started Session"
-        
+
     def send_form(self, dest, filename, name="Form"):
         self.outgoing_forms.insert(0, filename)
         print "Outgoing forms: %s" % self.outgoing_forms

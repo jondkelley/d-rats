@@ -127,7 +127,7 @@ class AGWConnection:
             c = self._s.recv(1)
         except socket.timeout:
             return None
-        
+
         if len(c) == 0: # Socket closed
             self.close()
 
@@ -157,7 +157,7 @@ class AGWConnection:
                 self._framebuf[f.kind].insert(0, f)
             elif not poll:
                 return None
-        
+
     def close(self):
         self._s.close()
 
@@ -326,7 +326,7 @@ def transmit_data(conn, dcall, spath, data):
         c, s = ssid(scall)
         src += "".join([chr(ord(x) << 1) for x in c])
         src += encode_ssid(s, spath[-1] == scall)
-    
+
     d = struct.pack("B7s%isBB" % len(src),
                     0x00,    # Space for flag (?)
                     dst,     # Dest Call
@@ -340,7 +340,7 @@ def transmit_data(conn, dcall, spath, data):
     f = AGWFrame_K()
     f.set_payload(d)
     conn.send_frame(f)
-    
+
 def receive_data(conn, blocking=False):
     f = conn.recv_frame_type("K", blocking)
     if f:
@@ -350,7 +350,7 @@ def receive_data(conn, blocking=False):
 
 def test(conn):
     f = AGWFrame_K()
-    
+
     conn.send_frame(f)
 
 if __name__ == "__main__":

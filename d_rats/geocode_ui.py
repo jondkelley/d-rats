@@ -1,6 +1,7 @@
 #!/usr/bin/python
 #
 # Copyright 2009 Dan Smith <dsmith@danplanet.com>
+# Updated 2018 Jonathan Kelley <jonkelley@gmail.com>
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -98,7 +99,7 @@ class AddressAssistant(baseclass):
 
         def make_kv(key, value):
             hbox = gtk.HBox(False, 2)
-            
+
             lab = gtk.Label(key)
             lab.set_size_request(100, -1)
             lab.show()
@@ -134,7 +135,7 @@ class AddressAssistant(baseclass):
             places = []
             lat = lon = 0
             self.set_page_complete(page, False)
-        
+
         i = 0
         self.vals["AddressList"].set_values([])
         for place, (lat, lon) in places:
@@ -144,7 +145,7 @@ class AddressAssistant(baseclass):
         if i == -1:
             page.hide()
             self.set_current_page(self.get_current_page() + 1)
-        
+
     def prepare_conf(self, assistant, page):
         self.place, self.lat, self.lon = self.vals["AddressList"].get_selected(True)
 

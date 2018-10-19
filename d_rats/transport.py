@@ -1,6 +1,7 @@
 #!/usr/bin/python
 #
 # Copyright 2008 Dan Smith <dsmith@danplanet.com>
+# Updated 2018 Jonathan Kelley <jonkelley@gmail.com>
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -66,7 +67,7 @@ class BlockQueue(object):
         except:
             el = None
         self._lock.release()
-        
+
         return el
 
     def peek_all(self):
@@ -135,7 +136,7 @@ class Transporter(object):
                     break
                 print "Data path IO error: %s" % e
                 try:
-                    time.sleep(i) 
+                    time.sleep(i)
                     print "Attempting reconnect..."
                     self.pipe.reconnect()
                 except comm.DataPathNotConnectedError:
@@ -210,7 +211,7 @@ class Transporter(object):
         f.s_station = "CQCQCQ"
         f.d_station = "CQCQCQ"
         f.data = utils.filter_to_ascii(string)
-        
+
         self._handle_frame(f)
 
     def _parse_gps(self):
@@ -225,7 +226,7 @@ class Transporter(object):
     def parse_gps(self):
         while self._match_gps():
             self._parse_gps()
-            
+
     def send_frames(self):
         delayed = False
 
@@ -275,7 +276,7 @@ class Transporter(object):
         if not self.pipe.is_connected():
             if self.msg_fn:
                 self.msg_fn("Connecting")
-    
+
             try:
                 self.pipe.connect()
             except comm.DataPathNotConnectedError, e:
@@ -321,7 +322,7 @@ class Transporter(object):
         self.inhandler = None
         self.enabled = False
         self.thread.join()
-        
+
     def send_frame(self, frame):
         if not self.enabled:
             print "Refusing to queue block for dead transport"
@@ -363,7 +364,7 @@ class TestPipe(object):
             self.buf += "asg;sajd;jsadnkbasdl;b  as;jhd[SOB]laskjhd" + \
                 "asdkjh[EOB]a;klsd" + f.get_packed() + "asdljhasd[EOB]" + \
                 "asdljb  alsjdljn[asdl;jhas"
-            
+
             if i == 5:
                 self.buf += "$GPGGA,075519,4531.254,N,12259.400,W,1,3,0,0.0,M,0,M,,*55\r\nK7HIO   ,GPS Info\r"
             elif i == 7:
@@ -372,11 +373,11 @@ class TestPipe(object):
             elif i == 2:
                 self.buf += \
 """$GPGGA,023531.36,4531.4940,N,12254.9766,W,1,07,1.3,63.7,M,-21.4,M,,*64\r\n$GPRMC,023531.36,A,4531.4940,N,12254.9766,W,0.00,113.7,010808,17.4,E,A*27\rK7TAY M ,/10-13/\r"""
-                
+
 
         print "Made some data: %s" % self.buf
 
-    
+
     def __init__(self, src="Sender", dst="Recvr"):
         self.make_fake_data(src, dst)
 
@@ -397,7 +398,7 @@ class TestPipe(object):
 def test_simple():
     p = TestPipe()
     t = Transporter(p)
-    
+
     f = ddt2.DDT2EncodedFrame()
     f.seq = 9
     f.type = 8

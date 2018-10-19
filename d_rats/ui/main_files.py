@@ -121,7 +121,7 @@ class RemoteFileView(FileView):
 
     def refresh(self):
         self._store.clear()
-        
+
         job = rpc.RPCFileListJob(self.get_path(), "File list request")
         job.connect("state-change", self._file_list_cb)
 
@@ -145,7 +145,7 @@ class FilesTab(MainWindowTab):
     def _stop_throb(self):
         throbber, = self._getw("remote_throb")
         pix = self._config.ship_img(THROB_IMAGE)
-        throbber.set_from_pixbuf(pix)        
+        throbber.set_from_pixbuf(pix)
 
     def _end_list_job(self, job, state, *args):
         if not self._remote:
@@ -348,7 +348,7 @@ class FilesTab(MainWindowTab):
              (dnload, _("Download"), self._download, self._remote),
              (delete, _("Delete"), self._delete, self._remote),
              ]
-        
+
         populate_tb(rtb, rbuttons)
 
     def _setup_file_view(self, view):

@@ -1,6 +1,7 @@
 #!/usr/bin/python
 #
 # Copyright 2009 Dan Smith <dsmith@danplanet.com>
+# Updated 2018 Jonathan Kelley <jonkelley@gmail.com>
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -202,7 +203,7 @@ class RiverMapSourceEditor(MapSourceEditor):
         MapSourceEditor.__init__(self, config, source)
 
         box = self._wtree.get_widget("src_vbox")
-        
+
         hbox = gtk.HBox(False, 2)
         hbox.show()
 
@@ -249,7 +250,7 @@ class BuoyMapSourceEditor(MapSourceEditor):
         MapSourceEditor.__init__(self, config, source)
 
         box = self._wtree.get_widget("src_vbox")
-        
+
         hbox = gtk.HBox(False, 2)
         hbox.show()
 
@@ -292,4 +293,3 @@ SOURCE_TYPES = {
     "NWIS River" : (RiverMapSourceEditor, map_sources.MapUSGSRiverSource),
     "NBDC Buoy" : (BuoyMapSourceEditor, map_sources.MapNBDCBuoySource),
     }
-

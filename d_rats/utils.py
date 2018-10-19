@@ -1,5 +1,6 @@
 #
 # Copyright 2008 Dan Smith <dsmith@danplanet.com>
+# Updated 2018 Jonathan Kelley <jonkelley@gmail.com>
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -27,7 +28,7 @@ def open_icon_map(iconfn):
     if not os.path.exists(iconfn):
         print "Icon file %s not found" % iconfn
         return None
-    
+
     try:
         return gtk.gdk.pixbuf_new_from_file(iconfn)
     except Exception, e:
@@ -53,11 +54,11 @@ def hexprint(data):
     csum = 0
 
     lines = len(data) / line_sz
-    
+
     if (len(data) % line_sz) != 0:
         lines += 1
         data += "\x00" * ((lines * line_sz) - len(data))
-        
+
     for i in range(0, (len(data)/line_sz)):
 
 
@@ -68,7 +69,7 @@ def hexprint(data):
             limit = left
         else:
             limit = line_sz
-            
+
         for j in range(0,limit):
             print "%02x " % ord(data[(i * line_sz) + j]),
             csum += ord(data[(i * line_sz) + j])
@@ -150,7 +151,7 @@ def get_sub_image(iconmap, i, j, size=20):
 
     icon = gtk.gdk.Pixbuf(gtk.gdk.COLORSPACE_RGB, 1, 8, size, size)
     iconmap.copy_area(x, y, size, size, icon, 0, 0)
-    
+
     return icon
 
 def get_icon_from_map(iconmap, symbol):
@@ -205,7 +206,7 @@ class NetFile(file):
                 print "Retrieving %s -> %s" % (uri, self.__fn)
                 urllib.urlretrieve(uri, self.__fn)
                 break
-        
+
         file.__init__(self, self.__fn, mode, buffering)
 
     def close(self):
@@ -262,7 +263,7 @@ def set_entry_hint(entry, hint, default_focused=False):
         else:
             return
         entry.modify_text(gtk.STATE_NORMAL, c)
-        
+
     entry.connect("focus-in-event", focus, "in")
     entry.connect("focus-out-event", focus, "out")
 

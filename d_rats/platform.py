@@ -1,6 +1,7 @@
 #!/usr/bin/python
 #
 # Copyright 2008 Dan Smith <dsmith@danplanet.com>
+# Updated 2018 Jonathan Kelley <jonkelley@gmail.com>
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -166,7 +167,7 @@ class UnixPlatform(Platform):
         if not basepath:
             basepath = os.path.abspath(os.path.join(self.default_dir(),
                                                     ".d-rats"))
-        
+
         if not os.path.isdir(basepath):
             os.mkdir(basepath)
 
@@ -261,7 +262,7 @@ class UnixPlatform(Platform):
             dev.close()
         except Exception, e:
             print "Error playing sound %s: %s" % (soundfile, e)
-        
+
         if dev:
             dev.close()
 
@@ -327,7 +328,7 @@ class Win32Platform(Platform):
 
     def open_html_file(self, path):
         subprocess.Popen(["explorer", path])
-    
+
     def list_serial_ports(self):
         import win32file
         import win32con

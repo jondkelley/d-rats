@@ -1,6 +1,7 @@
 #!/usr/bin/python
 #
 # Copyright 2009 Dan Smith <dsmith@danplanet.com>
+# Updated 2018 Jonathan Kelley <jonkelley@gmail.com>
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -67,7 +68,7 @@ class MainWindow(MainWindowElement):
 
     def _destroy(self, window):
         w, h = window.get_size()
-        
+
         maximized = window.maximize_initially
         self._config.set("state", "main_maximized", maximized)
         if not maximized:
@@ -98,7 +99,7 @@ class MainWindow(MainWindowElement):
             d.set_comments(verinfo)
 
             d.set_translator_credits("Italian: Leo, IZ5FSA")
-        
+
             d.run()
             d.destroy()
 
@@ -276,7 +277,7 @@ class MainWindow(MainWindowElement):
         cpr = "Copyright 2010 Dan Smith (KK7DS)"
         self.tabs["chat"]._display_line("D-RATS v%s" % DRATS_VERSION, True, ic)
         self.tabs["chat"]._display_line(cpr, True, ic)
-        self.tabs["chat"]._display_line("", True)        
+        self.tabs["chat"]._display_line("", True)
 
         self.__window.connect("destroy", self._destroy)
         self.__window.connect("delete_event", self._delete)

@@ -1,6 +1,7 @@
 #!/usr/bin/python
 #
 # Copyright 2008 Dan Smith <dsmith@danplanet.com>
+# Updated 2018 Jonathan Kelley <jonkelley@gmail.com>
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -36,7 +37,7 @@ class SessionManager(object):
         self.tport = transport.Transporter(self.pipe,
                                            inhandler=self.incoming,
                                            **kwargs)
-    
+
     def set_call(self, callsign):
         self.station = callsign
 
@@ -140,7 +141,7 @@ class SessionManager(object):
 
         if not block.d_station:
             block.d_station = session._st
-            
+
         block.s_station = self.station
 
         if session._rs:
@@ -204,7 +205,7 @@ class SessionManager(object):
         if dest != "CQCQCQ":
             if not self.control.new_session(s):
                 self._deregister_session(id)
-        
+
         return s
 
     def set_sniffer_session(self, id):

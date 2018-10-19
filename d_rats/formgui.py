@@ -1,5 +1,6 @@
 #
 # Copyright 2008 Dan Smith <dsmith@danplanet.com>
+# Updated 2018 Jonathan Kelley <jonkelley@gmail.com>
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -114,7 +115,7 @@ def xml_unescape(string):
                 out += d[esc]
             else:
                 print "XML Error: No such escape: `%s'" % esc
-                
+
             i += len(esc)
 
     return out
@@ -130,7 +131,7 @@ class HTMLFormWriter(FormWriter):
         self.xslpath = os.path.join(xsl_dir, "%s.xsl" % type)
         if not os.path.exists(self.xslpath):
             self.xslpath = os.path.join(xsl_dir, "default.xsl")
-        
+
     def writeDoc(self, doc, outfile):
         print "Writing to %s" % outfile
         styledoc = libxml2.parseFile(self.xslpath)
@@ -296,7 +297,7 @@ class DateWidget(FieldWidget):
         months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun",
                   "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
         days = [str("%02i" % x) for x in range(1,32)]
-        
+
         years = [str(x) for x in range(int(y)-2, int(y)+2)]
 
         self.monthbox = make_choice(months, False, m)
@@ -405,7 +406,7 @@ class ChoiceWidget(FieldWidget):
 
     def __init__(self, node):
         FieldWidget.__init__(self, node)
-        
+
         self.choices = []
         self.default = None
 
@@ -426,7 +427,7 @@ class ChoiceWidget(FieldWidget):
         value = self.get_value()
         if not value:
             return
-        
+
         child = self.node.children
         while child:
             if child.getContent() == value:
@@ -572,12 +573,12 @@ class FormField(object):
         field.set_caption(caption)
         field.set_id(self.id)
 
-        return field        
+        return field
 
     def build_gui(self, node):
         self.caption = None
         self.entry = None
-        
+
         child = node.children
 
         while child:
@@ -633,7 +634,7 @@ class FormFile(object):
     def export_to_string(self):
         w = HTMLFormWriter(self.id, self.xsl_dir)
         return w.writeString(self.doc)
-        
+
     def get_xml(self):
         return self.doc.serialize()
 
@@ -644,7 +645,7 @@ class FormFile(object):
             raise Exception("%i forms in document" % len(forms))
 
         form = forms[0]
-        
+
         self.id = form.prop("id")
 
         titles = ctx.xpathEval("//form/title")
@@ -685,7 +686,7 @@ class FormFile(object):
         for element in self.__get_xpath("//form/path/e"):
             pathels.append(element.getContent().strip())
         return pathels
-    
+
     def __get_path(self):
         els = self.__get_xpath("//form/path")
         if not els:
@@ -968,7 +969,7 @@ class FormDialog(FormFile, gtk.Dialog):
                 attexp.set_label(_("Attachments"))
 
         self.attbox.connect("item-set", item_set)
-        
+
         bbox = gtk.VBox(False, 2)
         bbox.show()
         hbox.pack_start(bbox, 0, 0, 0)
@@ -999,7 +1000,7 @@ class FormDialog(FormFile, gtk.Dialog):
         rem = gtk.Button(_("Remove"), gtk.STOCK_REMOVE)
         rem.connect("clicked", but_rem)
         rem.show()
-        bbox.pack_start(rem, 0, 0, 0)        
+        bbox.pack_start(rem, 0, 0, 0)
 
         @run_or_error
         def but_sav(but):
@@ -1167,7 +1168,7 @@ class FormDialog(FormFile, gtk.Dialog):
                     import mainapp # Dirty hack
                     pos = mainapp.get_mainapp().get_position()
                     f.entry.widget.set_text(pos.coordinates())
-            
+
             l = gtk.Label(f.caption)
             l.show()
             w = f.get_widget()
@@ -1181,7 +1182,7 @@ class FormDialog(FormFile, gtk.Dialog):
                 field_box.attach(l, 0, 1, row, row+1, gtk.SHRINK, gtk.SHRINK, 5)
                 field_box.attach(w, 1, 2, row, row+1, yoptions=0)
             row += 1
-            
+
 
         self.vbox.pack_start(self.build_att_widget(), 0, 0, 0)
         self.vbox.pack_start(self.build_path_widget(), 0, 0, 0)
@@ -1240,7 +1241,7 @@ class FormDialog(FormFile, gtk.Dialog):
     def set_editable(self, editable):
         for field in self.fields:
             field.set_editable(editable)
-        
+
 if __name__ == "__main__":
     f = file(sys.argv[1])
     xml = f.read()

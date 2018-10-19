@@ -1,6 +1,7 @@
 #!/usr/bin/python
 #
 # Copyright 2009 Dan Smith <dsmith@danplanet.com>
+# Updated 2018 Jonathan Kelley <jonkelley@gmail.com>
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -280,7 +281,7 @@ class MapNBDCBuoy(MapPointThreaded):
 
         self.__buoy = buoy
         self.__url = "http://www.ndbc.noaa.gov/data/latest_obs/%s.rss" % buoy
-        
+
         self.set_icon(utils.get_icon("\\N"))
 
 class MapSourceFailedToConnect(Exception):
@@ -359,7 +360,7 @@ class MapFileSource(MapSource):
         dirpath = os.path.join(config.platform.config_dir(),
                                "static_locations")
         files = glob(os.path.join(dirpath, "*.*"))
-        
+
         return [os.path.splitext(os.path.basename(f))[0] for f in files]
 
     enumerate = Callable(_enumerate)
@@ -382,7 +383,7 @@ class MapFileSource(MapSource):
             id, icon, lat, lon, alt, comment, show = line.split(",", 6)
         except Exception, e:
             raise MapSourcePointError(str(e))
-        
+
         if alt:
             alt = float(alt)
         else:
@@ -408,7 +409,7 @@ class MapFileSource(MapSource):
                                                 point.get_comment(),
                                                 point.get_visible(),
                                                 os.linesep))
-        f.close()                  
+        f.close()
 
     def __init__(self, name, description, fn, create=False):
         MapSource.__init__(self, name, description)
@@ -549,4 +550,3 @@ class MapNBDCBuoySource(MapSource):
 
     def get_buoys(self):
         return self.__buoys
-

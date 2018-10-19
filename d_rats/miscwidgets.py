@@ -1,5 +1,6 @@
 #
 # Copyright 2008 Dan Smith <dsmith@danplanet.com>
+# Updated 2018 Jonathan Kelley <jonkelley@gmail.com>
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -60,12 +61,12 @@ class KeyedListWidget(gtk.HBox):
 
     def _make_view(self):
         colnum = -1
-    
+
         for typ, cap in self.columns:
             colnum += 1
             if colnum == 0:
                 continue # Key column
-    
+
             if typ in [gobject.TYPE_STRING, gobject.TYPE_INT, gobject.TYPE_FLOAT]:
                 rend = gtk.CellRendererText()
                 rend.set_property("ellipsize", pango.ELLIPSIZE_END)
@@ -76,10 +77,10 @@ class KeyedListWidget(gtk.HBox):
                 column = gtk.TreeViewColumn(cap, rend, active=colnum)
             else:
                 raise Exception("Unsupported type %s" % typ)
-            
+
             column.set_sort_column_id(colnum)
             self.__view.append_column(column)
-    
+
         self.__view.connect("button_press_event", self._mouse)
 
     def set_item(self, key, *values):
@@ -91,11 +92,11 @@ class KeyedListWidget(gtk.HBox):
                 self.__store.remove(iter)
                 return
             iter = self.__store.iter_next(iter)
-    
+
         self.__store.append(row=(key,) + values)
 
         self.emit("item-set", key)
-    
+
     def get_item(self, key):
         iter = self.__store.get_iter_first()
         while iter:
@@ -103,9 +104,9 @@ class KeyedListWidget(gtk.HBox):
             if vals[0] == key:
                 return vals
             iter = self.__store.iter_next(iter)
-    
+
         return None
-    
+
     def del_item(self, key):
         iter = self.__store.get_iter_first()
         while iter:
@@ -115,12 +116,12 @@ class KeyedListWidget(gtk.HBox):
                 return True
 
             iter = self.__store.iter_next(iter)
-    
+
         return False
-    
+
     def has_item(self, key):
         return self.get_item(key) is not None
-    
+
     def get_selected(self):
         try:
             (store, iter) = self.__view.get_selection().get_selected()
@@ -145,7 +146,7 @@ class KeyedListWidget(gtk.HBox):
             iter = self.__store.iter_next(iter)
 
         return False
-        
+
     def get_keys(self):
         keys = []
         iter = self.__store.get_iter_first()
@@ -158,16 +159,16 @@ class KeyedListWidget(gtk.HBox):
 
     def __init__(self, columns):
         gtk.HBox.__init__(self, True, 0)
-    
+
         self.columns = columns
-    
+
         types = tuple([x for x,y in columns])
-    
+
         self.__store = gtk.ListStore(*types)
         self.__view = gtk.TreeView(self.__store)
-    
+
         self.pack_start(self.__view, 1, 1, 1)
-    
+
         self.__toggle_connected = False
 
         self._make_view()
@@ -176,7 +177,7 @@ class KeyedListWidget(gtk.HBox):
     def connect(self, signame, *args):
         if signame == "item-toggled":
             self.__toggle_connected = True
-        
+
         gtk.HBox.connect(self, signame, *args)
 
     def set_editable(self, column, is_editable):
@@ -188,7 +189,7 @@ class KeyedListWidget(gtk.HBox):
     def set_sort_column(self, column, value=None):
         self.__view.get_model().set_sort_column_id(column,
                                                    gtk.SORT_ASCENDING)
-    
+
     def set_resizable(self, column, resizable, ellipsize=False):
         col = self.__view.get_column(column)
         col.set_resizable(resizable)
@@ -196,7 +197,7 @@ class KeyedListWidget(gtk.HBox):
         rend.set_property("ellipsize",
                           ellipsize and pango.ELLIPSIZE_END \
                               or pango.ELLIPSIZE_NONE)
-        
+
     def set_expander(self, column):
         col = self.__view.get_column(column)
         self.__view.set_expander_column(col)
@@ -205,11 +206,11 @@ class KeyedListWidget(gtk.HBox):
         def render_password(foo, rend, model, iter):
             val = model.get(iter, column+1)[0]
             rend.set_property("text", "*" * len(val));
-        
+
         col = self.__view.get_column(column)
         rnd = col.get_cell_renderers()[0]
         col.set_cell_data_func(rnd, render_password)
-        
+
 
 class ListWidget(gtk.HBox):
     __gsignals__ = {
@@ -268,7 +269,7 @@ class ListWidget(gtk.HBox):
         # pylint: disable-msg=W0612
         col_types = tuple([x for x, y in columns])
         self._ncols = len(col_types)
-        
+
         self._store = self.store_type(*col_types)
         self._view = None
         self.make_view(columns)
@@ -448,8 +449,8 @@ class TreeWidget(ListWidget):
             if onlyone:
                 break
             iter = self._store.iter_next(iter)
-            
-        return l            
+
+        return l
 
     def get_values(self, parent=None):
         if parent:
@@ -515,7 +516,7 @@ class ProgressDialog(gtk.Window):
 
         self.pbar = gtk.ProgressBar()
         self.pbar.show()
-        
+
         vbox.pack_start(self.label, 0, 0, 0)
         vbox.pack_start(self.pbar, 0, 0, 0)
 
@@ -570,7 +571,7 @@ class LatLonEntry(gtk.Entry):
     def parse_dm(self, string):
         string = string.strip()
         string = string.replace('  ', ' ')
-        
+
         (_degrees, _minutes) = string.split(' ', 2)
 
         degrees = int(_degrees)
@@ -609,7 +610,7 @@ class LatLonEntry(gtk.Entry):
         degrees = int(deg)
         minutes = int(mns)
         seconds = float(sec)
-        
+
         return degrees + (minutes / 60.0) + (seconds / 3600.0)
 
     def value(self):
@@ -743,7 +744,7 @@ def test():
 
     lst.add_item("Test1", True)
     lst.set_values([("Test2", True), ("Test3", False)])
-    
+
     lst.show()
     win.add(lst)
     win.show()

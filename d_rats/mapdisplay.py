@@ -131,14 +131,14 @@ class MarkerEditDialog(inputdialog.FieldDialog):
             iconsel.set_sensitive(False)
 
         self._point = point
-                       
+
     def get_point(self):
         name = self.get_field(_("Name")).get_text()
         lat = self.get_field(_("Latitude")).value()
         lon = self.get_field(_("Longitude")).value()
         comment = self.get_field(_("Comment")).get_text()
         idx = self.get_field(_("Icon")).get_active()
-        
+
         self._point.set_name(name)
         self._point.set_latitude(lat)
         self._point.set_longitude(lon)
@@ -224,7 +224,7 @@ class MapTile(object):
             fname = None
 
         gobject.idle_add(cb, fname, *args)
-        
+
     def threaded_fetch(self, cb, *args):
         _args = (cb,) + args
         t = threading.Thread(target=self._thread, args=_args)
@@ -339,7 +339,7 @@ class MapWidget(gtk.DrawingArea):
     def latlon2xy(self, lat, lon):
         y = 1- ((lat - self.lat_min) / (self.lat_max - self.lat_min))
         x = 1- ((lon - self.lon_min) / (self.lon_max - self.lon_min))
-        
+
         x *= (self.tilesize * self.width)
         y *= (self.tilesize * self.height)
 
@@ -351,7 +351,7 @@ class MapWidget(gtk.DrawingArea):
 
         lon = 1 - (float(x) / (self.tilesize * self.width))
         lat = 1 - (float(y) / (self.tilesize * self.height))
-        
+
         lat = (lat * (self.lat_max - self.lat_min)) + self.lat_min
         lon = (lon * (self.lon_max - self.lon_min)) + self.lon_min
 
@@ -389,7 +389,7 @@ class MapWidget(gtk.DrawingArea):
         topleft = center + (-2, -2)
         botright = center + (2, 2)
         (self.lat_min, _, _, self.lon_min) = botright.tile_edges()
-        (_, self.lon_max, self.lat_max, _) = topleft.tile_edges()        
+        (_, self.lon_max, self.lat_max, _) = topleft.tile_edges()
 
         # I have no idea why, but for some reason we can calculate the
         # longitude (x) just fine, but not the latitude (y).  The result
@@ -459,7 +459,7 @@ class MapWidget(gtk.DrawingArea):
         pb.get_from_drawable(pm, pm.get_colormap(), 0, 0, x, y, -1, -1)
 
         self.__broken_tile = pb
-        
+
         return pb
 
     def draw_tile(self, path, x, y, ctx=None):
@@ -528,7 +528,7 @@ class MapWidget(gtk.DrawingArea):
                     message = _("Retrieving")
                 else:
                     message = _("Loading")
-               
+
                 if tile.is_local():
                     path = tile._local_path()
                     self.draw_tile(tile._local_path(),
@@ -635,7 +635,7 @@ class MapWidget(gtk.DrawingArea):
 
         pl = self.create_pango_layout("")
         pl.set_markup("%s" % dist)
-        self.window.draw_layout(gc, x-pixels, y-shift, pl)        
+        self.window.draw_layout(gc, x-pixels, y-shift, pl)
 
     def point_is_visible(self, lat, lon):
         for i in self.map_tiles:
@@ -720,7 +720,7 @@ class MapWindow(gtk.Window):
 
             src.save()
             break
-                
+
         self.map.queue_draw()
 
     def marker_mh(self, _action, id, group):
@@ -923,7 +923,7 @@ class MapWindow(gtk.Window):
             dir = os.path.join(platform.get_platform().config_dir(), "maps")
             shutil.rmtree(dir, True)
             self.map.queue_draw()
-        
+
     def printable_map(self, bounds=None):
         p = platform.get_platform()
 
@@ -955,7 +955,7 @@ class MapWindow(gtk.Window):
         f.write(html)
         f.close()
 
-        p.open_html_file(hf)        
+        p.open_html_file(hf)
 
     def save_map(self, bounds=None):
         p = platform.get_platform()
@@ -1031,7 +1031,7 @@ class MapWindow(gtk.Window):
         self.menu_ag = gtk.ActionGroup("MenuBar")
 
         self.menu_ag.add_actions(actions)
-        
+
         uim.insert_action_group(self.menu_ag, 0)
         menuid = uim.add_ui_from_string(menu_xml)
 
@@ -1143,7 +1143,7 @@ class MapWindow(gtk.Window):
                     self.emit("user-send-chat",
                               "CQCQCQ", port,
                               fix.to_NMEA_GGA(), True)
-                    
+
                 break
             except Exception, e:
                 utils.log_exception()
@@ -1289,7 +1289,7 @@ class MapWindow(gtk.Window):
                     for child in self.info_window.get_children():
                         self.info_window.remove(child)
                     self.info_window.add(label)
-                    
+
                     posx, posy = self.get_position()
                     posx += mx + 10
                     posy += my - 10
@@ -1354,7 +1354,7 @@ class MapWindow(gtk.Window):
                 # this is evil
                 print "Adding point instead of updating"
                 return self.add_point(source, point)
-                
+
         self.add_point_visible(point)
         self.map.queue_draw()
 
@@ -1448,7 +1448,7 @@ class MapWindow(gtk.Window):
         self.map = MapWidget(tiles, tiles, status=self.status)
         self.map.show()
         self.map.connect("redraw-markers", self.redraw_markers)
-        self.map.connect("new-tiles-loaded", 
+        self.map.connect("new-tiles-loaded",
                          lambda m: self.update_points_visible())
 
         box = gtk.VBox(False, 2)
@@ -1567,7 +1567,7 @@ class MapWindow(gtk.Window):
                  _("does not exist.  Do you want to create it?"))
             if not ask_for_confirmation(q):
                 return
-                                            
+
             s = map_sources.MapFileSource.open_source_by_name(self.config,
                                                               group,
                                                               True)

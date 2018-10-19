@@ -190,7 +190,7 @@ class EventTab(MainWindowTab):
         menus = {
             _EVENT_TYPES[EVENT_SESSION] : self._make_session_menu,
             }
-                
+
         menufn = menus.get(type, None)
         if menufn:
             menu = menufn(id, event)

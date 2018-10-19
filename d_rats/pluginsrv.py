@@ -1,6 +1,7 @@
 #!/usr/bin/python
 #
 # Copyright 2009 Dan Smith <dsmith@danplanet.com>
+# Updated 2018 Jonathan Kelley <jonkelley@gmail.com>
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -142,7 +143,7 @@ class DRatsPluginProxy(gobject.GObject):
         """Wait for a chat message for @timeout seconds.  Optional filter
         @src_station avoids returning until a chat message from that
         station is received"""
-        
+
         ev = DRatsChatEvent(src_station)
         self.__events["chat"].append(ev)
         ev.wait(timeout)
@@ -168,7 +169,7 @@ class DRatsPluginServer(SimpleXMLRPCServer):
         self.__thread = None
 
         self.__proxy = DRatsPluginProxy()
-            
+
         self.register_function(self.__proxy.send_chat, "send_chat")
         self.register_function(self.__proxy.list_ports, "list_ports")
         self.register_function(self.__proxy.send_file, "send_file")
@@ -181,7 +182,7 @@ class DRatsPluginServer(SimpleXMLRPCServer):
         self.__thread.setDaemon(True)
         self.__thread.start()
         print "Started serve_forever() thread"
-                               
+
     def incoming_chat_message(self, *args):
         self.__proxy.incoming_chat_message(*args)
 

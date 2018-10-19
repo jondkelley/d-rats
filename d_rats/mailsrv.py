@@ -1,6 +1,7 @@
 #!/usr/bin/python
 #
 # Copyright 2010 Dan Smith <dsmith@danplanet.com>
+# Updated 2018 Jonathan Kelley <jonkelley@gmail.com>
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -111,10 +112,10 @@ class POP3Handler(SocketServer.StreamRequestHandler):
 
         self._say("OK %i octets" % len(mstr))
         self.wfile.write(mstr + "\r\n.\r\n")
-        
+
     def _handle_top(self, args):
         msgno, lines = args.split(" ", 1)
-        
+
         msgno = int(msgno) - 1
         lines = int(lines)
 
@@ -153,7 +154,7 @@ class POP3Handler(SocketServer.StreamRequestHandler):
         except:
             cmd = data
             args = ""
-            
+
         cmd = cmd.upper()
 
         print "[POP3] %s %s" % (cmd, args)
@@ -318,7 +319,7 @@ class DRATS_SMTPServerThread(threading.Thread):
         if self.__server:
             self.__server.close()
         self.join()
-        
+
 
 if __name__ == "__main__":
     s = DRATS_POP3Server(("localhost", 9090), DRATS_POP3Handler)

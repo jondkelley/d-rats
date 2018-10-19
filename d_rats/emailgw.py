@@ -1,6 +1,7 @@
 #!/usr/bin/python
 #
 # Copyright 2008 Dan Smith <dsmith@danplanet.com>
+# Updated 2018 Jonathan Kelley <jonkelley@gmail.com>
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -28,7 +29,7 @@ except ImportError:
     # Python 2.4
     from email import MIMEMultipart
     from email import MIMEBase
-    from email import MIMEText 
+    from email import MIMEText
 
 import rfc822
 import time
@@ -47,7 +48,7 @@ import msgrouting
 def create_form_from_mail(config, mail, tmpfn):
     subject = mail.get("Subject", "[no subject]")
     sender = mail.get("From", "Unknown <devnull@nowhere.com>")
-    
+
     xml = None
     body = ""
 
@@ -149,20 +150,20 @@ class MailThread(threading.Thread, gobject.GObject):
             form = create_form_from_mail(self.config, mail, ffn)
         except Exception, e:
             print "Failed to create form from mail: %s" % e
-            return    
+            return
 
         if self._coerce_call:
             print "Coercing to %s" % self._coerce_call
             form.set_path_dst(self._coerce_call)
         else:
             print "Not coercing"
-    
+
         form.add_path_element("EMAIL")
         form.add_path_element(self.config.get("user", "callsign"))
         form.save_to(ffn)
-    
+
         self._emit("form-received", -999, ffn)
-    
+
     def fetch_mails(self):
         self.message("Querying %s:%i" % (self.server, self.port))
 
@@ -173,7 +174,7 @@ class MailThread(threading.Thread, gobject.GObject):
 
         server.user(self.username)
         server.pass_(self.password)
-        
+
         num = len(server.list()[1])
 
         messages = []
@@ -277,7 +278,7 @@ class AccountMailThread(MailThread):
             mail.get("From", "Unknown Sender"),
             mail.get("Subject", ""),
             body)
-            
+
         for port in self.emit("get-station-list").keys():
             self._emit("user-send-chat", "CQCQCQ", port, text, False)
 
@@ -342,7 +343,7 @@ def __validate_access(config, callsign, emailaddr, types):
 
 def validate_outgoing(config, callsign, emailaddr):
     return __validate_access(config, callsign, emailaddr, ["Both", "Outgoing"])
-    
+
 def validate_incoming(config, callsign, emailaddr):
     return __validate_access(config, callsign, emailaddr, ["Both", "Incoming"])
 

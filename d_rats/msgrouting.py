@@ -1,5 +1,6 @@
 #
 # Copyright 2009 Dan Smith <dsmith@danplanet.com>
+# Updated 2018 Jonathan Kelley <jonkelley@gmail.com>
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -31,8 +32,8 @@ except ImportError:
     # Python 2.4
     from email import MIMEMultipart
     from email import MIMEBase
-    from email import MIMEText 
-    from email import Message 
+    from email import MIMEText
+    from email import Message
 
 import gobject
 
@@ -103,7 +104,7 @@ def gratuitous_next_hop(route, path):
     return route_nodes[len(path_nodes)]
 
 def is_sendable_dest(mycall, string):
-    
+
     # Specifically for me
     if string == mycall:
         print "for me"
@@ -285,7 +286,7 @@ class MessageRouter(gobject.GObject):
                 queue[call] = [f]
             else:
                 queue[call].append(f)
-        
+
         return queue
 
     def _send_form(self, call, port, filename):
@@ -505,10 +506,10 @@ class MessageRouter(gobject.GObject):
                 except Exception:
                     utils.log_exception()
                     routed = False
-    
+
                 if not routed:
                     msg_unlock(msg)
-    
+
     def _run(self):
         while self.__enabled:
             if self.__config.getboolean("settings", "msg_forward") or \
@@ -593,4 +594,3 @@ class MessageRouter(gobject.GObject):
         if self.__sent_port.has_key(port):
             # This port is now open for another transfer
             del self.__sent_port[port]
-

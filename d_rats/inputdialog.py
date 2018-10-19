@@ -1,6 +1,7 @@
 #!/usr/bin/python
 #
 # Copyright 2008 Dan Smith <dsmith@danplanet.com>
+# Updated 2018 Jonathan Kelley <jonkelley@gmail.com>
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -32,7 +33,7 @@ class TextInputDialog(gtk.Dialog):
         self.label.set_size_request(300, 100)
         # pylint: disable-msg=E1101
         self.vbox.pack_start(self.label, 1, 1, 0)
-       
+
         self.text = gtk.Entry()
         self.text.connect("activate", self.respond_ok, None)
         # pylint: disable-msg=E1101
@@ -93,7 +94,7 @@ class FieldDialog(gtk.Dialog):
         self.set_default_response(gtk.RESPONSE_OK)
 
         self.set_modal(True)
-        self.set_type_hint(gtk.gdk.WINDOW_TYPE_HINT_DIALOG)        
+        self.set_type_hint(gtk.gdk.WINDOW_TYPE_HINT_DIALOG)
 
     def response(self, _):
         print "Blocking response"
@@ -123,7 +124,7 @@ class FieldDialog(gtk.Dialog):
             self.vbox.pack_start(box, 1, 1, 1)
         else:
             self.vbox.pack_start(box, 0, 0, 0)
-    
+
         self.__fields[label] = widget
 
     def get_field(self, label):

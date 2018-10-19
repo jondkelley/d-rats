@@ -1,6 +1,7 @@
 #!/usr/bin/python
 #
 # Copyright 2008 Dan Smith <dsmith@danplanet.com>
+# Updated 2018 Jonathan Kelley <jonkelley@gmail.com>
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -287,14 +288,14 @@ class QSTCAP(QSTThreadedText):
             print "Sending CAP that is effective %s" % i.effective
             str += "\r\n-----\r\n%s\r\n-----\r\n" % i.report()
 
-        return str        
+        return str
 
 class QSTWeatherWU(QSTThreadedText):
     pbase = "http://api.wunderground.com/weatherstation/WXCurrentObXML.asp?ID="
     abase = "http://api.wunderground.com/auto/wui/geo/WXCurrentObXML/index.xml?query="
     def do_qst(self):
         obs = wu.WUObservation()
-        
+
         try:
             t, s = self.text.split("/", 2)
         except Exception, e:
@@ -397,7 +398,7 @@ class QSTTextEditWidget(QSTEditWidget):
         self.pack_start(lab, 0, 0, 0)
 
         self.__tb = gtk.TextBuffer()
-        
+
         ta = gtk.TextView(self.__tb)
         ta.show()
 
@@ -409,7 +410,7 @@ class QSTTextEditWidget(QSTEditWidget):
 
     def reset(self):
         self.__tb.set_text("")
-    
+
     def to_qst(self):
         return str(self)
 
@@ -424,12 +425,12 @@ class QSTFileEditWidget(QSTEditWidget):
 
     def __init__(self):
         QSTEditWidget.__init__(self, False, 2)
-        
+
         lab = gtk.Label(self.label_text)
         lab.set_line_wrap(True)
         lab.show()
         self.pack_start(lab, 1, 1, 1)
-        
+
         self.__fn = miscwidgets.FilenameBox()
         self.__fn.show()
         self.pack_start(self.__fn, 0, 0, 0)
@@ -492,7 +493,7 @@ class QSTGPSEditWidget(QSTEditWidget):
 
         dprs.connect("clicked", self.prompt_for_DPRS)
         hbox.pack_start(dprs, 0, 0, 0)
-        
+
     def __str__(self):
         return "Message: %s" % self.__msg.get_text()
 
@@ -560,7 +561,7 @@ class QSTStationEditWidget(QSTEditWidget):
             return
 
         marks = [x.get_name() for x in src.get_points()]
-    
+
         store = station.get_model()
         store.clear()
         for i in sorted(marks):
@@ -622,7 +623,7 @@ class QSTWUEditWidget(QSTEditWidget):
         hbox = gtk.HBox(False, 2)
         hbox.show()
         self.pack_start(hbox, 0, 0, 0)
-        
+
         self.__station = gtk.Entry()
         self.__station.show()
         hbox.pack_start(self.__station, 0, 0, 0)
@@ -645,7 +646,7 @@ class QSTWUEditWidget(QSTEditWidget):
             s = _("UNKNOWN")
 
         combo_select(self.__type, t)
-        self.__station.set_text(s)        
+        self.__station.set_text(s)
 
     def to_human(self):
         return self.to_qst()

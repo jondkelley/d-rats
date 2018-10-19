@@ -1,6 +1,7 @@
 #!/usr/bin/python
 #
 # Copyright 2008 Dan Smith <dsmith@danplanet.com>
+# Updated 2018 Jonathan Kelley <jonkelley@gmail.com>
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -187,7 +188,7 @@ def load_portspec(wtree, portspec, info, name):
     namewidget = wtree.get_widget("name")
     namewidget.set_text(name)
     namewidget.set_sensitive(False)
-    
+
     tsel = wtree.get_widget("type")
     if portspec.startswith("net:"):
         tsel.set_active(1)
@@ -217,13 +218,13 @@ def load_portspec(wtree, portspec, info, name):
         tsel.set_active(0)
         wtree.get_widget("serial_port").child.set_text(portspec)
         utils.combo_select(wtree.get_widget("serial_rate"), info)
-        
+
 def prompt_for_port(portspec=None, info=None, pname=None):
     p = os.path.join(platform.get_platform().source_dir(), "ui/addport.glade")
     wtree = gtk.glade.XML(p, "addport", "D-RATS")
 
     ports = platform.get_platform().list_serial_ports()
-    
+
     sportsel = wtree.get_widget("serial_port")
     tportsel = wtree.get_widget("tnc_port")
     sportlst = sportsel.get_model()
@@ -274,7 +275,7 @@ def prompt_for_port(portspec=None, info=None, pname=None):
 
         desc.set_markup("<span fgcolor='blue'>%s</span>" % \
                             descriptions[tsel.get_active()])
-    
+
     name = wtree.get_widget("name")
     desc = wtree.get_widget("typedesc")
     ttncport = wtree.get_widget("tnc_tncport")
@@ -484,7 +485,7 @@ class DratsConfigWidget(gtk.HBox):
 
         def toggled(but, confwidget):
             confwidget.value = str(but.get_active())
-            
+
         w = gtk.CheckButton(label)
         w.connect("toggled", toggled, self)
         w.set_active(self.value == "True")
@@ -578,7 +579,7 @@ class DratsConfigWidget(gtk.HBox):
         b = gtk.Button(_("Test"), gtk.STOCK_MEDIA_PLAY)
         b.connect("clicked", test_sound)
         b.show()
-        
+
         box = gtk.HBox(False, 2)
         box.show()
         box.pack_start(w, 1, 1, 1)
@@ -645,7 +646,7 @@ class DratsListConfigWidget(DratsConfigWidget):
                 w.set_item(key, *tuple(vals))
             except Exception, e:
                 print "Failed to set item '%s': %s" % (str(vals), e)
-        
+
         w.connect("item-set", item_set)
         w.show()
 
@@ -767,7 +768,7 @@ class DratsPrefsPanel(DratsPanel):
         val2.add_text()
         self.mv(_("Sign-off Message"), val1, val2)
         disable_with_toggle(val1._widget, val2._widget)
-        
+
         val = DratsConfigWidget(config, "user", "units")
         val.add_combo([_("Imperial"), _("Metric")])
         self.mv(_("Units"), val)
@@ -800,7 +801,7 @@ class DratsPrefsPanel(DratsPanel):
                 _("Incoming Messages"), mval,
                 _("New Chat Messages"), cval,
                 _("Incoming Files"), fval,
-                _("Received Events"), eval)        
+                _("Received Events"), eval)
 
 class DratsPathsPanel(DratsPanel):
     def __init__(self, config):
@@ -825,7 +826,7 @@ class DratsGPSPanel(DratsPanel):
         lat = DratsConfigWidget(config, "user", "latitude")
         lat.add_coords()
         self.mv(_("Latitude"), lat)
-        
+
         lon = DratsConfigWidget(config, "user", "longitude")
         lon.add_coords()
         self.mv(_("Longitude"), lon)
@@ -858,7 +859,7 @@ class DratsGPSPanel(DratsPanel):
         self.mv(_("GPS-A Symbol"),
                 gtk.Label(_("Table:")), val1,
                 gtk.Label(_("Symbol:")), val2)
-           
+
         val = DratsConfigWidget(config, "settings", "map_tile_ttl")
         val.add_numeric(0, 9999999999999, 1)
         self.mv(_("Freshen map after"), val, gtk.Label(_("hours")))
@@ -969,7 +970,7 @@ class DratsSoundPanel(DratsPanel):
         do_snd("chat", _("Chat activity"))
         do_snd("messages", _("Message activity"))
         do_snd("files", _("File activity"))
-        
+
 
 class DratsRadioPanel(DratsPanel):
     INITIAL_ROWS = 3
@@ -1215,7 +1216,7 @@ class DratsTCPPanel(DratsPanel):
         if done:
             return ret
         else:
-            return None                    
+            return None
 
 class DratsTCPOutgoingPanel(DratsTCPPanel):
     def but_add(self, button, lw):
@@ -1297,7 +1298,7 @@ class DratsOutEmailPanel(DratsPanel):
         val.add_text()
         self.mv(_("Source Address"), val)
         disable_with_toggle(gw._widget, val._widget)
-        
+
         val = DratsConfigWidget(config, "settings", "smtp_username")
         val.add_text()
         self.mv(_("SMTP Username"), val)
@@ -1617,7 +1618,7 @@ class DratsConfigUI(gtk.Dialog):
         for v in self.panels.values():
             v.hide()
         self.panels[selected].show()
-        
+
     def move_cursor(self, view, step, count):
         try:
             (store, iter) = view.get_selection().get_selected()
@@ -1661,7 +1662,7 @@ class DratsConfigUI(gtk.Dialog):
                                   config_tips.get_tip(val.vsec, val.vname))
 
             return self.__store.append(par, row=(s, l))
-            
+
         prefs = add_panel(DratsPrefsPanel, "prefs", _("Preferences"), None)
         add_panel(DratsPathsPanel, "paths", _("Paths"), prefs)
         add_panel(DratsGPSPanel, "gps", _("GPS"), prefs, self)
@@ -1717,7 +1718,7 @@ class DratsConfig(ConfigParser.ConfigParser):
     def __init__(self, mainapp, safe=False):
         ConfigParser.ConfigParser.__init__(self)
 
-        self.platform = platform.get_platform()        
+        self.platform = platform.get_platform()
         self.filename = self.platform.config_file("d-rats.config")
         print "FILE: %s" % self.filename
         self.read(self.filename)

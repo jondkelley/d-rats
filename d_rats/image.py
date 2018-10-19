@@ -56,7 +56,7 @@ def update_image(filename, dlg):
     dlg.resized = os.path.join(tempfile.gettempdir(),
                                "resized_" + base + ".jpg")
     resized.save(dlg.resized, quality=dlg.quality)
-    
+
     print "Saved to %s" % dlg.resized
 
     f = file(dlg.resized)
@@ -64,7 +64,7 @@ def update_image(filename, dlg):
     size = f.tell()
     f.close()
 
-    dlg.sizelabel.set_text("%i KB" % (size >> 10))        
+    dlg.sizelabel.set_text("%i KB" % (size >> 10))
     dlg.preview.set_from_file(dlg.resized)
 
 def set_quality(scale, event, value, dlg):

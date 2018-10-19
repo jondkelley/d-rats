@@ -1,5 +1,6 @@
 #
 # Copyright 2008 Dan Smith <dsmith@danplanet.com>
+# Updated 2018 Jonathan Kelley <jonkelley@gmail.com>
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -35,7 +36,7 @@ class FormElementEditor(gtk.Dialog):
 
         f = gtk.Frame("Initial value:")
         f.add(entry)
-        
+
         self.entries[id] = entry
 
         return f
@@ -111,7 +112,7 @@ class FormElementEditor(gtk.Dialog):
         self.type_sel.connect("changed", self.type_changed, None)
         self.type_sel.show()
         self.vals["text"].show()
-        
+
         self.ts_frame = gtk.Frame("Field Type")
         self.ts_frame.show()
         self.ts_frame.add(self.type_sel)
@@ -161,7 +162,7 @@ class FormElementEditor(gtk.Dialog):
             return str([(False, x) for x in opts])
         else:
             return ""
-        
+
     def set_options(self, val):
         sel = self.type_sel.get_active_text()
         if sel == "choice":
@@ -251,7 +252,7 @@ class FormBuilderGUI(gtk.Dialog):
                                  self.col_opts)
         except:
             return
-        
+
         d = FormElementEditor()
         d.set_type(t)
         d.set_initial_value(v)
@@ -363,11 +364,11 @@ class FormBuilderGUI(gtk.Dialog):
                 ent_xml = "<!-- Invalid list: %s -->" % opts
         else:
             ent_xml = "<entry type='%s'/>" % type
-        
+
         field_xml = "<field id='%s'>\n%s\n%s\n</field>\n" % (id,
                                                              cap_xml,
                                                              ent_xml)
-        
+
         print "Field XML: %s\n\n" % field_xml
 
         self.xml += field_xml
@@ -382,7 +383,7 @@ class FormBuilderGUI(gtk.Dialog):
             self.xml += "<logo>%s</logo>" % logo
         self.store.foreach(self.make_field_xml, None)
         self.xml += "</form>\n</xml>\n"
-        
+
         return self.xml
 
     def build_buttons(self):
@@ -408,7 +409,7 @@ class FormBuilderGUI(gtk.Dialog):
 
     def make_field(self, caption, choices=None):
         box = gtk.HBox(False, 2)
-        
+
         l = gtk.Label(caption)
         l.set_size_request(45, -1)
         l.show()
@@ -429,7 +430,7 @@ class FormBuilderGUI(gtk.Dialog):
 
     def build_formprops(self):
         self.props = {}
-        
+
         frame = gtk.Frame("Form Properties")
 
         path = mainapp.get_mainapp().config.get("settings", "form_logo_dir")
@@ -576,7 +577,7 @@ class FormManagerGUI(object):
             (filename, _id) = list.get(iter, self.col_file, self.col_id)
         except:
             return
-        
+
         d = FormBuilderGUI()
         d.load_from_file(filename)
         r = d.run()
@@ -680,7 +681,7 @@ class FormManagerGUI(object):
             b.connect("clicked", func, None)
             b.show()
             hbox.add(b)
-            
+
         hbox.show()
 
         return hbox

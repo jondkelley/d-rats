@@ -1,6 +1,7 @@
 #!/usr/bin/python
 #
 # Copyright 2008 Dan Smith <dsmith@danplanet.com>
+# Updated 2018 Jonathan Kelley <jonkelley@gmail.com>
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -81,6 +82,9 @@ MAINAPP = None
 gobject.threads_init()
 
 def ping_file(filename):
+    """
+    returns data from a file
+    """
     try:
         f = NetFile(filename, "r")
     except IOError, e:
@@ -93,14 +97,20 @@ def ping_file(filename):
     return data
 
 def ping_exec(command):
+    """
+    get status output of command ( assumingsubprocess?)
+    """
     s, o = getstatusoutput(command)
     if s:
         raise Exception("Failed to run command: %s" % command)
         return None
 
-    return o    
+    return o
 
 class CallList(object):
+    """
+    a list of seen seen_callsigns
+    """
     def __init__(self):
         self.clear()
 
@@ -118,7 +128,7 @@ class CallList(object):
 
         (foo, p) = self.data.get(call, (0, None))
 
-        self.data[call] = (ts, p)        
+        self.data[call] = (ts, p)
 
     def get_call_pos(self, call):
         (foo, p) = self.data.get(call, (0, None))
@@ -187,7 +197,7 @@ class MainApp(object):
             enb, port, rate, dosniff, raw, name = spec.split(",")
             enb = (enb == "True")
             dosniff = (dosniff == "True")
-            raw = (raw == "True")                   
+            raw = (raw == "True")
         except Exception, e:
             print "Failed to parse portspec %s:" % spec
             log_exception()
@@ -243,7 +253,7 @@ class MainApp(object):
             _port = name
             event = main_events.Event(None, "%s: %s" % (_port, msg))
             gobject.idle_add(self.mainwindow.tabs["event"].event, event)
-                                   
+
         transport_args = {
             "compat" : raw,
             "warmup_length" : self.config.getint("settings", "warmup_length"),
@@ -494,6 +504,9 @@ class MainApp(object):
                                                               fn)
 
     def refresh_config(self):
+        """
+        reload app config
+        """
         print "Refreshing config..."
 
         call = self.config.get("user", "callsign")
@@ -510,8 +523,11 @@ class MainApp(object):
         self._refresh_gps()
         self._refresh_mail_threads()
 
-            
+
     def _refresh_location(self):
+        """
+        update gps status
+        """
         fix = self.get_position()
 
         if not self.__map_point:
@@ -526,7 +542,7 @@ class MainApp(object):
             self.__map_point.set_altitude(fix.altitude)
             self.__map_point.set_comment(fix.comment)
             self.__map_point.set_name(fix.station)
-            
+
         try:
             comment = self.config.get("settings", "default_gps_comment")
             fix.APRSIcon = gps.dprs_to_aprs(comment);
@@ -541,6 +557,9 @@ class MainApp(object):
         return True
 
     def __chat(self, src, dst, data, incoming, port):
+        """
+        send chat message
+        """
         if self.plugsrv:
             self.plugsrv.incoming_chat_message(src, dst, data)
 
@@ -579,6 +598,9 @@ class MainApp(object):
 # ---------- STANDARD SIGNAL HANDLERS --------------------
 
     def __status(self, object, status):
+        """get window status?
+
+        """
         self.mainwindow.set_status(status)
 
     def __user_stop_session(self, object, sid, port, force=False):
@@ -589,7 +611,7 @@ class MainApp(object):
             session.close(force)
         except Exception, e:
             print "Session `%i' not found: %s" % (sid, e)
-    
+
     def __user_cancel_session(self, object, sid, port):
         self.__user_stop_session(object, sid, port, True)
 
@@ -716,7 +738,7 @@ class MainApp(object):
     def __station_status(self, object, sta, stat, msg, port):
         self.mainwindow.tabs["stations"].saw_station(sta, port, stat, msg)
         status = station_status.get_status_msgs()[stat]
-        event = main_events.Event(None, 
+        event = main_events.Event(None,
                                   "%s %s %s %s: %s" % (_("Station"),
                                                        sta,
                                                        _("is now"),
@@ -809,7 +831,7 @@ class MainApp(object):
             refresh_folder = "Outbox"
         else:
             refresh_folder = "Inbox"
-        
+
         msgrouting.msg_unlock(fn)
         self.mainwindow.tabs["messages"].refresh_if_folder(refresh_folder)
 
@@ -826,7 +848,7 @@ class MainApp(object):
         event.set_as_final()
         self.mainwindow.tabs["files"].refresh_local()
         self.mainwindow.tabs["event"].event(event)
-                
+
     def __form_sent(self, object, id, fn, port=None):
         self.msgrouter.form_xfer_done(fn, port, False)
         if port:
@@ -973,7 +995,7 @@ class MainApp(object):
         self.map.set_center(pos.latitude, pos.longitude)
         self.map.set_zoom(14)
         self.__map_point = None
-                                                              
+
         self.mainwindow = mainwindow.MainWindow(self.config)
         self.__connect_object(self.mainwindow)
 
@@ -982,7 +1004,7 @@ class MainApp(object):
 
         self.refresh_config()
         self._load_map_overlays()
-        
+
         if self.config.getboolean("prefs", "dosignon") and self.chat_session:
             msg = self.config.get("prefs", "signon")
             status = station_status.STATUS_ONLINE
@@ -1032,7 +1054,7 @@ class MainApp(object):
                             ".lock*")
         for lock in glob.glob(path):
             print "Removing stale message lock %s" % lock
-            os.remove(lock)        
+            os.remove(lock)
 
     def main(self):
         # Copy default forms before we start
@@ -1043,7 +1065,7 @@ class MainApp(object):
         for form in dist_forms:
             fname = os.path.basename(form)
             user_fname = os.path.join(userdir, fname)
-            
+
             try:
                 needupd = \
                     (os.path.getmtime(form) > os.path.getmtime(user_fname))

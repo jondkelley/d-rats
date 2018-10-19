@@ -1,6 +1,7 @@
 #!/usr/bin/python
 #
 # Copyright 2008 Dan Smith <dsmith@danplanet.com>
+# Updated 2018 Jonathan Kelley <jonkelley@gmail.com>
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -35,7 +36,7 @@ def update_crc(c, crc):
             v = 1
         else:
             v = 0
-            
+
         if (crc & 0x8000):
             crc <<= 1
             crc += v
@@ -106,7 +107,7 @@ class DDT2Frame(object):
             self.magic = (~self.magic) & 0xFF
 
         length = len(data)
-        
+
         s_station = self.s_station.ljust(8, "~")
         d_station = self.d_station.ljust(8, "~")
 
