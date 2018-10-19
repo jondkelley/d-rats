@@ -1,4 +1,5 @@
-#!/usr/bin/python
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 #
 # Copyright 2009 Dan Smith <dsmith@danplanet.com>
 #
@@ -88,7 +89,7 @@ class ChatQM(MainWindowElement):
         iter = model.get_iter_first()
         while iter:
             msg, = model.get(iter, 0)
-            print "Setting %i: %s" % (i, msg)
+            print(("Setting %i: %s" % (i, msg)))
             self._config.set("quick", "msg_%i" % i, msg)
             iter = model.iter_next(iter)
             i += 1
@@ -293,7 +294,7 @@ class ChatQST(MainWindowElement):
                               
             qc = qst.get_qst_class(t)
             if not qc:
-                print "Error: unable to get QST class `%s'" % t
+                print(("Error: unable to get QST class `%s'" % t))
                 continue
             q = qc(self._config, c)
             q.connect("qst-fired", self._qst_fired)
@@ -338,7 +339,7 @@ class ChatTab(MainWindowTab):
         label.set_markup(label.get_text())
 
     def _display_matching_filter(self, text):
-        for filter, display in self.__filters.items():
+        for filter, display in list(self.__filters.items()):
             if filter and filter in text:
                 return display
 
@@ -364,18 +365,18 @@ class ChatTab(MainWindowTab):
         buffer.apply_tag_by_name("bold", start, end)
         
     def _display_for_channel(self, channel):
-        if self.__filters.has_key(channel):
+        if channel in self.__filters:
             return self.__filters[channel]
         else:
             return None
 
     def _display_line(self, text, apply_filters, *attrs, **kwargs):
         match = re.match("^([^#].*)(#[^/]+)//(.*)$", text)
-        if "priv_src" in kwargs.keys():
+        if "priv_src" in list(kwargs.keys()):
             channel = "@%s" % kwargs["priv_src"]
             display = self._display_for_channel(channel)
             if not display:
-                print "Creating channel %s" % channel
+                print(("Creating channel %s" % channel))
                 self._build_filter(channel)
                 self._save_filters()
                 display = self._display_for_channel(channel)
@@ -455,7 +456,7 @@ class ChatTab(MainWindowTab):
 
         try:
             f = file(fn)
-        except Exception, e:
+        except Exception as e:
             display_error(_("Unable to open file %s: %s") % (fn, e))
             return
 
@@ -486,7 +487,7 @@ class ChatTab(MainWindowTab):
 
     def _save_filters(self):
         rev = {}
-        for key, val in self.__filters.items():
+        for key, val in list(self.__filters.items()):
             rev[val] = key
 
         filters = []
@@ -770,11 +771,11 @@ class ChatTab(MainWindowTab):
             self._build_filter(filter)
 
     def reconfigure(self):
-        if not self.__filters.has_key(None):
+        if None not in self.__filters:
             # First time only
             self._configure_filters()
 
-        for display in self.__filters.values():
+        for display in list(self.__filters.values()):
             self._reconfigure_colors(display.get_buffer())
             self._reconfigure_font(display)
 

@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 bstr_pos = lambda n: n > 0 and bstr_pos(n >> 1) + str(n & 1) or ''
 
 
@@ -19,7 +21,7 @@ class BitStuffContext:
             self.ones += 1
         else:
             self.ones = 0
-        print("Register: %s" % bstr_pos(self.register))
+        print(("Register: %s" % bstr_pos(self.register)))
         self.bits += 1
         if self.bits == 8:
             print("Pushing")

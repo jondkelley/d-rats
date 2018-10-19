@@ -1,4 +1,5 @@
-#!/usr/bin/python
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 #
 # Copyright 2009 Dan Smith <dsmith@danplanet.com>
 # Updated 2018 Jonathan Kelley <jonkelley@gmail.com>
@@ -26,7 +27,7 @@ if __name__ == "__main__":
     import gettext
     lang = gettext.translation("D-RATS", localedir="./locale", languages=["en"])
     lang.install()
-    print sys.path
+    print((sys.path))
 
 import os
 import time
@@ -119,7 +120,7 @@ class MainWindow(MainWindowElement):
             saved = self._config.show(parent=window)
             if saved:
                 self.emit("config-changed")
-                for tabs in self.tabs.values():
+                for tabs in list(self.tabs.values()):
                     tabs.reconfigure()
 
         def do_map(but):
@@ -132,7 +133,7 @@ class MainWindow(MainWindowElement):
         def do_ping(but):
             station_list = self.emit("get-station-list")
             stations = []
-            for portlist in station_list.values():
+            for portlist in list(station_list.values()):
                 stations += [str(x) for x in portlist]
             station, port = prompt_for_station(stations, self._config)
             if station:
@@ -172,7 +173,7 @@ class MainWindow(MainWindowElement):
                 args.append("./d-rats_repeater")
             else:
                 args.append("d-rats_repeater")
-            print "Running proxy: %s" % str(args)
+            print(("Running proxy: %s" % str(args)))
             p = subprocess.Popen(args)
 
         quit = self._wtree.get_widget("main_menu_quit")
@@ -268,7 +269,7 @@ class MainWindow(MainWindowElement):
         self.tabs["files"] = FilesTab(wtree, config)
         self.tabs["stations"] = StationsList(wtree, config)
 
-        for label, tab in self.tabs.items():
+        for label, tab in list(self.tabs.items()):
             tab.connect("notice", self._maybe_blink, label)
 
         self._current_tab = "messages"
@@ -327,7 +328,7 @@ if __name__ == "__main__":
     conf = config.DratsConfig(None)
 
     def test(chat, station, msg):
-        print "%s->%s" % (station, msg)
+        print(("%s->%s" % (station, msg)))
 
     chat = ChatTab(wtree, conf)
     chat.connect("user-sent-message", test)

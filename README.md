@@ -1,4 +1,8 @@
-# D-RATS
+# D-RATS Renewed
+
+This is hopefully the future home for D-RATS development. The system is being modernized to Python3 and will use the latest GTK library in python pygobject. This should give the D-RATS project a renewed lifespan on multiple platforms. Once we get the old code stable we can consider accepting feature requests.
+
+# Description
 
  D-RATS is a communications tool for D-STAR amateur radio low-speed data
  (DV mode).
@@ -22,13 +26,9 @@ your system (from inside d-rats root source directory):
 
 ## Support
 
-D-RATS email list: https://groups.yahoo.com/neo/groups/d-rats_group/info
+Support? We don't need no stinking support.
 
-## Original Author
+## Authors
 
 Dan Smith (KK7DS)
-
-## Maintainer
-
-Rafael Diniz (PU2UIT)
-rafael (at) rhizomatica (dot) org
+Jonathan Kelley (N5IPT)

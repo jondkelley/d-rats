@@ -1,4 +1,5 @@
-#!/usr/bin/python
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 #
 # Copyright 2008 Dan Smith <dsmith@danplanet.com>
 # Updated 2018 Jonathan Kelley <jonkelley@gmail.com>
@@ -17,14 +18,14 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import sys
-import platform
+from . import platform
 import os
 
 debug_path = platform.get_platform().config_file("debug.log")
 if sys.platform == "win32" or not os.isatty(0):
     sys.stdout = file(debug_path, "w", 0)
     sys.stderr = sys.stdout
-    print "Enabled debug log"
+    print("Enabled debug log")
 else:
     try:
         os.unlink(debug_path)
@@ -39,7 +40,7 @@ import re
 from threading import Thread, Lock
 from select import select
 import socket
-from commands import getstatusoutput
+from subprocess import getstatusoutput
 import glob
 import shutil
 import datetime
@@ -48,30 +49,30 @@ import serial
 import gtk
 import gobject
 
-import mainwindow
-import config
-import gps
-import mapdisplay
-import map_sources
-import comm
-import sessionmgr
-import session_coordinator
-import emailgw
-import formgui
-import station_status
-import pluginsrv
-import msgrouting
-import wl2k
-import inputdialog
-import version
-import agw
-import mailsrv
+from . import mainwindow
+from . import config
+from . import gps
+from . import mapdisplay
+from . import map_sources
+from . import comm
+from . import sessionmgr
+from . import session_coordinator
+from . import emailgw
+from . import formgui
+from . import station_status
+from . import pluginsrv
+from . import msgrouting
+from . import wl2k
+from . import inputdialog
+from . import version
+from . import agw
+from . import mailsrv
 
-from ui import main_events
+from .ui import main_events
 
-from utils import hexprint,filter_to_ascii,NetFile,log_exception,run_gtk_locked
-from utils import init_icon_maps
-from sessions import rpc, chat, sniff
+from .utils import hexprint,filter_to_ascii,NetFile,log_exception,run_gtk_locked
+from .utils import init_icon_maps
+from .sessions import rpc, chat, sniff
 
 init_icon_maps()
 
@@ -87,7 +88,7 @@ def ping_file(filename):
     """
     try:
         f = NetFile(filename, "r")
-    except IOError, e:
+    except IOError as e:
         raise Exception("Unable to open file %s: %s" % (filename, e))
         return None
 
@@ -141,10 +142,10 @@ class CallList(object):
         return t
 
     def list(self):
-        return self.data.keys()
+        return list(self.data.keys())
 
     def is_known(self, call):
-        return self.data.has_key(call)
+        return call in self.data
 
     def remove(self, call):
         try:
@@ -157,7 +158,7 @@ class MainApp(object):
         idtext = "(ID)"
 
     def stop_comms(self, portid):
-        if self.sm.has_key(portid):
+        if portid in self.sm:
             sm, sc = self.sm[portid]
             sm.shutdown(True)
             sc.shutdown()
@@ -179,17 +180,17 @@ class MainApp(object):
                     self.config.get("tcp_out", forward).split(",")
                 sport = int(sport)
                 dport = int(dport)
-            except Exception, e:
-                print "Failed to parse TCP forward config %s: %s" % (forward, e)
+            except Exception as e:
+                print(("Failed to parse TCP forward config %s: %s" % (forward, e)))
                 return
 
             try:
                 sc.create_socket_listener(sport, dport, station)
-                print "Started socket listener %i:%i@%s" % \
-                    (sport, dport, station)
-            except Exception, e:
-                print "Failed to start socket listener %i:%i@%s: %s" % \
-                    (sport, dport, station, e)
+                print(("Started socket listener %i:%i@%s" % \
+                    (sport, dport, station)))
+            except Exception as e:
+                print(("Failed to start socket listener %i:%i@%s: %s" % \
+                    (sport, dport, station, e)))
 
     def start_comms(self, portid):
         spec = self.config.get("ports", portid)
@@ -198,26 +199,26 @@ class MainApp(object):
             enb = (enb == "True")
             dosniff = (dosniff == "True")
             raw = (raw == "True")
-        except Exception, e:
-            print "Failed to parse portspec %s:" % spec
+        except Exception as e:
+            print(("Failed to parse portspec %s:" % spec))
             log_exception()
             return
 
         if not enb:
-            if self.sm.has_key(name):
+            if name in self.sm:
                 del self.sm[name]
             return
 
-        print "Starting port %s (%s)" % (portid, name)
+        print(("Starting port %s (%s)" % (portid, name)))
 
         call = self.config.get("user", "callsign")
 
-        if self.__unused_pipes.has_key(port):
+        if port in self.__unused_pipes:
             path = self.__unused_pipes[port]
             del self.__unused_pipes[port]
-            print "Re-using path %s for port %s" % (path, port)
+            print(("Re-using path %s for port %s" % (path, port)))
         elif port.startswith("tnc-ax25:"):
-            print port
+            print(port)
             tnc, _port, tncport, path = port.split(":")
             path = path.replace(";", ",")
             _port = "%s:%s" % (_port, tncport)
@@ -229,7 +230,7 @@ class MainApp(object):
             path = comm.SocketDataPath(("127.0.0.1", 20003, call, None))
         elif port.startswith("agwpe:"):
             path = comm.AGWDataPath(port, 0.5)
-            print "Opening AGW: %s" % path
+            print(("Opening AGW: %s" % path))
         elif ":" in port:
             try:
                 (mode, host, sport) = port.split(":")
@@ -245,7 +246,7 @@ class MainApp(object):
         else:
             path = comm.SerialDataPath((port, int(rate)))
 
-        if self.__pipes.has_key(name):
+        if name in self.__pipes:
             raise Exception("Port %s already started!" % name)
         self.__pipes[name] = (port, path)
 
@@ -262,7 +263,7 @@ class MainApp(object):
             "msg_fn" : transport_msg,
             }
 
-        if not self.sm.has_key(name):
+        if name not in self.sm:
             sm = sessionmgr.SessionManager(path, call, **transport_args)
 
             chat_session = sm.start_session("chat",
@@ -334,8 +335,8 @@ class MainApp(object):
     def _refresh_comms(self):
         delay = False
 
-        for portid in self.sm.keys():
-            print "Stopping %s" % portid
+        for portid in list(self.sm.keys()):
+            print(("Stopping %s" % portid))
             if self.stop_comms(portid):
                 if sys.platform == "win32":
                     # Wait for windows to let go of the serial port
@@ -345,11 +346,11 @@ class MainApp(object):
             time.sleep(0.25)
 
         for portid in self.config.options("ports"):
-            print "Starting %s" % portid
+            print(("Starting %s" % portid))
             self.start_comms(portid)
 
-        for spec, path in self.__unused_pipes.items():
-            print "Path %s for port %s no longer needed" % (path, spec)
+        for spec, path in list(self.__unused_pipes.items()):
+            print(("Path %s for port %s no longer needed" % (path, spec)))
             path.disconnect()
 
         self.__unused_pipes = {}
@@ -363,12 +364,12 @@ class MainApp(object):
             lat = self.config.get("user", "latitude")
             lon = self.config.get("user", "longitude")
             alt = self.config.get("user", "altitude")
-        except Exception, e:
+        except Exception as e:
             import traceback
             traceback.print_exc(file=sys.stdout)
-            print "Invalid static position: %s" % e
+            print(("Invalid static position: %s" % e))
 
-        print "Static position: %s,%s" % (lat,lon)
+        print(("Static position: %s,%s" % (lat,lon)))
         return gps.StaticGPSSource(lat, lon, alt)
 
     def _refresh_gps(self):
@@ -376,7 +377,7 @@ class MainApp(object):
         rate = self.config.getint("settings", "gpsportspeed")
         enab = self.config.getboolean("settings", "gpsenabled")
 
-        print "GPS: %s on %s@%i" % (enab, port, rate)
+        print(("GPS: %s on %s@%i" % (enab, port, rate)))
 
         if enab:
             if self.gps:
@@ -394,7 +395,7 @@ class MainApp(object):
             self.gps = self._static_gps()
 
     def _refresh_mail_threads(self):
-        for k, v in self.mail_threads.items():
+        for k, v in list(self.mail_threads.items()):
             v.stop()
             del self.mail_threads[k]
 
@@ -417,8 +418,8 @@ class MainApp(object):
                 smtpsrv = mailsrv.DRATS_SMTPServerThread(self.config)
                 smtpsrv.start()
                 self.mail_threads["SMTPSRV"] = smtpsrv
-        except Exception, e:
-            print "Unable to start SMTP server: %s" % e
+        except Exception as e:
+            print(("Unable to start SMTP server: %s" % e))
             log_exception()
 
         try:
@@ -426,8 +427,8 @@ class MainApp(object):
                 pop3srv = mailsrv.DRATS_POP3ServerThread(self.config)
                 pop3srv.start()
                 self.mail_threads["POP3SRV"] = pop3srv
-        except Exception, e:
-            print "Unable to start POP3 server: %s" % e
+        except Exception as e:
+            print(("Unable to start POP3 server: %s" % e))
             log_exception()
 
     def _refresh_lang(self):
@@ -437,13 +438,13 @@ class MainApp(object):
                     "Dutch" : "nl",
                     }
         locale = locales.get(self.config.get("prefs", "language"), "English")
-        print "Loading locale `%s'" % locale
+        print(("Loading locale `%s'" % locale))
 
         localedir = os.path.join(platform.get_platform().source_dir(),
                                  "locale")
-        print "Locale dir is: %s" % localedir
+        print(("Locale dir is: %s" % localedir))
 
-        if not os.environ.has_key("LANGUAGE"):
+        if "LANGUAGE" not in os.environ:
             os.environ["LANGUAGE"] = locale
 
         try:
@@ -454,10 +455,10 @@ class MainApp(object):
             gtk.glade.bindtextdomain("D-RATS", localedir)
             gtk.glade.textdomain("D-RATS")
         except LookupError:
-            print "Unable to load language `%s'" % locale
+            print(("Unable to load language `%s'" % locale))
             gettext.install("D-RATS")
-        except IOError, e:
-            print "Unable to load translation for %s: %s" % (locale, e)
+        except IOError as e:
+            print(("Unable to load translation for %s: %s" % (locale, e)))
             gettext.install("D-RATS")
 
     def _load_map_overlays(self):
@@ -472,20 +473,20 @@ class MainApp(object):
         for stype in source_types:
             try:
                 sources = stype.enumerate(self.config)
-            except Exception, e:
-                import utils
+            except Exception as e:
+                from . import utils
                 utils.log_exception()
-                print "Failed to load source type %s" % stype
+                print(("Failed to load source type %s" % stype))
                 continue
 
             for sname in sources:
                 try:
                     source = stype.open_source_by_name(self.config, sname)
                     self.map.add_map_source(source)
-                except Exception, e:
+                except Exception as e:
                     log_exception()
-                    print "Failed to load map source %s: %s" % \
-                        (source.get_name(), e)
+                    print(("Failed to load map source %s: %s" % \
+                        (source.get_name(), e)))
 
                 if sname == _("Stations"):
                     self.stations_overlay = source
@@ -507,7 +508,7 @@ class MainApp(object):
         """
         reload app config
         """
-        print "Refreshing config..."
+        print("Refreshing config...")
 
         call = self.config.get("user", "callsign")
         gps.set_units(self.config.get("user", "units"))
@@ -546,7 +547,7 @@ class MainApp(object):
         try:
             comment = self.config.get("settings", "default_gps_comment")
             fix.APRSIcon = gps.dprs_to_aprs(comment);
-        except Exception, e:
+        except Exception as e:
             log_exception()
             fix.APRSIcon = "\?"
         self.__map_point.set_icon_from_aprs_sym(fix.APRSIcon)
@@ -604,13 +605,13 @@ class MainApp(object):
         self.mainwindow.set_status(status)
 
     def __user_stop_session(self, object, sid, port, force=False):
-        print "User did stop session %i (force=%s)" % (sid, force)
+        print(("User did stop session %i (force=%s)" % (sid, force)))
         try:
             sm, sc = self.sm[port]
             session = sm.sessions[sid]
             session.close(force)
-        except Exception, e:
-            print "Session `%i' not found: %s" % (sid, e)
+        except Exception as e:
+            print(("Session `%i' not found: %s" % (sid, e)))
 
     def __user_cancel_session(self, object, sid, port):
         self.__user_stop_session(object, sid, port, True)
@@ -638,15 +639,15 @@ class MainApp(object):
 
     def __get_station_list(self, object):
         stations = {}
-        for port, (sm, sc) in self.sm.items():
+        for port, (sm, sc) in list(self.sm.items()):
             stations[port] = []
 
         station_list = self.mainwindow.tabs["stations"].get_stations()
 
         for station in station_list:
-            if station.get_port() not in stations.keys():
-                print "Station %s has unknown port %s" % (station,
-                                                          station.get_port())
+            if station.get_port() not in list(stations.keys()):
+                print(("Station %s has unknown port %s" % (station,
+                                                          station.get_port())))
             else:
                 stations[station.get_port()].append(station)
 
@@ -665,7 +666,7 @@ class MainApp(object):
         self.refresh_config()
 
     def __show_map_station(self, object, station):
-        print "Showing map"
+        print("Showing map")
         self.map.show()
 
     def __ping_station(self, object, station, port):
@@ -707,11 +708,11 @@ class MainApp(object):
                 return s
 
             try:
-                print "Creating a map source for %s" % station
+                print(("Creating a map source for %s" % station))
                 s = map_sources.MapFileSource.open_source_by_name(self.config,
                                                                   station,
                                                                   True)
-            except Exception, e:
+            except Exception as e:
                 # Unable to create or add so use "Stations" overlay
                 return self.stations_overlay
 
@@ -771,7 +772,7 @@ class MainApp(object):
         elif id == 0:
             msg = "Port connected"
 
-        print "[SESSION %i]: %s" % (id, msg)
+        print(("[SESSION %i]: %s" % (id, msg)))
 
         event = main_events.SessionEvent(id, port, msg)
         self.mainwindow.tabs["event"].event(event)
@@ -799,7 +800,7 @@ class MainApp(object):
         if port:
             id = "%s_%s" % (id, port)
 
-        print "[NEWFORM %s]: %s" % (id, fn)
+        print(("[NEWFORM %s]: %s" % (id, fn)))
         f = formgui.FormFile(fn)
 
         msg = '%s "%s" %s %s' % (_("Message"),
@@ -818,12 +819,12 @@ class MainApp(object):
         bounce = "@" in src and "@" in dst
         isseen = myc in f.get_path()[:-1]
 
-        print "Decision: " + \
+        print(("Decision: " + \
             "fwd:%s " % fwd_on + \
             "sendable:%s " % is_dst + \
             "next:%s " % nextst + \
             "bounce:%s " % bounce + \
-            "seen:%s " % isseen
+            "seen:%s " % isseen))
 
         if fwd_on and is_dst and not bounce and not isseen:
             msg += " (%s %s)" % (_("forwarding to"), nextst)
@@ -853,7 +854,7 @@ class MainApp(object):
         self.msgrouter.form_xfer_done(fn, port, False)
         if port:
             id = "%s_%s" % (id, port)
-        print "[FORMSENT %s]: %s" % (id, fn)
+        print(("[FORMSENT %s]: %s" % (id, fn)))
         event = main_events.FormEvent(id, _("Message Sent"))
         event.set_as_final()
 
@@ -863,7 +864,7 @@ class MainApp(object):
     def __file_sent(self, object, id, fn, port=None):
         if port:
             id = "%s_%s" % (id, port)
-        print "[FILESENT %s]: %s" % (id, fn)
+        print(("[FILESENT %s]: %s" % (id, fn)))
         _fn = os.path.basename(fn)
         msg = '%s "%s" %s' % (_("File"), _fn, _("Sent"))
         event = main_events.FileEvent(id, msg)
@@ -882,7 +883,7 @@ class MainApp(object):
             mt = wl2k.wl2k_auto_thread(self, call)
             self.__connect_object(mt)
             mt.start()
-        elif account in self.mail_threads.keys():
+        elif account in list(self.mail_threads.keys()):
             self.mail_threads[account].trigger()
         else:
             mt = emailgw.AccountMailThread(self.config, account)
@@ -894,7 +895,7 @@ class MainApp(object):
 # ------------ END SIGNAL HANDLERS ----------------
 
     def __connect_object(self, object, *args):
-        for signal in object._signals.keys():
+        for signal in list(object._signals.keys()):
             handler = self.handlers.get(signal, None)
             if handler is None:
                 pass
@@ -904,15 +905,15 @@ class MainApp(object):
                 try:
                     object.connect(signal, handler, *args)
                 except Exception:
-                    print "Failed to attach signal %s" % signal
+                    print(("Failed to attach signal %s" % signal))
                     raise
 
     def _announce_self(self):
-        print ("-" * 75)
-        print "D-RATS v%s starting at %s" % (version.DRATS_VERSION,
-                                             time.asctime())
-        print platform.get_platform()
-        print ("-" * 75)
+        print(("-" * 75))
+        print(("D-RATS v%s starting at %s" % (version.DRATS_VERSION,
+                                             time.asctime())))
+        print((platform.get_platform()))
+        print(("-" * 75))
 
     def __init__(self, **args):
         self.handlers = {
@@ -999,7 +1000,7 @@ class MainApp(object):
         self.mainwindow = mainwindow.MainWindow(self.config)
         self.__connect_object(self.mainwindow)
 
-        for tab in self.mainwindow.tabs.values():
+        for tab in list(self.mainwindow.tabs.values()):
             self.__connect_object(tab)
 
         self.refresh_config()
@@ -1008,7 +1009,7 @@ class MainApp(object):
         if self.config.getboolean("prefs", "dosignon") and self.chat_session:
             msg = self.config.get("prefs", "signon")
             status = station_status.STATUS_ONLINE
-            for port in self.sm.keys():
+            for port in list(self.sm.keys()):
                 self.chat_session(port).advertise_status(status, msg)
 
         gobject.timeout_add(3000, self._refresh_location)
@@ -1039,11 +1040,11 @@ class MainApp(object):
             try:
                 routeto, station, port = line.split()
             except Exception:
-                print "Line %i of %s not valid" % (lno, routes)
+                print(("Line %i of %s not valid" % (lno, routes)))
                 continue
 
             self.mainwindow.tabs["stations"].saw_station(station.upper(), port)
-            if self.sm.has_key(port):
+            if port in self.sm:
                 sm, sc = self.sm[port]
                 sm.manual_heard_station(station)
 
@@ -1053,7 +1054,7 @@ class MainApp(object):
                             "*",
                             ".lock*")
         for lock in glob.glob(path):
-            print "Removing stale message lock %s" % lock
+            print(("Removing stale message lock %s" % lock))
             os.remove(lock)
 
     def main(self):
@@ -1072,17 +1073,17 @@ class MainApp(object):
             except Exception:
                 needupd = True
             if not os.path.exists(user_fname) or needupd:
-                print "Installing dist form %s -> %s" % (fname, user_fname)
+                print(("Installing dist form %s -> %s" % (fname, user_fname)))
                 try:
                     shutil.copyfile(form, user_fname)
-                except Exception, e:
-                    print "FAILED: %s" % e
+                except Exception as e:
+                    print(("FAILED: %s" % e))
 
         self.clear_all_msg_locks()
 
         if len(self.config.options("ports")) == 0 and \
                 self.config.has_option("settings", "port"):
-            print "Migrating single-port config to multi-port"
+            print("Migrating single-port config to multi-port")
 
             port = self.config.get("settings", "port")
             rate = self.config.get("settings", "rate")
@@ -1104,8 +1105,8 @@ class MainApp(object):
             self.plugsrv = pluginsrv.DRatsPluginServer()
             self.__connect_object(self.plugsrv.get_proxy())
             self.plugsrv.serve_background()
-        except Exception, e:
-            print "Unable to start plugin server: %s" % e
+        except Exception as e:
+            print(("Unable to start plugin server: %s" % e))
             self.plugsrv = None
 
         self.load_static_routes()
@@ -1114,7 +1115,7 @@ class MainApp(object):
             self.msgrouter = msgrouting.MessageRouter(self.config)
             self.__connect_object(self.msgrouter)
             self.msgrouter.start()
-        except Exception, e:
+        except Exception as e:
             log_exception()
             self.msgrouter = None
 
@@ -1122,16 +1123,16 @@ class MainApp(object):
             gtk.main()
         except KeyboardInterrupt:
             pass
-        except Exception, e:
-            print "Got exception on close: %s" % e
+        except Exception as e:
+            print(("Got exception on close: %s" % e))
 
-        print "Saving config..."
+        print("Saving config...")
         self.config.save()
 
         if self.config.getboolean("prefs", "dosignoff") and self.sm:
             msg = self.config.get("prefs", "signoff")
             status = station_status.STATUS_OFFLINE
-            for port in self.sm.keys():
+            for port in list(self.sm.keys()):
                 self.chat_session(port).advertise_status(status, msg)
 
             time.sleep(0.5) # HACK

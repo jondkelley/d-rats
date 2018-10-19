@@ -1,8 +1,9 @@
-#!/usr/bin/python
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 
 import os
 import math
-import urllib
+import urllib.request, urllib.parse, urllib.error
 import time
 import random
 import shutil
@@ -13,19 +14,19 @@ import copy
 import gtk
 import gobject
 
-import mainapp
-import platform
-import miscwidgets
-import inputdialog
-import utils
-import geocode_ui
-import map_sources
-import map_source_editor
-import signals
+from . import mainapp
+from . import platform
+from . import miscwidgets
+from . import inputdialog
+from . import utils
+from . import geocode_ui
+from . import map_sources
+from . import map_source_editor
+from . import signals
 
-from ui.main_common import ask_for_confirmation
+from .ui.main_common import ask_for_confirmation
 
-from gps import GPSPosition, distance, value_with_units, DPRS_TO_APRS
+from .gps import GPSPosition, distance, value_with_units, DPRS_TO_APRS
 
 CROSSHAIR = "+"
 
@@ -71,7 +72,7 @@ def fetch_url(url, local):
     else:
         proxies = None
 
-    data = urllib.urlopen(url, proxies=proxies)
+    data = urllib.request.urlopen(url, proxies=proxies)
     local_file = file(local, "wb")
     d = data.read()
     local_file.write(d)
@@ -125,7 +126,7 @@ class MarkerEditDialog(inputdialog.FieldDialog):
                 iidx = symlist.index(point.get_aprs_symbol())
                 iconsel.set_active(iidx)
             except ValueError:
-                print "No such symbol `%s'" % point.get_aprs_symbol()
+                print(("No such symbol `%s'" % point.get_aprs_symbol()))
 
         else:
             iconsel.set_sensitive(False)
@@ -210,8 +211,8 @@ class MapTile(object):
                 try:
                     fetch_url(url, self._local_path())
                     return True
-                except Exception, e:
-                    print "[%i] Failed to fetch `%s': %s" % (i, url, e)
+                except Exception as e:
+                    print(("[%i] Failed to fetch `%s': %s" % (i, url, e)))
 
             return False
         else:
@@ -410,14 +411,14 @@ class MapWidget(gtk.DrawingArea):
         x, y = self.latlon2xy(n, w)
         self.lat_fudge = ((self.height / 2) * self.tilesize) - y
         if False:
-            print "------ Bounds Calculation ------"
-            print "Center tile should be at %i,%i" % (\
+            print("------ Bounds Calculation ------")
+            print(("Center tile should be at %i,%i" % (\
                 (self.height/2) * self.tilesize,
-                (self.width/2) * self.tilesize)
-            print "We calculate it based on Lat,Lon to be %i, %i" % (x, y)
-            print "--------------------------------"
-        print "Latitude Fudge Factor: %i (zoom %i)" % (self.lat_fudge,
-                                                       self.zoom)
+                (self.width/2) * self.tilesize)))
+            print(("We calculate it based on Lat,Lon to be %i, %i" % (x, y)))
+            print("--------------------------------")
+        print(("Latitude Fudge Factor: %i (zoom %i)" % (self.lat_fudge,
+                                                       self.zoom)))
 
     def broken_tile(self):
         if self.__broken_tile:
@@ -471,7 +472,7 @@ class MapWidget(gtk.DrawingArea):
         if path:
             try:
                 pb = gtk.gdk.pixbuf_new_from_file(path)
-            except Exception, e:
+            except Exception as e:
                 utils.log_exception()
                 pb = self.broken_tile()
         else:
@@ -515,7 +516,7 @@ class MapWidget(gtk.DrawingArea):
             self.pixmap = gtk.gdk.Pixmap(self.window,
                                          self.width * self.tilesize,
                                          self.height * self.tilesize)
-        except Exception, e:
+        except Exception as e:
             # Window is not loaded, thus can't load tiles
             return
 
@@ -727,7 +728,7 @@ class MapWindow(gtk.Window):
         action = _action.get_name()
 
         if action == "delete":
-            print "Deleting %s/%s" % (group, id)
+            print(("Deleting %s/%s" % (group, id)))
             for source in self.map_sources:
                 if source.get_name() == group:
                     if not source.get_mutable():
@@ -838,7 +839,7 @@ class MapWindow(gtk.Window):
             if not parent:
                 parent = iter
             group = model.get_value(parent, 1)
-            if self.colors.has_key(group):
+            if group in self.colors:
                 rend.set_property("foreground", self.colors[group])
 
         c = self.marker_list._view.get_column(1)
@@ -1139,13 +1140,13 @@ class MapWindow(gtk.Window):
                 fix = GPSPosition(lat=lat, lon=lon, station=call)
                 fix.comment = desc
 
-                for port in self.emit("get-station-list").keys():
+                for port in list(self.emit("get-station-list").keys()):
                     self.emit("user-send-chat",
                               "CQCQCQ", port,
                               fix.to_NMEA_GGA(), True)
 
                 break
-            except Exception, e:
+            except Exception as e:
                 utils.log_exception()
                 ed = gtk.MessageDialog(buttons=gtk.BUTTONS_OK, parent=d)
                 ed.set_property("text", _("Invalid value") + ": %s" % e)
@@ -1172,7 +1173,7 @@ class MapWindow(gtk.Window):
             return cap.replace(" ", "_")
 
         xml = ""
-        for action in [_an(x) for x in self._popup_items.keys()]:
+        for action in [_an(x) for x in list(self._popup_items.keys())]:
             xml += "<menuitem action='%s'/>\n" % action
 
         xml = """
@@ -1193,7 +1194,7 @@ class MapWindow(gtk.Window):
         t.set_sensitive(False)
         ag.add_action(t)
 
-        for name, handler in self._popup_items.items():
+        for name, handler in list(self._popup_items.items()):
             action = gtk.Action(_an(name), name, None, None)
             action.connect("activate", handler, vals)
             ag.add_action(action)
@@ -1214,7 +1215,7 @@ class MapWindow(gtk.Window):
 
         lat, lon = self.map.xy2latlon(mx, my)
 
-        print "Button %i at %i,%i" % (event.button, mx, my)
+        print(("Button %i at %i,%i" % (event.button, mx, my)))
         if event.button == 3:
             vals = { "lat" : lat,
                      "lon" : lon,
@@ -1224,12 +1225,12 @@ class MapWindow(gtk.Window):
             if menu:
                 menu.popup(None, None, None, event.button, event.time)
         elif event.type == gtk.gdk.BUTTON_PRESS:
-            print "Clicked: %.4f,%.4f" % (lat, lon)
+            print(("Clicked: %.4f,%.4f" % (lat, lon)))
             # The crosshair marker has been missing since 0.3.0
             #self.set_marker(GPSPosition(station=CROSSHAIR,
             #                            lat=lat, lon=lon))
         elif event.type == gtk.gdk._2BUTTON_PRESS:
-            print "Recenter on %.4f, %.4f" % (lat,lon)
+            print(("Recenter on %.4f, %.4f" % (lat,lon)))
 
             self.recenter(lat, lon)
 
@@ -1349,10 +1350,10 @@ class MapWindow(gtk.Window):
                                       point.get_longitude(),
                                       center.distance_from(this),
                                       center.bearing_to(this))
-        except Exception, e:
+        except Exception as e:
             if str(e) == "Item not found":
                 # this is evil
-                print "Adding point instead of updating"
+                print("Adding point instead of updating")
                 return self.add_point(source, point)
 
         self.add_point_visible(point)
@@ -1409,7 +1410,7 @@ class MapWindow(gtk.Window):
     def maybe_recenter_on_updated_point(self, source, point):
         if point.get_name() == self.center_mark and \
                 self.tracking_enabled:
-            print "Center updated"
+            print("Center updated")
             self.recenter(point.get_latitude(), point.get_longitude())
         self.update_point(source, point)
 
@@ -1554,10 +1555,10 @@ class MapWindow(gtk.Window):
                 return
 
             for source in self.map_sources:
-                print "%s,%s" % (source.get_name(), group)
+                print(("%s,%s" % (source.get_name(), group)))
                 if source.get_name() == group:
-                    print "Adding new point %s to %s" % (point.get_name(),
-                                                         source.get_name())
+                    print(("Adding new point %s to %s" % (point.get_name(),
+                                                         source.get_name())))
                     source.add_point(point)
                     source.save()
                     return
@@ -1600,7 +1601,7 @@ class MapWindow(gtk.Window):
 if __name__ == "__main__":
 
     import sys
-    import gps
+    from . import gps
 
     if len(sys.argv) == 3:
         m = MapWindow()

@@ -1,4 +1,5 @@
-#!/usr/bin/python
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 #
 # Copyright 2009 Dan Smith <dsmith@danplanet.com>
 #
@@ -21,7 +22,7 @@ import gobject
 try:
     from gtk import Assistant as baseclass
 except ImportError:
-    print "No Assistant support"
+    print("No Assistant support")
     from d_rats.geocode_ui import baseclass
 
 if __name__ == "__main__":
@@ -36,7 +37,7 @@ def calc_watchdog(size):
     bytes_per_sec = 950 / 8           # 950 bits per second
     sec = 10 + (size / bytes_per_sec)  # Time to transmit, plus padding
 
-    print "Waiting %i seconds for send of %i" % (sec, size)
+    print(("Waiting %i seconds for send of %i" % (sec, size)))
 
     return int(sec * 1000)
 
@@ -61,7 +62,7 @@ class ConnTestAssistant(baseclass):
         def set_type(rb, type):
             self.__type = type
 
-            for v in self.__tests.values():
+            for v in list(self.__tests.values()):
                 v.hide()
             self.__tests[type].show()
 
@@ -158,7 +159,7 @@ class ConnTestAssistant(baseclass):
         self.__tests[TEST_TYPE_GRADMULTI] = self.make_gradmulti_settings()
 
         box = gtk.VBox(False, 0)
-        for v in self.__tests.values():
+        for v in list(self.__tests.values()):
             box.pack_start(v, 1, 1, 1)
 
         self.__tests[TEST_TYPE_FIXEDMULTI].show()
@@ -244,7 +245,7 @@ class ConnTestAssistant(baseclass):
 
     def set_test_val(self, *pairs):
         if len(pairs) % 2:
-            print "Ack! need name=value pairs!"
+            print("Ack! need name=value pairs!")
             return
 
         for i in range(0, len(pairs), 2):

@@ -1,13 +1,16 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 import re
 import csv
 import sys
 import getpass
-import xmlrpclib
-import htmlentitydefs
+import xmlrpc.client
+import html.entities
 import xml.dom.minidom
 from itertools import groupby
-from urllib import quote_plus, urlencode
-from urllib2 import urlopen, HTTPError
+from urllib.parse import quote_plus, urlencode
+from urllib.request import urlopen
+from urllib.error import HTTPError
 from xml.parsers.expat import ExpatError
 
 try:
@@ -17,7 +20,7 @@ except NameError:
 
 # Other submodules from geopy:
 
-import util
+from . import util
 
 # Now try some more exotic modules...
 
@@ -32,8 +35,8 @@ except ImportError:
     try:
         from django.utils import simplejson
     except ImportError:
-        print "simplejson was not found. " \
-              "Geocoders relying on JSON parsing will not work."
+        print("simplejson was not found. " \
+              "Geocoders relying on JSON parsing will not work.")
 
 
 class Geocoder(object):
@@ -46,7 +49,7 @@ class Geocoder(object):
 class WebGeocoder(Geocoder):
     """A Geocoder subclass with utility methods helpful for handling results
     given by web-based geocoders."""
-    
+
     @classmethod
     def _get_encoding(cls, page, contents=None):
         """Get the last encoding (charset) listed in the header of ``page``."""
@@ -67,13 +70,13 @@ class WebGeocoder(Geocoder):
         UTF-8."""
         contents = page.read()
         encoding = cls._get_encoding(page, contents) or sys.getdefaultencoding()
-        return unicode(contents, encoding=encoding).encode('utf-8')
+        return str(contents, encoding=encoding).encode('utf-8')
 
     @classmethod
     def _get_first_text(cls, node, tag_names, strip=None):
         """Get the text value of the first child of ``node`` with tag
         ``tag_name``. The text is stripped using the value of ``strip``."""
-        if isinstance(tag_names, basestring):
+        if isinstance(tag_names, str):
             tag_names = [tag_names]
         if node:
             while tag_names:
@@ -86,7 +89,7 @@ class WebGeocoder(Geocoder):
     def _join_filter(cls, sep, seq, pred=bool):
         """Join items in ``seq`` with string ``sep`` if pred(item) is True.
         Sequence items are passed to unicode() before joining."""
-        return sep.join([unicode(i) for i in seq if pred(i)])
+        return sep.join([str(i) for i in seq if pred(i)])
 
 
 class MediaWiki(WebGeocoder):
@@ -119,10 +122,10 @@ class MediaWiki(WebGeocoder):
         return self.geocode_url(url)
 
     def geocode_url(self, url):
-        print "Fetching %s..." % url
+        print(("Fetching %s..." % url))
         page = urlopen(url)
         name, (latitude, longitude) = self.parse_xhtml(page)
-        return (name, (latitude, longitude))        
+        return (name, (latitude, longitude))
 
     def parse_xhtml(self, page):
         soup = isinstance(page, BeautifulSoup) and page or BeautifulSoup(page)
@@ -155,13 +158,13 @@ class SemanticMediaWiki(MediaWiki):
         may be passed as a string.
         For example: attributes=['geographical coordinate']
                  or: attributes='geographical coordinate'
-        
+
         ``relations`` is a sequence of semantic relation names that will be
         followed, depth-first in order, until a geocoded page is found. A
         single relation name may be passed as a string.
         For example: relations=['Located in']
                  or: relations='Located in'
-        
+
         ``prefer_semantic`` indicates whether or not the contents of the
         semantic attributes (given by ``attributes``) should be preferred
         over the GIS extension's coordinates if both exist. This defaults to
@@ -173,18 +176,18 @@ class SemanticMediaWiki(MediaWiki):
 
         if attributes is None:
             self.attributes = []
-        elif isinstance(attributes, basestring):
+        elif isinstance(attributes, str):
             self.attributes = [attributes]
         else:
             self.attributes = attributes
 
         if relations is None:
             self.relations = []
-        elif isinstance(relations, basestring):
+        elif isinstance(relations, str):
             self.relations = [relations]
         else:
             self.relations = relations
-        
+
         self.prefer_semantic = prefer_semantic
 
     def transform_semantic(self, string):
@@ -196,24 +199,24 @@ class SemanticMediaWiki(MediaWiki):
         if tried is None:
             tried = set()
 
-        print "Fetching %s..." % url
+        print(("Fetching %s..." % url))
         page = urlopen(url)
         soup = BeautifulSoup(page)
         name, (latitude, longitude) = self.parse_xhtml(soup)
         if None in (name, latitude, longitude) or self.prefer_semantic:
             rdf_url = self.parse_rdf_link(soup)
-            print "Fetching %s..." % rdf_url
+            print(("Fetching %s..." % rdf_url))
             page = urlopen(rdf_url)
-            
+
             things, thing = self.parse_rdf(page)
             name = self.get_label(thing)
-            
+
             attributes = self.get_attributes(thing)
             for attribute, value in attributes:
                 latitude, longitude = util.parse_geo(value)
                 if None not in (latitude, longitude):
                     break
-            
+
             if None in (latitude, longitude):
                 relations = self.get_relations(thing)
                 for relation, resource in relations:
@@ -234,7 +237,7 @@ class SemanticMediaWiki(MediaWiki):
         return link and link['href'] or None
 
     def parse_rdf(self, page):
-        if not isinstance(page, basestring):
+        if not isinstance(page, str):
             page = self._decode_page(page)
         doc = xml.dom.minidom.parseString(page)
 
@@ -254,7 +257,7 @@ class SemanticMediaWiki(MediaWiki):
     def get_attributes(self, thing, attributes=None):
         if attributes is None:
             attributes = self.attributes
-        
+
         for attribute in attributes:
             attribute = self.transform_semantic(attribute)
             for node in thing.getElementsByTagName('attribute:' + attribute):
@@ -274,7 +277,7 @@ class SemanticMediaWiki(MediaWiki):
 
 class Google(WebGeocoder):
     """Geocoder using the Google Maps API."""
-    
+
     def __init__(self, api_key=None, domain='maps.google.com',
                  resource='maps/geo', format_string='%s', output_format='kml'):
         """Initialize a customized Google geocoder with location-specific
@@ -295,7 +298,7 @@ class Google(WebGeocoder):
         ``format_string`` is a string containing '%s' where the string to
         geocode should be interpolated before querying the geocoder.
         For example: '%s, Mountain View, CA'. The default is just '%s'.
-        
+
         ``output_format`` can be 'json', 'xml', 'kml', 'csv', or 'js' and will
         control the output format of Google's response. The default is 'kml'
         since it is supported by both the 'maps' and 'maps/geo' resources. The
@@ -327,16 +330,16 @@ class Google(WebGeocoder):
         return self.geocode_url(url, exactly_one)
 
     def geocode_url(self, url, exactly_one=True):
-        print "Fetching %s..." % url
+        print(("Fetching %s..." % url))
         page = urlopen(url)
-        
+
         dispatch = getattr(self, 'parse_' + self.output_format)
         return dispatch(page, exactly_one)
 
     def parse_xml(self, page, exactly_one=True):
         """Parse a location name, latitude, and longitude from an XML response.
         """
-        if not isinstance(page, basestring):
+        if not isinstance(page, str):
             page = self._decode_page(page)
         try:
             doc = xml.dom.minidom.parseString(page)
@@ -348,7 +351,7 @@ class Google(WebGeocoder):
         if exactly_one and len(places) != 1:
             raise ValueError("Didn't find exactly one placemark! " \
                              "(Found %d.)" % len(places))
-        
+
         def parse_place(place):
             location = self._get_first_text(place, ['address', 'name']) or None
             points = place.getElementsByTagName('Point')
@@ -360,7 +363,7 @@ class Google(WebGeocoder):
                 latitude = longitude = None
                 _, (latitude, longitude) = self.geocode(location)
             return (location, (latitude, longitude))
-        
+
         if exactly_one:
             return parse_place(places[0])
         else:
@@ -373,7 +376,7 @@ class Google(WebGeocoder):
         return self.parse_xml(page, exactly_one)
 
     def parse_json(self, page, exactly_one=True):
-        if not isinstance(page, basestring):
+        if not isinstance(page, str):
             page = self._decode_page(page)
         json = simplejson.loads(page)
         places = json.get('Placemark', [])
@@ -386,7 +389,7 @@ class Google(WebGeocoder):
             location = place.get('address')
             longitude, latitude = place['Point']['coordinates'][:2]
             return (location, (latitude, longitude))
-        
+
         if exactly_one:
             return parse_place(places[0])
         else:
@@ -398,7 +401,7 @@ class Google(WebGeocoder):
         the HTTP geocoder doesn't work for addresses in your country (the
         UK, for example).
         """
-        if not isinstance(page, basestring):
+        if not isinstance(page, str):
             page = self._decode_page(page)
 
         LATITUDE = r"[\s,]lat:\s*(?P<latitude>-?\d+\.\d+)"
@@ -406,7 +409,7 @@ class Google(WebGeocoder):
         LOCATION = r"[\s,]laddr:\s*'(?P<location>.*?)(?<!\\)',"
         ADDRESS = r"(?P<address>.*?)(?:(?: \(.*?@)|$)"
         MARKER = '.*?'.join([LATITUDE, LONGITUDE, LOCATION])
-        MARKERS = r"{markers: (?P<markers>\[.*?\]),\s*polylines:"            
+        MARKERS = r"{markers: (?P<markers>\[.*?\]),\s*polylines:"
 
         def parse_marker(marker):
             latitude, longitude, location = marker
@@ -417,12 +420,12 @@ class Google(WebGeocoder):
         match = re.search(MARKERS, page)
         markers = match and match.group('markers') or ''
         markers = re.findall(MARKER, markers)
-       
+
         if exactly_one:
             if len(markers) != 1:
                 raise ValueError("Didn't find exactly one marker! " \
                                  "(Found %d.)" % len(markers))
-            
+
             marker = markers[0]
             return parse_marker(marker)
         else:
@@ -431,7 +434,7 @@ class Google(WebGeocoder):
 
 class Yahoo(WebGeocoder):
     """Geocoder using the Yahoo! Maps API.
-    
+
     Note: The Terms of Use dictate that the stand-alone geocoder may only be
     used for displaying Yahoo! Maps or points on Yahoo! Maps. Lame.
 
@@ -463,22 +466,22 @@ class Yahoo(WebGeocoder):
                   }
         url = self.url % urlencode(params)
         return self.geocode_url(url, exactly_one)
-    
+
     def geocode_url(self, url, exactly_one=True):
-        print "Fetching %s..." % url
+        print(("Fetching %s..." % url))
         page = urlopen(url)
-        
+
         parse = getattr(self, 'parse_' + self.output_format)
         return parse(page, exactly_one)
 
     def parse_xml(self, page, exactly_one=True):
         """Parse a location name, latitude, and longitude from an XML response.
         """
-        if not isinstance(page, basestring):
+        if not isinstance(page, str):
             page = self._decode_page(page)
         doc = xml.dom.minidom.parseString(page)
         results = doc.getElementsByTagName('Result')
-        
+
         if exactly_one and len(results) != 1:
             raise ValueError("Didn't find exactly one result! " \
                              "(Found %d.)" % len(results))
@@ -498,7 +501,7 @@ class Yahoo(WebGeocoder):
             longitude = self._get_first_text(result, 'Longitude') or None
             longitude = longitude and float(longitude)
             return (location, (latitude, longitude))
-    
+
         if exactly_one:
             return parse_result(results[0])
         else:
@@ -511,21 +514,21 @@ class GeocoderDotUS(WebGeocoder):
     otherwise you must register and pay per call. This class supports both free
     and commercial API usage.
     """
-    
+
     def __init__(self, username=None, password=None, format_string='%s',
                  protocol='xmlrpc'):
         """Initialize a customized geocoder.us geocoder with location-specific
         address information and login information (for commercial usage).
-        
+
         if ``username`` and ``password`` are given, they will be used to send
         account information to the geocoder.us API. If ``username`` is given
         and ``password`` is none, the ``getpass` module will be used to
         prompt for the password.
-        
+
         ``format_string`` is a string containing '%s' where the string to
         geocode should be interpolated before querying the geocoder.
         For example: '%s, Mountain View, CA'. The default is just '%s'.
-        
+
         ``protocol`` currently supports values of 'xmlrpc' and 'rest'.
         """
         if username and password is None:
@@ -543,7 +546,7 @@ class GeocoderDotUS(WebGeocoder):
         username = self.username
         password = self.__password
         protocol = self.protocol.lower()
-        
+
         if username and password:
             auth = "%s:%s@" % (username, password)
             resource = "member/service/%s/" % protocol
@@ -561,9 +564,9 @@ class GeocoderDotUS(WebGeocoder):
         return dispatch(string, exactly_one)
 
     def geocode_xmlrpc(self, string, exactly_one=True):
-        proxy = xmlrpclib.ServerProxy(self.url)
+        proxy = xmlrpc.client.ServerProxy(self.url)
         results = proxy.geocode(self.format_string % string)
-        
+
         if exactly_one and len(results) != 1:
             raise ValueError("Didn't find exactly one result! " \
                              "(Found %d.)" % len(results))
@@ -581,7 +584,7 @@ class GeocoderDotUS(WebGeocoder):
             latitude = result.get('lat')
             longitude = result.get('long')
             return (location, (latitude, longitude))
-        
+
         if exactly_one:
             return parse_result(results[0])
         else:
@@ -596,15 +599,15 @@ class GeocoderDotUS(WebGeocoder):
     def parse_rdf(self, page, exactly_one=True):
         """Parse a location name, latitude, and longitude from an RDF response.
         """
-        if not isinstance(page, basestring):
+        if not isinstance(page, str):
             page = self._decode_page(page)
         doc = xml.dom.minidom.parseString(page)
         points = doc.getElementsByTagName('geo:Point')
-        
+
         if exactly_one and len(points) != 1:
             raise ValueError("Didn't find exactly one point! " \
                              "(Found %d.)" % len(points))
-        
+
         def parse_point(point):
             strip = ", \n"
             location = self._get_first_text(point, 'dc:description', strip)
@@ -614,7 +617,7 @@ class GeocoderDotUS(WebGeocoder):
             longitude = self._get_first_text(point, 'geo:long') or None
             longitude = longitude and float(longitude)
             return (location, (latitude, longitude))
-            
+
         if exactly_one:
             return parse_point(points[0])
         else:
@@ -624,7 +627,7 @@ class GeocoderDotUS(WebGeocoder):
 class VirtualEarth(WebGeocoder):
     """Geocoder using Microsoft's Windows Live Local web service, powered by
     Virtual Earth.
-    
+
     WARNING: This does not use a published API and can easily break if
     Microsoft changes their JavaScript.
     """
@@ -649,12 +652,12 @@ class VirtualEarth(WebGeocoder):
         return self.geocode_url(url, exactly_one)
 
     def geocode_url(self, url, exactly_one=True):
-        print "Fetching %s..." % url
+        print(("Fetching %s..." % url))
         page = urlopen(url)
         return self.parse_javascript(page, exactly_one)
 
     def parse_javascript(self, page, exactly_one=True):
-        if not isinstance(page, basestring):
+        if not isinstance(page, str):
             page = self._decode_page(page)
 
         matches = self.SINGLE_LOCATION.findall(page)
@@ -674,7 +677,7 @@ class VirtualEarth(WebGeocoder):
                 location, (latitude, longitude) = array[0], array[5:7]
             else:
                 location, latitude, longitude = array[:3]
-                
+
             return (location, (latitude, longitude))
 
         if exactly_one:
@@ -707,15 +710,15 @@ class GeoNames(WebGeocoder):
         return dispatch(page, exactly_one)
 
     def parse_json(self, page, exactly_one):
-        if not isinstance(page, basestring):
+        if not isinstance(page, str):
             page = self._decode_page(page)
         json = simplejson.loads(page)
         codes = json.get('postalCodes', [])
-        
+
         if exactly_one and len(codes) != 1:
             raise ValueError("Didn't find exactly one code! " \
                              "(Found %d.)" % len(codes))
-        
+
         def parse_code(code):
             place = self._join_filter(", ", [code.get('placeName'),
                                              code.get('countryCode')])
@@ -733,11 +736,11 @@ class GeoNames(WebGeocoder):
             return (parse_code(code) for code in codes)
 
     def parse_xml(self, page, exactly_one):
-        if not isinstance(page, basestring):
+        if not isinstance(page, str):
             page = self._decode_page(page)
         doc = xml.dom.minidom.parseString(page)
         codes = doc.getElementsByTagName('code')
-        
+
         if exactly_one and len(codes) != 1:
             raise ValueError("Didn't find exactly one code! " \
                              "(Found %d.)" % len(codes))
@@ -753,7 +756,7 @@ class GeoNames(WebGeocoder):
             latitude = latitude and float(latitude)
             longitude = longitude and float(longitude)
             return (location, (latitude, longitude))
-        
+
         if exactly_one:
             return parse_code(codes[0])
         else:

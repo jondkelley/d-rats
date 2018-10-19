@@ -1,4 +1,5 @@
-#!/usr/bin/python
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 #
 # Copyright 2009 Dan Smith <dsmith@danplanet.com>
 #
@@ -43,9 +44,9 @@ class ControlSession(base.Session):
             l, r = struct.unpack("BB", frame.data)
             session = self._sm.sessions[l]
             session._rs = r
-            print "Signaled waiting session thread (l=%i r=%i)" % (l, r)
-        except Exception, e:
-            print "Failed to lookup new session event: %s" % e
+            print("Signaled waiting session thread (l=%i r=%i)" % (l, r))
+        except Exception as e:
+            print("Failed to lookup new session event: %s" % e)
 
         if session.get_state() == base.ST_CLSW:
             session.set_state(base.ST_CLSD)
@@ -54,23 +55,23 @@ class ControlSession(base.Session):
         elif session.get_state() == base.ST_SYNC:
             session.set_state(base.ST_OPEN)
         else:
-            print "ACK for session in invalid state: %i" % session.get_state()
+            print("ACK for session in invalid state: %i" % session.get_state())
         
     def ctl_end(self, frame):
-        print "End of session %s" % frame.data
+        print("End of session %s" % frame.data)
 
         try:
             id = int(frame.data)
-        except Exception, e:
-            print "Session end request had invalid ID: %s" % e
+        except Exception as e:
+            print("Session end request had invalid ID: %s" % e)
             return
 
         try:
             session = self._sm.sessions[id]
             session.set_state(base.ST_CLSD)
             self._sm.stop_session(session)
-        except Exception, e:
-            print "Session %s ended but not registered" % id
+        except Exception as e:
+            print("Session %s ended but not registered" % id)
             return
 
         frame.d_station = frame.s_station
@@ -84,31 +85,31 @@ class ControlSession(base.Session):
         try:
             (id,) = struct.unpack("B", frame.data[:1])
             name = frame.data[1:]
-        except Exception, e:
-            print "Session request had invalid ID: %s" % e
+        except Exception as e:
+            print("Session request had invalid ID: %s" % e)
             return
 
-        print "New session %i from remote" % id
+        print("New session %i from remote" % id)
 
         exist = self._sm.get_session(rid=id, rst=frame.s_station)
         if exist:
-            print "Re-acking existing session %s:%i:%i" % (frame.s_station,
+            print("Re-acking existing session %s:%i:%i" % (frame.s_station,
                                                            id,
-                                                           exist._id)
+                                                           exist._id))
             self.ack_req(frame.s_station, struct.pack("BB", id, exist._id))
             return
 
-        print "ACK'ing session request for %i" % id
+        print("ACK'ing session request for %i" % id)
 
         try:
             c = self.stypes[frame.type]
-            print "Got type: %s" % c
+            print("Got type: %s" % c)
             s = c(name)
             s._rs = id
             s.set_state(base.ST_OPEN)
-        except Exception, e:
+        except Exception as e:
             log_exception()
-            print "Can't start session type `%s': %s" % (frame.type, e)
+            print("Can't start session type `%s': %s" % (frame.type, e))
             return
                 
         num = self._sm._register_session(s, frame.s_station, "new,in")
@@ -118,7 +119,7 @@ class ControlSession(base.Session):
 
     def ctl(self, frame):
         if frame.d_station != self._sm.station:
-            print "Control ignoring frame for station %s" % frame.d_station
+            print("Control ignoring frame for station %s" % frame.d_station)
             return
 
         if frame.type == T_ACK:
@@ -128,7 +129,7 @@ class ControlSession(base.Session):
         elif frame.type >= T_NEW:
             self.ctl_new(frame)
         else:
-            print "Unknown control message type %i" % frame.type
+            print("Unknown control message type %i" % frame.type)
             
     def new_session(self, session):
         f = DDT2EncodedFrame()
@@ -145,24 +146,24 @@ class ControlSession(base.Session):
             f.sent_event.wait(10)
             f.sent_event.clear()
 
-            print "Sent request, blocking..."
+            print("Sent request, blocking...")
             session.wait_for_state_change(wait_time)
 
             state = session.get_state()
 
             if state == base.ST_CLSD:
-                print "Session is closed"
+                print("Session is closed")
                 break
             elif state == base.ST_SYNC:
-                print "Waiting for synchronization"
+                print("Waiting for synchronization")
                 wait_time = 15
             else:
-                print "Established session %i:%i" % (session._id, session._rs)
+                print("Established session %i:%i" % (session._id, session._rs))
                 session.set_state(base.ST_OPEN)
                 return True
 
         session.set_state(base.ST_CLSD)
-        print "Failed to establish session"
+        print("Failed to establish session")
         return False
         
     def end_session(self, session):
@@ -170,7 +171,7 @@ class ControlSession(base.Session):
             return
 
         while session.get_state() == base.ST_SYNC:
-            print "Waiting for session in SYNC"
+            print("Waiting for session in SYNC")
             session.wait_for_state_change(2)
 
         f = DDT2EncodedFrame()
@@ -185,21 +186,21 @@ class ControlSession(base.Session):
         session.set_state(base.ST_CLSW)
 
         for i in range(0, 3):
-            print "Sending End-of-Session"
+            print("Sending End-of-Session")
             self._sm.outgoing(self, f)
 
             f.sent_event.wait(10)
             f.sent_event.clear()
 
-            print "Sent, waiting for response"
+            print("Sent, waiting for response")
             session.wait_for_state_change(15)
 
             if session.get_state() == base.ST_CLSD:
-                print "Session closed"
+                print("Session closed")
                 return True
 
         session.set_state(base.ST_CLSD)
-        print "Session closed because no response"
+        print("Session closed because no response")
         return False
             
     def __init__(self):

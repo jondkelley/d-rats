@@ -1,11 +1,13 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 import re
-import htmlentitydefs
-from distance import arc_degrees
+import html.entities
+from .distance import arc_degrees
 
 # Unicode characters for symbols that appear in coordinate strings:
-DEGREE = unichr(htmlentitydefs.name2codepoint['deg'])
-ARCMIN = unichr(htmlentitydefs.name2codepoint['prime'])
-ARCSEC = unichr(htmlentitydefs.name2codepoint['Prime'])
+DEGREE = chr(html.entities.name2codepoint['deg'])
+ARCMIN = chr(html.entities.name2codepoint['prime'])
+ARCSEC = chr(html.entities.name2codepoint['Prime'])
 
 def parse_geo(string, regex=None):
     """Return a 2-tuple of Decimals parsed from ``string``. The default
@@ -22,7 +24,7 @@ def parse_geo(string, regex=None):
     as the degree symbol, prime (arcminutes), and double prime (arcseconds)
     are also supported. Coordinates given from South and West will be
     converted appropriately (by switching their signs).
-    
+
     A custom expression can be given using the ``regex`` argument. It can
     be a string or compiled regular expression, and must contain groups
     named 'latitude_degrees' and 'longitude_degrees'. It can optionally
@@ -65,7 +67,7 @@ def parse_geo(string, regex=None):
                                d.get('latitude_seconds', 0))
             n_s = d.get('north_south', 'N').upper()
             if n_s == 'S':
-                lat *= -1 
+                lat *= -1
         if lng:
             lng = float(lng)
             lng += arc_degrees(d.get('longitude_minutes', 0),
@@ -76,4 +78,3 @@ def parse_geo(string, regex=None):
         return (lat, lng)
     else:
         return (None, None)
-

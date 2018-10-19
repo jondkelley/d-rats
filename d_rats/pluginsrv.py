@@ -1,4 +1,5 @@
-#!/usr/bin/python
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 #
 # Copyright 2009 Dan Smith <dsmith@danplanet.com>
 # Updated 2018 Jonathan Kelley <jonkelley@gmail.com>
@@ -18,12 +19,12 @@
 
 import os
 import threading
-from SimpleXMLRPCServer import SimpleXMLRPCServer
+from xmlrpc.server import SimpleXMLRPCServer
 
 import gobject
 
-import signals
-import utils
+from . import signals
+from . import utils
 from d_rats.sessions import rpc
 
 class DRatsChatEvent(object):
@@ -76,7 +77,7 @@ class DRatsPluginProxy(gobject.GObject):
 
     def send_chat(self, port, message):
         """Send a chat @message on @port"""
-        print "Sending chat on port %s: %s" % (port, message)
+        print(("Sending chat on port %s: %s" % (port, message)))
         self.emit("user-send-chat", "CQCQCQ", port, message, False)
 
         return 0
@@ -84,7 +85,7 @@ class DRatsPluginProxy(gobject.GObject):
     def list_ports(self):
         """Return a list of port names"""
         slist = self.emit("get-station-list")
-        return slist.keys()
+        return list(slist.keys())
 
     def send_file(self, station, filename, port=None):
         """Send a file to @station specified by @filename on optional port.
@@ -96,7 +97,7 @@ class DRatsPluginProxy(gobject.GObject):
 
         sname = os.path.basename(filename)
 
-        print "Sending file %s to %s on port %s" % (filename, station, port)
+        print(("Sending file %s to %s on port %s" % (filename, station, port)))
         self.emit("user-send-file", station, port, filename, sname)
 
         return 0
@@ -131,7 +132,7 @@ class DRatsPluginProxy(gobject.GObject):
     def get_result(self, ident):
         """Get the result of job @ident.  Returns a structure, empty until
         completion"""
-        if self.__persist.has_key(ident):
+        if ident in self.__persist:
             result = self.__persist[ident]
             del self.__persist[ident]
         else:
@@ -181,7 +182,7 @@ class DRatsPluginServer(SimpleXMLRPCServer):
         self.__thread = threading.Thread(target=self.serve_forever)
         self.__thread.setDaemon(True)
         self.__thread.start()
-        print "Started serve_forever() thread"
+        print("Started serve_forever() thread")
 
     def incoming_chat_message(self, *args):
         self.__proxy.incoming_chat_message(*args)

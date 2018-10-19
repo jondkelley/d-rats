@@ -1,4 +1,5 @@
-#!/usr/bin/python
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 #
 # Copyright 2009 Dan Smith <dsmith@danplanet.com>
 # Updated 2018 Jonathan Kelley <jonkelley@gmail.com>
@@ -19,15 +20,15 @@
 import gtk
 import gobject
 
-import miscwidgets
-from geopy import geocoders
+from . import miscwidgets
+from .geopy import geocoders
 
 YID = "eHRO5K_V34FXWnljF5BJYvTc.lXh.kQ0MaJpnq3BhgaX.IJrvtd6cvGgtWEPNAb7"
 
 try:
     from gtk import Assistant as baseclass
 except ImportError:
-    print "No gtk.Assistant support"
+    print("No gtk.Assistant support")
     class baseclass(gtk.MessageDialog):
         __gsignals__ = {
             "prepare" : (gobject.SIGNAL_RUN_LAST,
@@ -130,8 +131,8 @@ class AddressAssistant(baseclass):
             g = geocoders.Yahoo(YID)
             places = g.geocode(address, exactly_one=False)
             self.set_page_complete(page, True)
-        except Exception, e:
-            print "Did not find `%s': %s" % (address, e)
+        except Exception as e:
+            print(("Did not find `%s': %s" % (address, e)))
             places = []
             lat = lon = 0
             self.set_page_complete(page, False)
@@ -157,16 +158,16 @@ class AddressAssistant(baseclass):
 
     def prepare_page(self, assistant, page):
         if page == self.sel_page:
-            print "Sel"
+            print("Sel")
             return self.prepare_sel(assistant, page)
         elif page == self.conf_page:
-            print "Conf"
+            print("Conf")
             return self.prepare_conf(assistant, page)
         elif page == self.entry_page:
-            print "Ent"
+            print("Ent")
             self.sel_page.show()
         else:
-            print "I dunno"
+            print("I dunno")
 
     def exit(self, _, response):
         self.response = response

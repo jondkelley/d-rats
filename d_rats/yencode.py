@@ -1,4 +1,5 @@
-#!/usr/bin/python
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 #
 # Copyright 2008 Dan Smith <dsmith@danplanet.com>
 # Updated 2018 Jonathan Kelley <jonkelley@gmail.com>

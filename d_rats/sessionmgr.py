@@ -1,4 +1,5 @@
-#!/usr/bin/python
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 #
 # Copyright 2008 Dan Smith <dsmith@danplanet.com>
 # Updated 2018 Jonathan Kelley <jonkelley@gmail.com>
@@ -22,11 +23,11 @@ import os
 import struct
 import socket
 
-from ddt2 import DDT2EncodedFrame
-import transport
+from .ddt2 import DDT2EncodedFrame
+from . import transport
 
-from sessions import base, control, stateful, stateless
-from sessions import file, form, sock, sniff
+from .sessions import base, control, stateful, stateless
+from .sessions import file, form, sock, sniff
 
 class SessionManager(object):
     def set_comm(self, pipe, **kwargs):
@@ -68,29 +69,29 @@ class SessionManager(object):
         self._stations_heard[station] = time.time()
 
     def fire_session_cb(self, session, reason):
-        for f,d in self.session_cb.items():
+        for f,d in list(self.session_cb.items()):
             try:
                 f(d, reason, session)
 
             # TODO: Fix Exceptions
-            except Exception, e:
-                print("Exception in session CB: %s" % e)
+            except Exception as e:
+                print(("Exception in session CB: %s" % e))
 
     def register_session_cb(self, function, data):
         self.session_cb[function] = data
 
-        for i,s in self.sessions.items():
+        for i,s in list(self.sessions.items()):
             self.fire_session_cb(s, "new,existing")
 
     def shutdown(self, force=False):
         if force:
             self.tport.disable()
 
-        if self.sessions.has_key(self.control._id):
+        if self.control._id in self.sessions:
             del self.sessions[self.control._id]
 
-        for s in self.sessions.values():
-            print("Stopping session `%s'" % s.name)
+        for s in list(self.sessions.values()):
+            print(("Stopping session `%s'" % s.name))
             s.close(force)
 
         if not force:
@@ -109,7 +110,7 @@ class SessionManager(object):
                 frame.d_station != self.station and \
                 frame.session != 1:
             # Not CQ, not us, and not chat
-            print("Received frame for station `%s'" % frame.d_station)
+            print(("Received frame for station `%s'" % frame.d_station))
             return
         elif frame.s_station == self.station:
             # Either there is another station using our callsign, or
@@ -117,15 +118,15 @@ class SessionManager(object):
             print("Received looped frame")
             return
 
-        if not frame.session in self.sessions.keys():
-            print("Incoming frame for unknown session `%i'" % frame.session)
+        if not frame.session in list(self.sessions.keys()):
+            print(("Incoming frame for unknown session `%i'" % frame.session))
             return
 
         session = self.sessions[frame.session]
 
         if session.stateless == False and \
                 session._st != frame.s_station:
-            print("Received frame from invalid station `%s' (expecting `%s'" % (frame.s_station, session._st))
+            print(("Received frame from invalid station `%s' (expecting `%s'" % (frame.s_station, session._st)))
             return
 
         if session.handler:
@@ -134,7 +135,7 @@ class SessionManager(object):
             session.inq.enqueue(frame)
             session.notify()
 
-        print("Received block %i:%i for session `%s'" % (frame.seq, frame.type, session.name))
+        print(("Received block %i:%i for session `%s'" % (frame.seq, frame.type, session.name)))
 
     def outgoing(self, session, block):
         self.last_frame = time.time()
@@ -155,7 +156,7 @@ class SessionManager(object):
         self._sid_lock.acquire()
         if self._sid_counter >= 255:
             for id in range(0, 255):
-                if id not in self.sessions.keys():
+                if id not in list(self.sessions.keys()):
                     self._sid_counter = id
         else:
             id = self._sid_counter
@@ -181,13 +182,13 @@ class SessionManager(object):
         return id
 
     def _deregister_session(self, id):
-        if self.sessions.has_key(id):
+        if id in self.sessions:
             self.fire_session_cb(self.sessions[id], "end")
 
         try:
             del self.sessions[id]
-        except Exception, e:
-            print("No session %s to deregister" % id)
+        except Exception as e:
+            print(("No session %s to deregister" % id))
 
     def start_session(self, name, dest=None, cls=None, **kwargs):
         if not cls:
@@ -212,7 +213,7 @@ class SessionManager(object):
         self.sniff_session = id
 
     def stop_session(self, session):
-        for id, s in self.sessions.items():
+        for id, s in list(self.sessions.items()):
             if session.name == s.name:
                 self.tport.flush_blocks(id)
                 if session.get_state() != base.ST_CLSD:
@@ -226,7 +227,7 @@ class SessionManager(object):
     def end_session(self, id):
         try:
             del self.sessions[id]
-        except Exception, e:
+        except Exception as e:
             print("Unable to deregister session")
 
     def get_session(self, rid=None, rst=None, lid=None):
@@ -234,7 +235,7 @@ class SessionManager(object):
             print("get_station() with no selectors!")
             return None
 
-        for s in self.sessions.values():
+        for s in list(self.sessions.values()):
             if rid and s._rs != rid:
                 continue
 
@@ -251,9 +252,9 @@ class SessionManager(object):
 if __name__ == "__main__":
     #p = transport.TestPipe(dst="KI4IFW")
 
-    import comm
+    from . import comm
     import sys
-    import sessions
+    from . import sessions
 
     #if sys.argv[1] == "KI4IFW":
     #    p = comm.SerialDataPath(("/dev/ttyUSB0", 9600))
@@ -278,7 +279,7 @@ if __name__ == "__main__":
         S.send_file("inputdialog.py")
     else:
         def h(data, reason, session):
-            print("Session CB: %s" % reason)
+            print(("Session CB: %s" % reason))
             if reason == "new,in":
                 print("Receiving file")
                 t = threading.Thread(target=session.recv_file,
@@ -292,7 +293,7 @@ if __name__ == "__main__":
     try:
         while True:
             time.sleep(30)
-    except Exception, e:
+    except Exception as e:
         print("------- Closing")
 
     sm.shutdown()

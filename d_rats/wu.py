@@ -1,4 +1,5 @@
-#!/usr/bin/python
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 #
 # Copyright 2008 Dan Smith <dsmith@danplanet.com>
 # Updated 2018 Jonathan Kelley <jonkelley@gmail.com>
@@ -18,7 +19,7 @@
 
 import os
 import libxml2
-import urllib
+import urllib.request, urllib.parse, urllib.error
 
 class InvalidXMLError(Exception):
     pass
@@ -52,7 +53,7 @@ class WUObservation(object):
         child = node.children
         while child:
             self.location[child.name] = child.getContent()
-            child = child.next
+            child = child.__next__
 
     def __parse_doc(self, doc):
         root = doc.children
@@ -76,14 +77,14 @@ class WUObservation(object):
             elif child.name in WEATHER_KEYS:
                 self.weather[child.name] = child.getContent()
 
-            child = child.next
+            child = child.__next__
 
     def from_xml(self, xml):
         doc = libxml2.parseMemory(xml, len(xml))
         return self.__parse_doc(doc)
 
     def from_uri(self, uri):
-        fn, foo = urllib.urlretrieve(uri)
+        fn, foo = urllib.request.urlretrieve(uri)
         doc = libxml2.parseFile(fn)
         os.remove(fn)
         return self.__parse_doc(doc)

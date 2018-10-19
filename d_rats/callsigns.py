@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 import re
 
 def find_us_callsigns(string):
@@ -15,7 +17,7 @@ def find_au_callsigns(string):
 
 def find_ca_callsigns(string):
     regex = '[Vv][EeAa][0-9][A-z]{2,3}'
-    
+
     return re.findall(regex, string)
 
 callsign_functions = {
@@ -30,8 +32,8 @@ def find_callsigns(config, string):
     cs = eval(config.get("prefs", "callsigns"))
     enabled = [y for x,y in cs if x]
 
-    for t in callsign_functions.keys():
-        if callsign_functions.has_key(t) and t in enabled:
+    for t in list(callsign_functions.keys()):
+        if t in callsign_functions and t in enabled:
             list += callsign_functions[t](string)
-    
+
     return list

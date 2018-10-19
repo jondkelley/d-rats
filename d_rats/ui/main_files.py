@@ -1,4 +1,5 @@
-#!/usr/bin/python
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 #
 # Copyright 2009 Dan Smith <dsmith@danplanet.com>
 #
@@ -80,20 +81,20 @@ class LocalFileView(FileView):
         for file in files:
             if os.path.isdir(file):
                 continue
-            print "Adding local file `%s'" % file
+            print(("Adding local file `%s'" % file))
             try:
                 stat = os.stat(file)
                 ts = stat.st_mtime
                 sz = stat.st_size
                 nm = os.path.basename(file)
                 self._store.append((self._file_icon, nm, sz, ts))
-            except Exception, e:
-                print "Failed to add local file: %s" % e
+            except Exception as e:
+                print(("Failed to add local file: %s" % e))
 
 class RemoteFileView(FileView):
     def _file_list_cb(self, job, state, result):
         if state != "complete":
-            print "Incomplete job"
+            print("Incomplete job")
             return
 
         unit_decoder = { "B" : 0,
@@ -101,7 +102,7 @@ class RemoteFileView(FileView):
                          "MB": 20 }
 
         # FIXME: This might need to be in the idle loop
-        for k,v in result.items():
+        for k,v in list(result.items()):
             if "B (" in v:
                 size, units, date, _time = v.split(" ")
                 try:
@@ -110,8 +111,8 @@ class RemoteFileView(FileView):
                     stamp = "%s %s" % (date, _time)
                     ts = time.mktime(time.strptime(stamp,
                                                    "(%Y-%m-%d %H:%M:%S)"))
-                except Exception, e:
-                    print "Unable to parse file info: %s" % e
+                except Exception as e:
+                    print(("Unable to parse file info: %s" % e))
                     ts = time.time()
                     size = 0
 
@@ -400,7 +401,7 @@ class FilesTab(MainWindowTab):
         pstore.clear()
 
         if stationlist:
-            for port, stations in stationlist.items():
+            for port, stations in list(stationlist.items()):
                 _ports.append(port)
                 for station in stations:
                     _stations.append(str(station))
@@ -445,7 +446,7 @@ class FilesTab(MainWindowTab):
 
     def file_sent(self, _fn):
         fn = os.path.basename(_fn)
-        if self._remote and self._remote.outstanding.has_key(fn):
+        if self._remote and fn in self._remote.outstanding:
             size = self._remote.outstanding[fn]
             del self._remote.outstanding[fn]
             self._remote.add_explicit(fn, size, time.time())

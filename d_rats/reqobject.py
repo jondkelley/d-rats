@@ -1,4 +1,5 @@
-#!/usr/bin/python
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 #
 # Copyright 2008 Dan Smith <dsmith@danplanet.com>
 # Updated 2018 Jonathan Kelley <jonkelley@gmail.com>
@@ -19,7 +20,7 @@
 import gtk
 import gobject
 
-import miscwidgets
+from . import miscwidgets
 
 class RequestRemoteObjectUI(gtk.Dialog):
     def __init__(self, rpcsession, station, parent=None):
@@ -52,6 +53,6 @@ class RequestRemoteObjectUI(gtk.Dialog):
     def get_selected_item(self):
         try:
             return self.__list.get_item(self.__list.get_selected())[1]
-        except Exception, e:
-            print "Unable to get selected item: %s" % e
+        except Exception as e:
+            print(("Unable to get selected item: %s" % e))
             return None

@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 import random
 import time
 
@@ -62,13 +64,13 @@ class ChatSession(stateless.StatelessSession, gobject.GObject):
         self._emit("incoming-chat-message",
                    frame.s_station,
                    frame.d_station,
-                   unicode(frame.data, "utf-8"))
+                   str(frame.data, "utf-8"))
 
     def _incoming_gps(self, fix):
         self._emit("incoming-gps-fix", fix)
 
     def incoming_data(self, frame):
-        print "Got chat frame: %s" % frame
+        print("Got chat frame: %s" % frame)
         if frame.type == self.T_DEF:
             fix = gps.parse_GPS(frame.data)
             if fix and fix.valid:
@@ -82,7 +84,7 @@ class ChatSession(stateless.StatelessSession, gobject.GObject):
 
             if frame.d_station == "CQCQCQ":
                 delay = random.randint(0,50) / 10.0
-                print "Broadcast ping, waiting %.1f sec" % delay
+                print("Broadcast ping, waiting %.1f sec" % delay)
                 time.sleep(delay)
             elif frame.d_station != self._sm.station:
                 return # Not for us
@@ -92,8 +94,8 @@ class ChatSession(stateless.StatelessSession, gobject.GObject):
 
             try:
                 frame.data = self.pingfn()
-            except Exception, e:
-                print "Ping function failed: %s" % e
+            except Exception as e:
+                print("Ping function failed: %s" % e)
                 return
 
             self._sm.outgoing(self, frame)
@@ -101,16 +103,16 @@ class ChatSession(stateless.StatelessSession, gobject.GObject):
             try:
                 s, m = self.emit("get-current-status")
                 self.advertise_status(s, m)
-            except Exception, e:
-                print "Exception while getting status for ping reply:"
+            except Exception as e:
+                print("Exception while getting status for ping reply:")
                 utils.log_exception()
 
             self._emit("ping-response",
                        frame.s_station,
                        frame.d_station,
-                       unicode(frame.data, "utf-8"))
+                       str(frame.data, "utf-8"))
         elif frame.type == self.T_PNG_RSP:
-            print "PING OUT"
+            print("PING OUT")
             self._emit("ping-response",
                        frame.s_station, frame.d_station, frame.data)
         elif frame.type == self.T_PNG_ERQ:
@@ -121,7 +123,7 @@ class ChatSession(stateless.StatelessSession, gobject.GObject):
 
             if frame.d_station == "CQCQCQ":
                 delay = random.randint(0, 100) / 10.0
-                print "Broadcast ping echo, waiting %.1f sec" % delay
+                print("Broadcast ping echo, waiting %.1f sec" % delay)
                 time.sleep(delay)
             elif frame.d_station != self._sm.station:
                 return # Not for us
@@ -140,19 +142,19 @@ class ChatSession(stateless.StatelessSession, gobject.GObject):
                        "%s %i %s" % (_("Echo of"),
                                      len(frame.data),
                                      _("bytes")))
-            if self.__ping_handlers.has_key(frame.s_station):
+            if frame.s_station in self.__ping_handlers:
                 cb, data = self.__ping_handlers[frame.s_station]
                 try:
                     cb(*data)
                 except Exception:
-                    print "Exception while running ping callback"
+                    print("Exception while running ping callback")
                     utils.log_exception()
         elif frame.type == self.T_STATUS:
             try:
                 s = int(frame.data[0])
             except Exception:
-                print "Unable to parse station status: %s" % {frame.s_station :
-                                                                  frame.data}
+                print("Unable to parse station status: %s" % {frame.s_station :
+                                                                  frame.data})
                 s = 0
 
             self._emit("station-status", frame.s_station, s, frame.data[1:])
@@ -162,7 +164,7 @@ class ChatSession(stateless.StatelessSession, gobject.GObject):
         f.data = data
         f.type = self.T_DEF
 
-        print "Sending raw: %s" % data
+        print("Sending raw: %s" % data)
 
         self._sm.outgoing(self, f)
 

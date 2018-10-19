@@ -1,5 +1,7 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 import struct
-import utils
+from . import utils
 import sys
 import socket
 import threading
@@ -112,7 +114,7 @@ class AGWConnection:
         self._s.connect((addr, port))
         self._buf = ""
         self._framebuf = {}
-        for i in AGW_FRAMES.keys():
+        for i in list(AGW_FRAMES.keys()):
             self._framebuf[ord(i)] = []
 
     def _detect_frame(self, data):
@@ -137,7 +139,7 @@ class AGWConnection:
             try:
                 f.unpack(self._buf)
                 self._buf = ""
-            except Exception, e:
+            except Exception as e:
                 return None
             return f
 
@@ -153,7 +155,7 @@ class AGWConnection:
             f = self.__recv_frame()
             self.__lock.release()
             if f:
-                print("Got %s frame while waiting for %s" % (chr(f.kind), kind))
+                print(("Got %s frame while waiting for %s" % (chr(f.kind), kind)))
                 self._framebuf[f.kind].insert(0, f)
             elif not poll:
                 return None
@@ -184,7 +186,7 @@ class AGW_AX25_Connection:
         self._agw.send_frame(cf)
 
         f = self._agw.recv_frame_type("C", True)
-        print(f.get_payload())
+        print((f.get_payload()))
 
     def disconnect(self):
         df = AGWFrame_d()
@@ -192,7 +194,7 @@ class AGW_AX25_Connection:
         self._agw.send_frame(df)
 
         f = self._agw.recv_frame_type("d", True)
-        print(f.get_payload())
+        print((f.get_payload()))
 
     def send(self, data):
         df = AGWFrame_D()
@@ -229,10 +231,10 @@ def agw_recv_frame(s):
             try:
                 f.unpack(data)
                 data = ""
-            except Exception, e:
+            except Exception as e:
                 #print "Failed: %s" % e
                 continue
-            print("%s -> %s [%s]" % (f.get_from(), f.get_to(), chr(f.kind)))
+            print(("%s -> %s [%s]" % (f.get_from(), f.get_to(), chr(f.kind))))
             utils.hexprint(f.get_payload())
             return
 
@@ -262,10 +264,10 @@ def test_class_connect():
     agw = AGWConnection("127.0.0.1", 8000, 0.5)
     axc = AGW_AX25_Connection(agw, "KK7DS")
     axc.connect("N7AAM-11")
-    print(axc.recv_text())
+    print((axc.recv_text()))
 
     while True:
-        print("packet> "),
+        print(("packet> "), end=' ')
         l = sys.stdin.readline().strip()
         if len(l) > 0:
             axc.send(l + "\r")
@@ -280,7 +282,7 @@ def ssid(call):
     if "-" in call:
         try:
             c, s = call.split("-", 1)
-        except Exception, e:
+        except Exception as e:
             raise Exception("Callsign `%s' not in CCCCCC-N format" % call)
     else:
         c = call
@@ -293,7 +295,7 @@ def ssid(call):
 
     try:
         s = int(s)
-    except Exception, e:
+    except Exception as e:
         raise Exception("Invalid SSID `%s'" % s)
 
     if s < 0 or s > 7:

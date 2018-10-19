@@ -1,4 +1,5 @@
-#!/usr/bin/python
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 #
 # Copyright 2009 Dan Smith <dsmith@danplanet.com>
 #
@@ -49,7 +50,7 @@ class Event(object):
     def __init__(self, group_id, message, evtype=EVENT_INFO):
         self._group_id = group_id
 
-        if evtype not in _EVENT_TYPES.keys():
+        if evtype not in list(_EVENT_TYPES.keys()):
             raise Exception("Invalid event type %i" % evtype)
         self._evtype = evtype
         self._message = message
@@ -198,7 +199,7 @@ class EventTab(MainWindowTab):
 
     def _type_selected(self, typesel, filtermodel):
         filter = typesel.get_active_text()
-        print "Filter on %s" % filter
+        print(("Filter on %s" % filter))
 
         if filter == _("All"):
             t = None

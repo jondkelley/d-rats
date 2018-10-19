@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 #
 # Copyright 2008 Dan Smith <dsmith@danplanet.com>
 # Updated 2018 Jonathan Kelley <jonkelley@gmail.com>
@@ -21,7 +23,7 @@ import pango
 
 import os
 
-import platform
+from . import platform
 
 class KeyedListWidget(gtk.HBox):
     __gsignals__ = {
@@ -126,8 +128,8 @@ class KeyedListWidget(gtk.HBox):
         try:
             (store, iter) = self.__view.get_selection().get_selected()
             return store.get(iter, 0)[0]
-        except Exception, e:
-            print "Unable to find selected: %s" % e
+        except Exception as e:
+            print(("Unable to find selected: %s" % e))
             return None
 
     def select_item(self, key):
@@ -312,8 +314,8 @@ class ListWidget(gtk.HBox):
         try:
             (lst, iter) = self._view.get_selection().get_selected()
             lst.remove(iter)
-        except Exception, e:
-            print "Unable to remove selected: %s" % e
+        except Exception as e:
+            print(("Unable to remove selected: %s" % e))
 
     def get_selected(self, take_default=False):
         (lst, iter) = self._view.get_selection().get_selected()
@@ -334,7 +336,7 @@ class ListWidget(gtk.HBox):
                 target = lst.get_iter(pos-1)
             elif delta < 0:
                 target = lst.get_iter(pos+1)
-        except Exception, e:
+        except Exception as e:
             return False
 
         if target:
@@ -420,7 +422,7 @@ class TreeWidget(ListWidget):
 
     def _set_values(self, parent, vals):
         if isinstance(vals, dict):
-            for key, val in vals.items():
+            for key, val in list(vals.items()):
                 iter = self._store.append(parent)
                 self._store.set(iter, self._key, key)
                 self._set_values(iter, val)
@@ -430,7 +432,7 @@ class TreeWidget(ListWidget):
         elif isinstance(vals, tuple):
             self._add_item(parent, *vals)
         else:
-            print "Unknown type: %s" % vals
+            print(("Unknown type: %s" % vals))
 
     def set_values(self, vals):
         self._store.clear()
@@ -549,7 +551,7 @@ class LatLonEntry(gtk.Entry):
         if string is None:
             return
 
-        deg = u"\u00b0"
+        deg = "\\u00b0"
 
         while " " in string:
             if "." in string:
@@ -580,7 +582,7 @@ class LatLonEntry(gtk.Entry):
         return degrees + (minutes / 60.0)
 
     def parse_dms(self, string):
-        string = string.replace(u"\u00b0", " ")
+        string = string.replace("\\u00b0", " ")
         string = string.replace('"', ' ')
         string = string.replace("'", ' ')
         string = string.replace('  ', ' ')
@@ -624,8 +626,8 @@ class LatLonEntry(gtk.Entry):
             except:
                 try:
                     return self.parse_dms(string)
-                except Exception, e:
-                    print "DMS: %s" % e
+                except Exception as e:
+                    print(("DMS: %s" % e))
 
         raise Exception("Invalid format")
 
@@ -773,9 +775,9 @@ def test():
 
     def print_val(entry):
         if entry.validate():
-            print "Valid: %s" % entry.value()
+            print(("Valid: %s" % entry.value()))
         else:
-            print "Invalid"
+            print("Invalid")
     lle.connect("activate", print_val)
 
     lle.set_text("45 13 12")
@@ -785,7 +787,7 @@ def test():
     except KeyboardInterrupt:
         pass
 
-    print lst.get_values()
+    print((lst.get_values()))
 
 if __name__ == "__main__":
     test()

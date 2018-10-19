@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 #
 # Copyright 2008 Dan Smith <dsmith@danplanet.com>
 # Updated 2018 Jonathan Kelley <jonkelley@gmail.com>
@@ -29,11 +31,11 @@ import gtk
 import gobject
 import pango
 
-from miscwidgets import make_choice, KeyedListWidget
-from utils import run_or_error
-from ui.main_common import ask_for_confirmation
-import platform
-import spell
+from .miscwidgets import make_choice, KeyedListWidget
+from .utils import run_or_error
+from .ui.main_common import ask_for_confirmation
+from . import platform
+from . import spell
 
 test = """
 <xml>
@@ -100,21 +102,21 @@ def xml_unescape(string):
             try:
                 semi = string[i:].index(";") + i + 1
             except:
-                print "XML Error: & with no ;"
+                print("XML Error: & with no ;")
                 i += 1
                 continue
 
             esc = string[i:semi]
 
             if not esc:
-                print "No escape: %i:%i" % (i, semi)
+                print("No escape: %i:%i" % (i, semi))
                 i += 1
                 continue
 
-            if d.has_key(string[i:semi]):
+            if string[i:semi] in d:
                 out += d[esc]
             else:
-                print "XML Error: No such escape: `%s'" % esc
+                print("XML Error: No such escape: `%s'" % esc)
 
             i += len(esc)
 
@@ -133,7 +135,7 @@ class HTMLFormWriter(FormWriter):
             self.xslpath = os.path.join(xsl_dir, "default.xsl")
 
     def writeDoc(self, doc, outfile):
-        print "Writing to %s" % outfile
+        print("Writing to %s" % outfile)
         styledoc = libxml2.parseFile(self.xslpath)
         style = libxslt.parseStylesheetDoc(styledoc)
         result = style.applyStylesheet(doc, None)
@@ -184,7 +186,7 @@ class FieldWidget(object):
             if child.type == "text":
                 child.unlinkNode()
 
-            child = child.next
+            child = child.__next__
 
         value = xml_escape(self.get_value())
         if value:
@@ -222,7 +224,7 @@ class ToggleWidget(FieldWidget):
             try:
                 status = eval(node.getContent().title())
             except:
-                print "Status of `%s' is invalid" % node.getContent()
+                print("Status of `%s' is invalid" % node.getContent())
                 status = False
         else:
             status = False
@@ -251,7 +253,7 @@ class MultilineWidget(FieldWidget):
         self.widget.set_size_request(175, 200)
         self.widget.set_wrap_mode(gtk.WRAP_WORD)
 
-        import mainapp
+        from . import mainapp
         config = mainapp.get_mainapp().config
         if config.getboolean("prefs", "check_spelling"):
             spell.prepare_TextBuffer(self.buffer)
@@ -415,7 +417,7 @@ class ChoiceWidget(FieldWidget):
             if child.type == "element":
                 self.parse_choice(child)
 
-            child = child.next
+            child = child.__next__
 
         self.widget = make_choice(self.choices, False, self.default)
         self.widget.show()
@@ -436,7 +438,7 @@ class ChoiceWidget(FieldWidget):
             else:
                 child.unsetProp("set")
 
-            child = child.next
+            child = child.__next__
 
 class MultiselectWidget(FieldWidget):
     def parse_choice(self, node):
@@ -447,8 +449,8 @@ class MultiselectWidget(FieldWidget):
             content = xml_unescape(node.children.getContent().strip())
             self.store.append(row=(node.prop("set") == "y", content))
             self.choices.append((node.prop("set") == "y", content))
-        except Exception, e:
-            print "Error: %s" % e
+        except Exception as e:
+            print("Error: %s" % e)
             pass
 
     def toggle(self, rend, path):
@@ -484,7 +486,7 @@ class MultiselectWidget(FieldWidget):
         while child:
             if child.type == "element":
                 self.parse_choice(child)
-            child = child.next
+            child = child.__next__
 
     def make_container(self):
         vbox = gtk.VBox(False, 2)
@@ -518,7 +520,7 @@ class MultiselectWidget(FieldWidget):
         child = self.node.children
         while child:
             choice = child.getContent().strip()
-            if choice not in vals.keys():
+            if choice not in list(vals.keys()):
                 vals[choice] = False
 
             if not child.hasProp("set"):
@@ -526,7 +528,7 @@ class MultiselectWidget(FieldWidget):
             else:
                 child.setProp("set", vals[choice] and "y" or "n")
 
-            child = child.next
+            child = child.__next__
 
 class LabelWidget(FieldWidget):
     def __init__(self, node):
@@ -587,7 +589,7 @@ class FormField(object):
             elif child.name == "entry":
                 ent_node = child
 
-            child = child.next
+            child = child.__next__
 
         self.caption = self.get_caption_string(cap_node)
         self.entry = self.build_entry(ent_node, self.caption)
@@ -628,7 +630,7 @@ class FormFile(object):
 
     def save_to(self, filename):
         f = file(filename, "w")
-        print >>f, self.doc.serialize()
+        print(self.doc.serialize(), file=f)
         f.close()
 
     def export_to_string(self):
@@ -672,7 +674,7 @@ class FormFile(object):
         while child:
             if child.type == "text":
                 child.unlinkNode()
-            child = child.next
+            child = child.__next__
         node.addContent(content)
 
     def __get_xpath(self, path):
@@ -750,7 +752,7 @@ class FormFile(object):
 
     def set_field_value(self, id, value):
         els = self.__get_xpath("//form/field[@id='%s']/entry" % id)
-        print "Setting %s to %s (%i)" % (id, value, len(els))
+        print("Setting %s to %s (%i)" % (id, value, len(els)))
         if len(els) == 1:
             if els[0].prop("type") == "multiline":
                 self.__set_content(els[0], value)
@@ -763,7 +765,7 @@ class FormFile(object):
                 val = self.get_field_value(field)
                 if val is not None:
                     return val
-            except Exception, e:
+            except Exception as e:
                 pass
         return "Unknown"
 
@@ -812,7 +814,7 @@ class FormFile(object):
     def add_attachment(self, name, data):
         try:
             att = self.get_attachment(name)
-        except Exception, e:
+        except Exception as e:
             att = None
 
         if att is not None:
@@ -844,9 +846,9 @@ class FormDialog(FormFile, gtk.Dialog):
         for f in fields:
             try:
                 self.fields.append(FormField(f))
-            except Exception, e:
+            except Exception as e:
                 raise
-                print e
+                print(e)
 
     def export(self, outfile):
         for f in self.fields:
@@ -873,7 +875,7 @@ class FormDialog(FormFile, gtk.Dialog):
 
         try:
             self.export(f)
-        except Exception, e:
+        except Exception as e:
             ed = gtk.MessageDialog(buttons=gtk.BUTTONS_OK,
                                    parent=self)
             ed.text = "Unable to open file"
@@ -887,7 +889,7 @@ class FormDialog(FormFile, gtk.Dialog):
         f.close()
         self.export(name)
 
-        print "Exported to temporary file: %s" % name
+        print("Exported to temporary file: %s" % name)
         platform.get_platform().open_html_file(name)
 
     def calc_check(self, buffer, checkwidget):
@@ -961,7 +963,7 @@ class FormDialog(FormFile, gtk.Dialog):
 
         def item_set(box, key):
             natt = len(self.attbox.get_keys())
-            print "Item %s set: %i\n" % (key, natt)
+            print("Item %s set: %i\n" % (key, natt))
             if natt:
                 msg = _("Attachments") + " (%i)" % natt
                 attexp.set_label("<span color='blue'>%s</span>" % msg)
@@ -1038,7 +1040,7 @@ class FormDialog(FormFile, gtk.Dialog):
         tb = gtk.Toolbar()
 
         def close(but, *args):
-            print "Closing"
+            print("Closing")
             if editable:
                 d = ask_for_confirmation("Close without saving?", self)
                 if not d:
@@ -1126,13 +1128,13 @@ class FormDialog(FormFile, gtk.Dialog):
             image = gtk.Image()
             try:
                 base = self._config.get("settings", "form_logo_dir")
-                print "Logo path: %s" % os.path.join(base, self.logo_path)
+                print("Logo path: %s" % os.path.join(base, self.logo_path))
                 image.set_from_file(os.path.join(base, self.logo_path))
                 self.vbox.pack_start(image, 0,0,0)
                 image.show()
-            except Exception, e:
-                print "Unable to load or display logo %s: %s" % (self.logo_path,
-                                                                 e)
+            except Exception as e:
+                print("Unable to load or display logo %s: %s" % (self.logo_path,
+                                                                 e))
         self.vbox.pack_start(tlabel, 0,0,0)
 
         self.vbox.pack_start(self.build_routing_widget(), 0, 0, 0)
@@ -1165,7 +1167,7 @@ class FormDialog(FormFile, gtk.Dialog):
                 f.entry.widget.set_property("editable", False)
             elif f.id == "_auto_position":
                 if not f.entry.widget.get_text():
-                    import mainapp # Dirty hack
+                    from . import mainapp # Dirty hack
                     pos = mainapp.get_mainapp().get_position()
                     f.entry.widget.set_text(pos.coordinates())
 
@@ -1204,7 +1206,7 @@ class FormDialog(FormFile, gtk.Dialog):
         gtk.Dialog.__init__(self, buttons=(), parent=parent)
         FormFile.__init__(self, filename)
 
-        import mainapp
+        from . import mainapp
         self._config = mainapp.get_mainapp().config
 
         self.process_fields(self.doc)
@@ -1213,14 +1215,14 @@ class FormDialog(FormFile, gtk.Dialog):
         try:
             x = self._config.getint("state", "form_%s_x" % self.id)
             y = self._config.getint("state", "form_%s_y" % self.id)
-        except Exception, e:
-            print "Unable to get form_%s_*: %s" % (self.id, e)
+        except Exception as e:
+            print("Unable to get form_%s_*: %s" % (self.id, e))
             x = 300
             y = 500
 
         self.set_default_size(x, y)
 
-        print "Form ID: %s" % self.id
+        print("Form ID: %s" % self.id)
 
     def update_dst(self):
         dst = self._dstbox.get_text()
@@ -1253,4 +1255,4 @@ if __name__ == "__main__":
     except:
         pass
 
-    print form.get_text()
+    print(form.get_text())

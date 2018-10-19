@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 #
 # Copyright 2008 Dan Smith <dsmith@danplanet.com>
 # Updated 2018 Jonathan Kelley <jonkelley@gmail.com>
@@ -23,10 +25,10 @@ import glob
 import tempfile
 import shutil
 
-from miscwidgets import make_choice
-from formgui import FormDialog,FormFile,xml_escape,xml_unescape
-import formgui
-import mainapp
+from .miscwidgets import make_choice
+from .formgui import FormDialog,FormFile,xml_escape,xml_unescape
+from . import formgui
+from . import mainapp
 from d_rats import platform
 
 class FormElementEditor(gtk.Dialog):
@@ -78,9 +80,9 @@ class FormElementEditor(gtk.Dialog):
     def type_changed(self, box, data=None):
         sel = box.get_active_text()
 
-        print "Selected: %s" % sel
+        print(("Selected: %s" % sel))
 
-        for t,w in self.vals.items():
+        for t,w in list(self.vals.items()):
             if t == sel:
                 w.show()
             else:
@@ -108,7 +110,7 @@ class FormElementEditor(gtk.Dialog):
             "label"     : self.make_null_editor("label"),
             }
 
-        self.type_sel = make_choice(self.vals.keys(), False, "text")
+        self.type_sel = make_choice(list(self.vals.keys()), False, "text")
         self.type_sel.connect("changed", self.type_changed, None)
         self.type_sel.show()
         self.vals["text"].show()
@@ -119,7 +121,7 @@ class FormElementEditor(gtk.Dialog):
 
         self.vbox.pack_start(self.ts_frame, 0,0,0)
 
-        for t,w in self.vals.items():
+        for t,w in list(self.vals.items()):
             self.vbox.pack_start(w, 1,1,1)
 
     def get_initial_value(self):
@@ -186,7 +188,7 @@ class FormElementEditor(gtk.Dialog):
         return self.type_sel.get_active_text()
 
     def set_type(self, type):
-        self.type_sel.set_active(self.vals.keys().index(type))
+        self.type_sel.set_active(list(self.vals.keys()).index(type))
 
 class FormBuilderGUI(gtk.Dialog):
 
@@ -221,9 +223,9 @@ class FormBuilderGUI(gtk.Dialog):
 
         iv = d.get_initial_value()
 
-        print "Type: %s" % d.get_type()
-        print "Initial: %s" % iv
-        print "Opts: %s" % d.get_options()
+        print(("Type: %s" % d.get_type()))
+        print(("Initial: %s" % iv))
+        print(("Opts: %s" % d.get_options()))
 
         iter = self.store.append()
         self.store.set(iter,
@@ -327,13 +329,13 @@ class FormBuilderGUI(gtk.Dialog):
 
         if val:
             val = xml_escape(val)
-        print "\n\nField type: %s" % type
+        print(("\n\nField type: %s" % type))
         cap_xml = "<caption>%s</caption>" % cap
         if type not in ["choice", "multiselect"] and val:
             ent_xml = "<entry type='%s'>%s</entry>" % (type, val)
         elif type == "choice":
             try:
-                print "Opts: %s" % opts
+                print(("Opts: %s" % opts))
                 l = eval(opts)
 
                 ent_xml = "<entry type='%s'>" % type
@@ -346,8 +348,8 @@ class FormBuilderGUI(gtk.Dialog):
                     ent_xml += "<choice%s>%s</choice>" % (set, c)
 
                 ent_xml += "</entry>"
-            except Exception, e:
-                print "Exception parsing choice list: %s" % e
+            except Exception as e:
+                print(("Exception parsing choice list: %s" % e))
                 ent_xml = "<!-- Invalid list: %s -->" % opts
 
         elif type == "multiselect":
@@ -359,8 +361,8 @@ class FormBuilderGUI(gtk.Dialog):
                     setval = v and "y" or "n"
                     ent_xml += "<choice set='%s'>%s</choice>" % (setval, c)
                 ent_xml += "</entry>"
-            except Exception, e:
-                print "Exception parsing choice list: %s" % e
+            except Exception as e:
+                print(("Exception parsing choice list: %s" % e))
                 ent_xml = "<!-- Invalid list: %s -->" % opts
         else:
             ent_xml = "<entry type='%s'/>" % type
@@ -369,7 +371,7 @@ class FormBuilderGUI(gtk.Dialog):
                                                              cap_xml,
                                                              ent_xml)
 
-        print "Field XML: %s\n\n" % field_xml
+        print(("Field XML: %s\n\n" % field_xml))
 
         self.xml += field_xml
 
@@ -487,10 +489,10 @@ class FormBuilderGUI(gtk.Dialog):
 
     def load_field(self, widget):
         iter = self.store.append()
-        print "Type: %s" % widget.type
+        print(("Type: %s" % widget.type))
         if widget.type in ["choice", "multiselect"]:
             opts = widget.choices
-            print "Opts for %s: %s" % (widget.type, opts)
+            print(("Opts for %s: %s" % (widget.type, opts)))
         else:
             opts = None
         self.store.set(iter,
@@ -536,8 +538,8 @@ class FormManagerGUI(object):
             id = form.id
             title = form.title_text
             del form
-        except Exception, e:
-            import utils
+        except Exception as e:
+            from . import utils
             utils.log_exception()
             id = "broken"
             title = "Broken Form - Delete me"
@@ -545,7 +547,7 @@ class FormManagerGUI(object):
         iter = self.store.get_iter_first()
         while iter:
             form_id, = self.store.get(iter, self.col_id)
-            print "Checking %s against %s" % (form_id, id)
+            print(("Checking %s against %s" % (form_id, id)))
             if form_id == id:
                 raise Exception("Cannot add duplicate form `%s'" % form_id)
             iter = self.store.iter_next(iter)
@@ -614,7 +616,7 @@ class FormManagerGUI(object):
 
         try:
             form_id = self.add_form(fn)
-        except Exception, e:
+        except Exception as e:
             d = gtk.MessageDialog(buttons=gtk.BUTTONS_OK)
             d.set_markup("<big><b>Unable to add form</b></big>")
             d.format_secondary_text(str(e))

@@ -1,4 +1,5 @@
-#!/usr/bin/python
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 #
 # Copyright 2008 Dan Smith <dsmith@danplanet.com>
 # Updated 2018 Jonathan Kelley <jonkelley@gmail.com>
@@ -25,30 +26,30 @@ import copy
 import re
 import threading
 
-from commands import getstatusoutput as run
-from miscwidgets import make_choice, KeyedListWidget
-import miscwidgets
-import mainapp
-import platform
-import inputdialog
-import cap
-import wu
-import mapdisplay
-import gps
-from utils import NetFile, combo_select, get_icon
+from subprocess import getstatusoutput as run
+from .miscwidgets import make_choice, KeyedListWidget
+from . import miscwidgets
+from . import mainapp
+from . import platform
+from . import inputdialog
+from . import cap
+from . import wu
+from . import mapdisplay
+from . import gps
+from .utils import NetFile, combo_select, get_icon
 
 try:
     import feedparser
     HAVE_FEEDPARSER = True
-except ImportError, e:
-    print "FeedParser not available"
+except ImportError as e:
+    print("FeedParser not available")
     HAVE_FEEDPARSER = False
 
 try:
     from hashlib import md5
 except ImportError:
-    print "Installing hashlib replacement hack"
-    from utils import ExternalHash as md5
+    print("Installing hashlib replacement hack")
+    from .utils import ExternalHash as md5
 
 def do_dprs_calculator(initial=""):
     def ev_sym_changed(iconsel, oversel, icons):
@@ -66,7 +67,7 @@ def do_dprs_calculator(initial=""):
         deficn = gps.DPRS_TO_APRS.get(dsym, "/#")
         defovr = cur[2]
         if defovr not in overlays:
-            print "Overlay %s not in list" % defovr
+            print(("Overlay %s not in list" % defovr))
             defovr = " "
     else:
         deficn = "/#"
@@ -132,7 +133,7 @@ class QSTExec(QSTText):
         pform = platform.get_platform()
         s, o = pform.run_sync(self.text)
         if s:
-            print "Command failed with status %i" % s
+            print(("Command failed with status %i" % s))
 
         return o[:size_limit]
 
@@ -142,7 +143,7 @@ class QSTFile(QSTText):
         try:
             f = NetFile(self.text)
         except:
-            print "Unable to open file `%s'" % self.text
+            print(("Unable to open file `%s'" % self.text))
             return
 
         text = f.read()
@@ -202,21 +203,21 @@ class QSTThreadedText(QSTText):
         self.thread = None
 
         if not msg:
-            print "Skipping QST because no data was returned"
+            print("Skipping QST because no data was returned")
             return
 
         gobject.idle_add(self.emit, "qst-fired", "%s%s" % (self.prefix, msg))
 
     def fire(self):
         if self.thread:
-            print "QST thread still running, not starting another"
+            print("QST thread still running, not starting another")
             return
 
         # This is a race, but probably pretty safe :)
         self.thread = threading.Thread(target=self.threaded_fire)
         self.thread.setDaemon(True)
         self.thread.start()
-        print "Started a thread for QST data..."
+        print("Started a thread for QST data...")
 
 class QSTRSS(QSTThreadedText):
     def __init__(self, config, content):
@@ -230,7 +231,7 @@ class QSTRSS(QSTThreadedText):
         try:
             entry = rss.entries[-1]
         except IndexError:
-            print "RSS feed had no entries"
+            print("RSS feed had no entries")
             return None
 
         try:
@@ -269,7 +270,7 @@ class QSTCAP(QSTThreadedText):
         if self.last_date is None:
             self.determine_starting_item()
 
-        print "Last date is %s" % self.last_date
+        print(("Last date is %s" % self.last_date))
 
         cp = cap.CAPParserURL(self.text)
         newev = cp.events_effective_after(self.last_date)
@@ -279,13 +280,13 @@ class QSTCAP(QSTThreadedText):
         try:
             self.last_date = newev[-1].effective
         except IndexError:
-            print "CAP feed had no entries"
+            print("CAP feed had no entries")
             return None
 
         str = ""
 
         for i in newev:
-            print "Sending CAP that is effective %s" % i.effective
+            print(("Sending CAP that is effective %s" % i.effective))
             str += "\r\n-----\r\n%s\r\n-----\r\n" % i.report()
 
         return str
@@ -298,8 +299,8 @@ class QSTWeatherWU(QSTThreadedText):
 
         try:
             t, s = self.text.split("/", 2)
-        except Exception, e:
-            print "Unable to split weather QST %s: %s" % (self.text, e)
+        except Exception as e:
+            print(("Unable to split weather QST %s: %s" % (self.text, e)))
             return None
 
         try:
@@ -308,20 +309,20 @@ class QSTWeatherWU(QSTThreadedText):
             elif t == _("Personal"):
                 base = self.pbase
             else:
-                print "Unknown QSTWeatherWU type %s" % t
+                print(("Unknown QSTWeatherWU type %s" % t))
                 return None
 
-            print "Getting %s%s for %s/%s" % ( base, self.text, t, s)
+            print(("Getting %s%s for %s/%s" % ( base, self.text, t, s)))
             obs.from_uri(base + s)
-        except Exception, e:
-            print "Error getting weather: %s" % e
+        except Exception as e:
+            print(("Error getting weather: %s" % e))
             return None
 
         return str(obs)
 
 class QSTStation(QSTGPSA):
     def get_source(self, name):
-        import mainapp
+        from . import mainapp
         app = mainapp.get_mainapp() # Hack for this difficult case
         sources = app.map.get_map_sources()
 
@@ -342,18 +343,18 @@ class QSTStation(QSTGPSA):
 
         try:
             (group, station) = self.text.split("::", 1)
-        except Exception, e:
-            print "QSTStation Error: %s" % e
+        except Exception as e:
+            print(("QSTStation Error: %s" % e))
             return None
 
         source = self.get_source(group)
         if source is None:
-            print "Unknown group %s" % group
+            print(("Unknown group %s" % group))
             return
 
         point = self.get_station(source, station)
         if point is None:
-            print "Unknown station %s in group %s" % (station, group)
+            print(("Unknown station %s in group %s" % (station, group)))
             return
 
         self.fix = gps.GPSPosition(point.get_latitude(),
@@ -362,7 +363,7 @@ class QSTStation(QSTGPSA):
         self.fix.set_station(self.fix.station,
                              "VIA %s" % self.config.get("user", "callsign"))
 
-        print "Sending position for %s/%s: %s" % (group, station, self.fix)
+        print(("Sending position for %s/%s: %s" % (group, station, self.fix)))
 
         return QSTGPSA.do_qst(self)
 
@@ -641,7 +642,7 @@ class QSTWUEditWidget(QSTEditWidget):
         try:
             t, s = content.split("/", 2)
         except:
-            print "Unable to split `%s'" % content
+            print(("Unable to split `%s'" % content))
             t = _("Airport")
             s = _("UNKNOWN")
 
@@ -663,7 +664,7 @@ class QSTEditDialog(gtk.Dialog):
     def _make_controls(self):
         hbox = gtk.HBox(False, 2)
 
-        self._type = make_choice(self._types.keys(), False, default=_("Text"))
+        self._type = make_choice(list(self._types.keys()), False, default=_("Text"))
         self._type.set_size_request(100, -1)
         self._type.show()
         self._type.connect("changed", self._select_type)
@@ -704,7 +705,7 @@ class QSTEditDialog(gtk.Dialog):
 
         self.vbox.pack_start(self._make_controls(), 0, 0, 0)
 
-        for i in self._types.values():
+        for i in list(self._types.values()):
             i.set_size_request(-1, 80)
             self.vbox.pack_start(i, 0, 0, 0)
 

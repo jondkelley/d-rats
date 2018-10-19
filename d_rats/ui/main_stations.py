@@ -1,4 +1,5 @@
-#!/usr/bin/python
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 #
 # Copyright 2009 Dan Smith <dsmith@danplanet.com>
 #
@@ -46,9 +47,9 @@ def prompt_for_account(config):
 
     accounts["Other"] = ["", "", "", "", "", "110"]
     accounts["WL2K"] = ["@WL2K", wl2k_call, "", "", "", "0"]
-    default = accounts.keys()[0]
+    default = list(accounts.keys())[0]
 
-    account = miscwidgets.make_choice(accounts.keys(), False, default)
+    account = miscwidgets.make_choice(list(accounts.keys()), False, default)
     host = gtk.Entry()
     user = gtk.Entry()
     pasw = gtk.Entry()
@@ -140,7 +141,7 @@ class StationsList(MainWindowTab):
                                                              _("says"),
                                                              msg))
                     self.emit("event", event)
-                print "Result: %s" % str(result)
+                print(("Result: %s" % str(result)))
             job.set_station(station)
             job.connect("state-change", log_result)
 
@@ -152,14 +153,14 @@ class StationsList(MainWindowTab):
             self._update_station_count()
         elif action == "pingall":
             stationlist = self.emit("get-station-list")
-            for port in stationlist.keys():
-                print "Doing CQCQCQ ping on port %s" % port
+            for port in list(stationlist.keys()):
+                print(("Doing CQCQCQ ping on port %s" % port))
                 self.emit("ping-station", "CQCQCQ", port)
         elif action == "reqposall":
             job = rpc.RPCPositionReport("CQCQCQ", "Position Request")
             job.set_station(".")
             stationlist = self.emit("get-station-list")
-            for port in stationlist.keys():
+            for port in list(stationlist.keys()):
                 self.emit("submit-rpc-job", job, port)
         elif action == "sendfile":
             fn = self._config.platform.gui_open_file()
@@ -182,8 +183,8 @@ class StationsList(MainWindowTab):
                         job.get_dest(),
                         result.get("version", "Unknown"),
                         result.get("os", "Unknown"))
-                    print "Station %s reports version info: %s" % (\
-                        job.get_dest(), result)
+                    print(("Station %s reports version info: %s" % (\
+                        job.get_dest(), result)))
 
                 else:
                     msg = "No version response from %s" % job.get_dest()
@@ -295,7 +296,7 @@ class StationsList(MainWindowTab):
         try:
             self.__view.set_tooltip_column(2)
         except AttributeError:
-            print "This version of GTK is old; disabling station tooltips"
+            print("This version of GTK is old; disabling station tooltips")
 
         self.__view.connect("button_press_event", self._mouse_cb)
 
@@ -363,7 +364,7 @@ class StationsList(MainWindowTab):
         prev_status = self._config.get("state", "status_state")
         if not utils.combo_select(status, prev_status):
             utils.combo_select(status,
-                               station_status.get_status_msgs().values()[0])
+                               list(station_status.get_status_msgs().values())[0])
         msg.set_text(self._config.get("state", "status_msg"))
         set_status(status)
         set_smsg(msg)

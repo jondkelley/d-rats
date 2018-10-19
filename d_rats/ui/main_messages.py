@@ -1,4 +1,5 @@
-#!/usr/bin/python
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 #
 # Copyright 2009 Dan Smith <dsmith@danplanet.com>
 #
@@ -25,7 +26,7 @@ import gobject
 import gtk
 import pango
 
-from ConfigParser import ConfigParser,DuplicateSectionError
+from configparser import ConfigParser,DuplicateSectionError
 from glob import glob
 
 from d_rats.ui.main_common import MainWindowElement, MainWindowTab
@@ -53,7 +54,7 @@ class MessageFolderInfo(object):
     def __init__(self, folder_path):
         self._path = folder_path
 
-        if _FOLDER_CACHE.has_key(folder_path):
+        if folder_path in _FOLDER_CACHE:
             self._config = _FOLDER_CACHE[folder_path]
         else:
             self._config = ConfigParser()
@@ -165,7 +166,7 @@ class MessageFolderInfo(object):
         exists = os.path.exists(os.path.join(self._path, name))
         try:
             self._config.add_section(name)
-        except DuplicateSectionError, e:
+        except DuplicateSectionError as e:
             if exists:
                 raise e
 
@@ -178,7 +179,7 @@ class MessageFolderInfo(object):
 
     def rename(self, new_name):
         newpath = os.path.join(os.path.dirname(self._path), new_name)
-        print "Renaming %s -> %s" % (self._path, newpath)
+        print(("Renaming %s -> %s" % (self._path, newpath)))
         os.rename(self._path, newpath)
         self._path = newpath
 
@@ -207,7 +208,7 @@ class MessageFolders(MainWindowElement):
 
         try:
             return info.create_subfolder(os.path.basename(name))
-        except Exception, e:
+        except Exception as e:
             raise Exception("Intermediate folder of %s does not exist" % name)
 
     def create_folder(self, name):
@@ -251,7 +252,7 @@ class MessageFolders(MainWindowElement):
         for folder in BASE_FOLDERS:
             try:
                 info = self._create_folder(root, folder)
-                print info.subfolders()
+                print((info.subfolders()))
             except Exception:
                 pass
 
@@ -278,7 +279,7 @@ class MessageFolders(MainWindowElement):
             info = self.get_folder(self._get_folder_by_iter(store, iter))
             try:
                 info.delete_self()
-            except OSError, e:
+            except OSError as e:
                 display_error("Unable to delete folder: %s" % e)
                 return
             store.remove(iter)
@@ -298,7 +299,7 @@ class MessageFolders(MainWindowElement):
 
             try:
                 info.rename(new_text)
-            except Exception, e:
+            except Exception as e:
                 display_error("Unable to rename: %s" % e)
                 return
 
@@ -314,8 +315,8 @@ class MessageFolders(MainWindowElement):
     def _move_cursor(self, view, step, count):
         try:
             (store, iter) = view.get_selection().get_selected()
-        except Exception, e:
-            print "Unable to find selected: %s" % e
+        except Exception as e:
+            print(("Unable to find selected: %s" % e))
             return
 
         self.emit("user-selected-folder", self._get_folder_by_iter(store, iter))
@@ -385,8 +386,8 @@ class MessageFolders(MainWindowElement):
                                 
         for record in msgs:
             fn, subj, type, read, send, recp = record.split("\0")
-            print "Dragged %s from %s into %s" % (fn, src_folder, dst_folder)
-            print "  %s %s %s %s->%s" % (subj, type, read, send, recp)
+            print(("Dragged %s from %s into %s" % (fn, src_folder, dst_folder)))
+            print(("  %s %s %s %s->%s" % (subj, type, read, send, recp)))
 
             try:
                 dst.delete(os.path.basename(fn))
@@ -412,7 +413,7 @@ class MessageFolders(MainWindowElement):
         info = self.get_folder(self._get_folder_by_iter(store, iter))
         try:
             info.rename(new_text)
-        except Exception, e:
+        except Exception as e:
             display_error("Unable to rename: %s" % e)
             return
 
@@ -496,10 +497,10 @@ class MessageList(MainWindowElement):
             dlg.update_dst()
             msgrouting.msg_unlock(filename)
             if response in saveable_actions:
-                print "Saving to %s" % filename
+                print(("Saving to %s" % filename))
                 dlg.save_to(filename)
             else:
-                print "Not saving"
+                print("Not saving")
             dlg.destroy()
             self.refresh(filename)
             if cb:
@@ -526,17 +527,17 @@ class MessageList(MainWindowElement):
         def close_msg_cb(response, info):
             if self.current_info == info:
                 iter = self.iter_from_fn(path)
-                print "Updating iter %s" % iter
+                print(("Updating iter %s" % iter))
                 if iter:
                     self._update_message_info(iter)
             else:
-                print "Not current, not updating"
+                print("Not current, not updating")
 
         editable = "Outbox" in path or "Drafts" in path # Dirty hack
         self.open_msg(path, editable, close_msg_cb, self.current_info)
         self.current_info.set_msg_read(path, True)
         iter = self.iter_from_fn(path)
-        print "Updating iter %s" % iter
+        print(("Updating iter %s" % iter))
         if iter:
             self._update_message_info(iter)
 
@@ -733,7 +734,7 @@ class MessageList(MainWindowElement):
             # Same folder, or duplicate message id
             return path
 
-        print "Moving %s -> %s" % (path, newfn)
+        print(("Moving %s -> %s" % (path, newfn)))
         shutil.copy(path, newfn)
         info.delete(path)
 
@@ -776,7 +777,7 @@ class MessagesTab(MainWindowTab):
     
         if msgtype is None:
             parent = self._wtree.get_widget("mainwindow")
-            d = inputdialog.ChoiceDialog(forms.keys(),
+            d = inputdialog.ChoiceDialog(list(forms.keys()),
                                          title=_("Choose a form"),
                                          parent=parent)
             r = d.run()
@@ -837,7 +838,7 @@ class MessagesTab(MainWindowTab):
                 return
     
             if len(sel) > 1:
-                print "FIXME: Warn about multiple reply"
+                print("FIXME: Warn about multiple reply")
                 return
     
             fn = sel[0]
@@ -861,14 +862,14 @@ class MessagesTab(MainWindowTab):
                     nform.set_field_value(df, xf(oldval))
                 else:
                     nform.set_field_value(df, oldval)
-        except Exception, e:
+        except Exception as e:
             log_exception()
-            print "Failed to do reply: %s" % e
+            print(("Failed to do reply: %s" % e))
             return
 
         if ";" in oform.get_path_dst():
             rpath = ";".join(reversed(oform.get_path()[:-1]))
-            print "rpath: %s (%s)" % (rpath, oform.get_path())
+            print(("rpath: %s (%s)" % (rpath, oform.get_path())))
             nform.set_path_dst(rpath)
         else:
             nform.set_path_dst(oform.get_path_src())
@@ -883,7 +884,7 @@ class MessagesTab(MainWindowTab):
 
         def close_msg_cb(response, info):
             if self._messages.current_info == info:
-                print "Respone was %i (%i)" % (response, gtk.RESPONSE_CANCEL)
+                print(("Respone was %i (%i)" % (response, gtk.RESPONSE_CANCEL)))
                 if response in [gtk.RESPONSE_CANCEL, gtk.RESPONSE_CLOSE]:
                     info.delete(newfn)
                     self._folders.select_folder(current)
@@ -897,8 +898,8 @@ class MessagesTab(MainWindowTab):
         if fn:
             try:
                 os.remove(fn)
-            except Exception, e:
-                print "Unable to delete %s: %s" % (fn, e)
+            except Exception as e:
+                print(("Unable to delete %s: %s" % (fn, e)))
             self._messages.refresh()
         else:
             if self._messages.current_info.name() == _("Trash"):
@@ -914,7 +915,7 @@ class MessagesTab(MainWindowTab):
                 return
     
             if len(sel) > 1:
-                print "FIXME: Warn about multiple send"
+                print("FIXME: Warn about multiple send")
                 return
     
             fn = sel[0]
@@ -926,7 +927,7 @@ class MessagesTab(MainWindowTab):
 
         stations = []
         ports = self.emit("get-station-list")
-        for slist in ports.values():
+        for slist in list(ports.values()):
             stations += slist
 
         if recip in stations:
@@ -971,7 +972,7 @@ class MessagesTab(MainWindowTab):
             return
 
         if len(sel) > 1:
-            print "FIXME: Warn about multiple send"
+            print("FIXME: Warn about multiple send")
             return
         elif len(sel) == 0:
             return
@@ -1078,7 +1079,7 @@ class MessagesTab(MainWindowTab):
             icon = gtk.Image()
             icon.set_from_pixbuf(self._config.ship_img(i))
             icon.show()
-            if menus.has_key(i):
+            if i in menus:
                 item = gtk.MenuToolButton(icon, l)
                 item.set_menu(menus[i])
                 try:
@@ -1091,7 +1092,7 @@ class MessagesTab(MainWindowTab):
                 item = gtk.ToolButton(icon, l)
             item.show()
             item.connect("clicked", f)
-            if tips.has_key(l):
+            if l in tips:
                 try:
                     item.set_tooltip_text(tips[l])
                 except AttributeError:
@@ -1130,13 +1131,13 @@ class MessagesTab(MainWindowTab):
         if fn in files:
             sent = self._folders.get_folder(_("Sent"))
             newfn = sent.create_msg(os.path.basename(fn))
-            print "Moving %s -> %s" % (fn, newfn)
+            print(("Moving %s -> %s" % (fn, newfn)))
             shutil.copy(fn, newfn)
             outbox.delete(fn)
             self.refresh_if_folder(_("Outbox"))
             self.refresh_if_folder(_("Sent"))
         else:
-            print "Form %s sent but not in outbox" % os.path.basename(fn)
+            print(("Form %s sent but not in outbox" % os.path.basename(fn)))
 
     def get_shared_messages(self, for_station):
         """Return a list of (title, stamp, filename) forms destined

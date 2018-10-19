@@ -1,8 +1,9 @@
-#!/usr/bin/python
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 
 TIPS_USER = {
-    "latitude" : _("Your current latitude.  Use decimal degrees (DD.DDDDD)\nor D*M'S\".  Use a space for special characters").replace("*", u"\u00B0"),
-    "longitude" : _("Your current longitude.  Use decimal degrees (DD.DDDDD)\nor D*M'S\".  Use a space for special characters").replace("*", u"\u00B0"),
+    "latitude" : _("Your current latitude.  Use decimal degrees (DD.DDDDD)\nor D*M'S\".  Use a space for special characters").replace("*", "\\u00B0"),
+    "longitude" : _("Your current longitude.  Use decimal degrees (DD.DDDDD)\nor D*M'S\".  Use a space for special characters").replace("*", "\\u00B0"),
     "altitude" : _("Your current altitude"),
 }
 

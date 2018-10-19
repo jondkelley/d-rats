@@ -1,4 +1,5 @@
-#!/usr/bin/python
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 #
 # Copyright 2008 Dan Smith <dsmith@danplanet.com>
 # Updated 2018 Jonathan Kelley <jonkelley@gmail.com>
@@ -23,11 +24,11 @@ import os
 
 import gobject
 
-import formgui
-import emailgw
-import signals
-import msgrouting
-from utils import run_safe, run_gtk_locked
+from . import formgui
+from . import emailgw
+from . import signals
+from . import msgrouting
+from .utils import run_safe, run_gtk_locked
 
 from d_rats.sessions import base, file, form, sock
 
@@ -49,7 +50,7 @@ class SessionThread(object):
         self.thread.join()
 
     def worker(self, **args):
-        print "**** EMPTY SESSION THREAD ****"
+        print("**** EMPTY SESSION THREAD ****")
 
 class FileBaseThread(SessionThread):
     progress_key = "recv_size"
@@ -70,7 +71,7 @@ class FileBaseThread(SessionThread):
         else:
             retries = ""
 
-        if vals.has_key("start_time"):
+        if "start_time" in vals:
             elapsed = time.time() - vals["start_time"]
             kbytes = vals[self.progress_key]
             speed = " %2.2f B/s" % (kbytes / elapsed)
@@ -107,7 +108,7 @@ class FileBaseThread(SessionThread):
         else:
             units = "B"
 
-        if self.session.stats.has_key("start_time"):
+        if "start_time" in self.session.stats:
             start = self.session.stats["start_time"]
             exmsg = " (%i%s @ %2.2f B/s)" % (\
                 size, units,
@@ -158,7 +159,7 @@ class FormRecvThread(FileBaseThread):
         md = os.path.join(self.coord.config.form_store_dir(), _("Inbox"))
         newfn = time.strftime(os.path.join(md, "form_%m%d%Y_%H%M%S.xml"))
         if not msgrouting.msg_lock(newfn):
-            print "AIEE! Unable to lock incoming new message file!"
+            print("AIEE! Unable to lock incoming new message file!")
 
         fn = self.session.recv_file(newfn)
 
@@ -175,7 +176,7 @@ class FormRecvThread(FileBaseThread):
             self.coord.session_newform(self.session, fn)
         else:
             self.failed()
-            print "<--- Form transfer failed -->"
+            print("<--- Form transfer failed -->")
 
 class FormSendThread(FileBaseThread):
     OUTGOING = True
@@ -227,7 +228,7 @@ class SocketThread(SessionThread):
     def worker(self, data):
         (sock, timeout) = data
 
-        print "*** Socket thread alive (%i timeout)" % timeout
+        print(("*** Socket thread alive (%i timeout)" % timeout))
 
         sock.settimeout(timeout)
 
@@ -235,29 +236,29 @@ class SocketThread(SessionThread):
             t = time.time()
             try:
                 sd = self.socket_read(sock, 512, timeout)
-            except Exception, e:
-                print str(e)
+            except Exception as e:
+                print((str(e)))
                 break
-            print "Waited %f sec for socket" % (time.time() - t)
+            print(("Waited %f sec for socket" % (time.time() - t)))
 
             try:
                 rd = self.session.read(512)
-            except base.SessionClosedError, e:
-                print "Session closed"
+            except base.SessionClosedError as e:
+                print("Session closed")
                 self.enabled = False
                 break
 
             self.status()
 
             if sd:
-                print "Sending socket data (%i)" % len(sd)
+                print(("Sending socket data (%i)" % len(sd)))
                 self.session.write(sd)
 
             if rd:
-                print "Sending radio data (%i)" % len(rd)
+                print(("Sending radio data (%i)" % len(rd)))
                 sock.sendall(rd)
 
-        print "Closing session"
+        print("Closing session")
 
         self.session.close()
         try:
@@ -265,7 +266,7 @@ class SocketThread(SessionThread):
         except:
             pass
 
-        print "*** Socket thread exiting"
+        print("*** Socket thread exiting")
 
 
 
@@ -312,22 +313,22 @@ class SessionCoordinator(gobject.GObject):
 
         try:
             session = self.sm.sessions[id]
-        except Exception, e:
-            print "Session `%i' not found: %s" % (id, e)
+        except Exception as e:
+            print(("Session `%i' not found: %s" % (id, e)))
             return
 
-        if self.sthreads.has_key(id):
+        if id in self.sthreads:
             del self.sthreads[id]
         session.close(force)
 
     def create_socket_listener(self, sport, dport, dest):
-        if dport not in self.socket_listeners.keys():
-            print "Starting a listener for port %i->%s:%i" % (sport,
+        if dport not in list(self.socket_listeners.keys()):
+            print(("Starting a listener for port %i->%s:%i" % (sport,
                                                               dest,
-                                                              dport)
+                                                              dport)))
             self.socket_listeners[dport] = \
                 sock.SocketListener(self.sm, dest, sport, dport)
-            print "Started"
+            print("Started")
         else:
             raise Exception("Listener for %i already active" % dport)
 
@@ -365,8 +366,8 @@ class SessionCoordinator(gobject.GObject):
         try:
             foo, port = session.name.split(":", 2)
             port = int(port)
-        except Exception, e:
-            print "Invalid socket session name %s: %s" % (session.name, e)
+        except Exception as e:
+            print(("Invalid socket session name %s: %s" % (session.name, e)))
             session.close()
             return
 
@@ -386,7 +387,7 @@ class SessionCoordinator(gobject.GObject):
                         return
 
                 raise Exception("Port %i not configured" % port)
-            except Exception, e:
+            except Exception as e:
                 msg = _("Error starting socket session: %s") % e
                 self.emit("session-status-update", session._id, msg)
                 session.close()
@@ -400,7 +401,7 @@ class SessionCoordinator(gobject.GObject):
         if session._id <= 3:
             return # Skip control, chat, sniff, rpc
 
-        print "New session (%s) of type: %s" % (direction, session.__class__)
+        print(("New session (%s) of type: %s" % (direction, session.__class__)))
         self.emit("session-started", session._id, type)
 
         if isinstance(session, form.FormTransferSession):
@@ -410,7 +411,7 @@ class SessionCoordinator(gobject.GObject):
         elif isinstance(session, sock.SocketSession):
             self.new_socket(session, direction)
         else:
-            print "*** Unknown session type: %s" % session.__class__.__name__
+            print(("*** Unknown session type: %s" % session.__class__.__name__))
 
     def new_session(self, type, session, direction):
         gobject.idle_add(self._new_session, type, session, direction)
@@ -437,7 +438,7 @@ class SessionCoordinator(gobject.GObject):
             name = os.path.basename(filename)
 
         self.outgoing_files.insert(0, filename)
-        print "Outgoing files: %s" % self.outgoing_files
+        print(("Outgoing files: %s" % self.outgoing_files))
 
         xfer = file.FileTransferSession
         bs = self.config.getint("settings", "ddt_block_size")
@@ -451,11 +452,11 @@ class SessionCoordinator(gobject.GObject):
                                      "outlimit"  : ol})
         t.setDaemon(True)
         t.start()
-        print "Started Session"
+        print("Started Session")
 
     def send_form(self, dest, filename, name="Form"):
         self.outgoing_forms.insert(0, filename)
-        print "Outgoing forms: %s" % self.outgoing_forms
+        print(("Outgoing forms: %s" % self.outgoing_forms))
 
         xfer = form.FormTransferSession
 
@@ -465,7 +466,7 @@ class SessionCoordinator(gobject.GObject):
                                      "cls"  : xfer})
         t.setDaemon(True)
         t.start()
-        print "Started form session"
+        print("Started form session")
 
     def __init__(self, config, sm):
         gobject.GObject.__init__(self)
@@ -481,6 +482,6 @@ class SessionCoordinator(gobject.GObject):
         self.socket_listeners = {}
 
     def shutdown(self):
-        for dport, listener in self.socket_listeners.items():
-            print "Stopping TCP:%i" % dport
+        for dport, listener in list(self.socket_listeners.items()):
+            print(("Stopping TCP:%i" % dport))
             listener.stop()

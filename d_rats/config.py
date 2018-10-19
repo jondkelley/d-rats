@@ -1,4 +1,5 @@
-#!/usr/bin/python
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 #
 # Copyright 2008 Dan Smith <dsmith@danplanet.com>
 # Updated 2018 Jonathan Kelley <jonkelley@gmail.com>
@@ -19,17 +20,17 @@
 import gtk
 import gtk.glade
 import gobject
-import ConfigParser
+import configparser
 import os
 import random
 
-import utils
-import miscwidgets
-import inputdialog
-import platform
-import geocode_ui
-import config_tips
-import spell
+from . import utils
+from . import miscwidgets
+from . import inputdialog
+from . import platform
+from . import geocode_ui
+from . import config_tips
+from . import spell
 
 from d_rats.ui.main_common import display_error
 
@@ -270,7 +271,7 @@ def prompt_for_port(portspec=None, info=None, pname=None):
     tablist = [_("Serial"), _("Network"), _("TNC"), _("Dongle"), _("AGWPE")]
 
     def chg_type(tsel, tabs, desc):
-        print "Changed to %s" % tsel.get_active_text()
+        print(("Changed to %s" % tsel.get_active_text()))
         tabs.set_current_page(tsel.get_active())
 
         desc.set_markup("<span fgcolor='blue'>%s</span>" % \
@@ -338,7 +339,7 @@ def disable_by_combo(combo, map):
     #   "value2" : [el3, el4],
     # }
     def set_disables(combo, map):
-        for i in map.values():
+        for i in list(map.values()):
             for j in i:
                 j.set_sensitive(False)
         for i in map[combo.get_active_text()]:
@@ -393,11 +394,11 @@ class DratsConfigWidget(gtk.HBox):
         try:
             self.value = DEFAULTS[self.vsec][self.vname]
         except KeyError:
-            print "DEFAULTS has no %s/%s" % (self.vsec, self.vname)
+            print(("DEFAULTS has no %s/%s" % (self.vsec, self.vname)))
             self.value = ""
 
         if not self._widget:
-            print "AAACK: No _widget in revert"
+            print("AAACK: No _widget in revert")
             return
 
         if isinstance(self._widget, gtk.Entry):
@@ -409,7 +410,7 @@ class DratsConfigWidget(gtk.HBox):
         elif isinstance(self._widget, miscwidgets.FilenameBox):
             self._widget.set_filename(self.value)
         else:
-            print "AAACK: I don't know how to do a %s" % self._widget.__class__
+            print(("AAACK: I don't know how to do a %s" % self._widget.__class__))
 
     def save(self):
         #print "Saving %s/%s: %s" % (self.vsec, self.vname, self.value)
@@ -500,15 +501,15 @@ class DratsConfigWidget(gtk.HBox):
         def changed(entry, confwidget):
             try:
                 confwidget.value = "%3.6f" % entry.value()
-            except Exception, e:
-                print "Invalid Coords: %s" % e
+            except Exception as e:
+                print(("Invalid Coords: %s" % e))
                 confwidget.value = "0"
 
         w = miscwidgets.LatLonEntry()
         w.connect("changed", changed, self)
-        print "Setting LatLon value: %s" % self.value
+        print(("Setting LatLon value: %s" % self.value))
         w.set_text(self.value)
-        print "LatLon text: %s" % w.get_text()
+        print(("LatLon text: %s" % w.get_text()))
         w.show()
 
         # Dirty ugly hack!
@@ -567,7 +568,7 @@ class DratsConfigWidget(gtk.HBox):
             self.value = box.get_filename()
 
         def test_sound(button):
-            print "Testing playback of %s" % self.value
+            print(("Testing playback of %s" % self.value))
             p = platform.get_platform()
             p.play_sound(self.value)
 
@@ -591,7 +592,7 @@ class DratsListConfigWidget(DratsConfigWidget):
     def __init__(self, config, section):
         try:
             DratsConfigWidget.__init__(self, config, section, None)
-        except ConfigParser.NoOptionError:
+        except configparser.NoOptionError:
             pass
 
     def convert_types(self, coltypes, values):
@@ -609,8 +610,8 @@ class DratsListConfigWidget(DratsConfigWidget):
                     value = float(value)
                 elif gtype == gobject.TYPE_BOOLEAN:
                     value = eval(value)
-            except ValueError, e:
-                print "Failed to convert %s for %s: %s" % (value, label, e)
+            except ValueError as e:
+                print(("Failed to convert %s for %s: %s" % (value, label, e)))
                 return []
 
             i += 1
@@ -644,8 +645,8 @@ class DratsListConfigWidget(DratsConfigWidget):
                 else:
                     key = vals[0]
                 w.set_item(key, *tuple(vals))
-            except Exception, e:
-                print "Failed to set item '%s': %s" % (str(vals), e)
+            except Exception as e:
+                print(("Failed to set item '%s': %s" % (str(vals), e)))
 
         w.connect("item-set", item_set)
         w.show()
@@ -667,7 +668,7 @@ class DratsListConfigWidget(DratsConfigWidget):
             vals = [str(x) for x in vals]
             value = ",".join(vals[1:])
             label = "%s_%i" % (self.vsec, count)
-            print "Setting %s: %s" % (label, value)
+            print(("Setting %s: %s" % (label, value)))
             self.config.set(self.vsec, label, value)
             count += 1
 
@@ -686,7 +687,7 @@ class DratsPanel(gtk.Table):
     def mv(self, title, *args):
         if self.row+1 == self.rows:
             self.rows += 1
-            print "Resizing box to %i" % self.rows
+            print(("Resizing box to %i" % self.rows))
             self.resize(self.rows, 2)
 
         hbox = gtk.HBox(False, 2)
@@ -865,7 +866,7 @@ class DratsGPSPanel(DratsPanel):
         self.mv(_("Freshen map after"), val, gtk.Label(_("hours")))
 
         def gps_comment_from_dprs(button, val):
-            import qst
+            from . import qst
             dprs = qst.do_dprs_calculator(config.get("settings",
                                                      "default_gps_comment"))
             if dprs is not None:
@@ -996,7 +997,7 @@ class DratsRadioPanel(DratsPanel):
 
     def but_mod(self, button, lw):
         values = lw.get_item(lw.get_selected())
-        print "Values: %s" % str(values)
+        print(("Values: %s" % str(values)))
         name, port, info = prompt_for_port(values[2], values[3], values[6])
         if name:
             lw.set_item(values[6], values[1], port, info, values[4], values[5], values[6])
@@ -1202,7 +1203,7 @@ class DratsTCPPanel(DratsPanel):
                     if not s:
                         raise ValueError("empty")
                     ret[n] = t(s)
-                except ValueError, e:
+                except ValueError as e:
                     ed = gtk.MessageDialog(buttons=gtk.BUTTONS_OK)
                     ed.set_property("text",
                                     _("Invalid value for") + " %s: %s" % (n, e))
@@ -1333,7 +1334,7 @@ class DratsInEmailPanel(DratsPanel):
     def prompt_for_acct(self, fields):
         dlg = inputdialog.FieldDialog()
         for n, t, d in fields:
-            if n in self.choices.keys():
+            if n in list(self.choices.keys()):
                 w = miscwidgets.make_choice(self.choices[n], False, d)
             elif n == _("Password"):
                 w = gtk.Entry()
@@ -1354,7 +1355,7 @@ class DratsInEmailPanel(DratsPanel):
             done = True
             for n, t, d in fields:
                 try:
-                    if n in self.choices.keys():
+                    if n in list(self.choices.keys()):
                         v = dlg.get_field(n).get_active_text()
                     elif t == bool:
                         v = dlg.get_field(n).get_active()
@@ -1363,7 +1364,7 @@ class DratsInEmailPanel(DratsPanel):
                         if not v:
                             raise ValueError("empty")
                     ret[n] = t(v)
-                except ValueError, e:
+                except ValueError as e:
                     ed = gtk.MessageDialog(buttons=gtk.BUTTONS_OK)
                     ed.set_property("text",
                                     _("Invalid value for") + " %s: %s" % (n, e))
@@ -1434,11 +1435,11 @@ class DratsInEmailPanel(DratsPanel):
             if len(val.split(",")) < 7:
                 val += ",Form"
                 config.set(section, opt, val)
-                print "7-8 Converted %s/%s" % (section, opt)
+                print(("7-8 Converted %s/%s" % (section, opt)))
             if len(val.split(",")) < 8:
                 val += ",True"
                 config.set(section, opt, val)
-                print "8-9 Converted %s/%s" % (section, opt)
+                print(("8-9 Converted %s/%s" % (section, opt)))
 
     def __init__(self, config):
         DratsPanel.__init__(self, config)
@@ -1502,7 +1503,7 @@ class DratsEmailAccessPanel(DratsPanel):
     def prompt_for_entry(self, fields):
         dlg = inputdialog.FieldDialog()
         for n, t, d in fields:
-            if n in self.choices.keys():
+            if n in list(self.choices.keys()):
                 w = miscwidgets.make_choice(self.choices[n], False, d)
             else:
                 w = gtk.Entry()
@@ -1516,7 +1517,7 @@ class DratsEmailAccessPanel(DratsPanel):
             done = True
             for n, t, d in fields:
                 try:
-                    if n in self.choices.keys():
+                    if n in list(self.choices.keys()):
                         v = dlg.get_field(n).get_active_text()
                     else:
                         v = dlg.get_field(n).get_text()
@@ -1527,7 +1528,7 @@ class DratsEmailAccessPanel(DratsPanel):
                         else:
                             v = v.upper()
                     ret[n] = t(v)
-                except ValueError, e:
+                except ValueError as e:
                     ed = gtk.MessageDialog(buttons=gtk.BUTTONS_OK)
                     ed.set_property("text",
                                     _("Invalid value for") + "%s: %s" % (n, e))
@@ -1611,11 +1612,11 @@ class DratsConfigUI(gtk.Dialog):
         try:
             (store, iter) = view.get_selection().get_selected()
             selected, = store.get(iter, 0)
-        except Exception, e:
-            print "Unable to find selected: %s" % e
+        except Exception as e:
+            print(("Unable to find selected: %s" % e))
             return None
 
-        for v in self.panels.values():
+        for v in list(self.panels.values()):
             v.hide()
         self.panels[selected].show()
 
@@ -1623,11 +1624,11 @@ class DratsConfigUI(gtk.Dialog):
         try:
             (store, iter) = view.get_selection().get_selected()
             selected, = store.get(iter, 0)
-        except Exception, e:
-            print "Unable to find selected: %s" % e
+        except Exception as e:
+            print(("Unable to find selected: %s" % e))
             return None
 
-        for v in self.panels.values():
+        for v in list(self.panels.values()):
             v.hide()
         self.panels[selected].show()
 
@@ -1705,22 +1706,22 @@ class DratsConfigUI(gtk.Dialog):
         self.build_ui()
         self.set_default_size(600, 400)
 
-class DratsConfig(ConfigParser.ConfigParser):
+class DratsConfig(configparser.ConfigParser):
     def set_defaults(self):
-        for sec, opts in DEFAULTS.items():
+        for sec, opts in list(DEFAULTS.items()):
             if not self.has_section(sec):
                 self.add_section(sec)
 
-            for opt, value in opts.items():
+            for opt, value in list(opts.items()):
                 if not self.has_option(sec, opt):
                     self.set(sec, opt, value)
 
     def __init__(self, mainapp, safe=False):
-        ConfigParser.ConfigParser.__init__(self)
+        configparser.ConfigParser.__init__(self)
 
         self.platform = platform.get_platform()
         self.filename = self.platform.config_file("d-rats.config")
-        print "FILE: %s" % self.filename
+        print(("FILE: %s" % self.filename))
         self.read(self.filename)
         self.widgets = []
 
@@ -1730,7 +1731,7 @@ class DratsConfig(ConfigParser.ConfigParser):
             default_dir = os.path.join(platform.get_platform().default_dir(),
                                        "D-RATS Shared")
             if not os.path.exists(default_dir):
-                print "Creating downlaod directory: %s" % default_dir
+                print(("Creating downlaod directory: %s" % default_dir))
                 os.mkdir(default_dir)
                 self.set("prefs", "download_dir", default_dir)
 
@@ -1751,13 +1752,13 @@ class DratsConfig(ConfigParser.ConfigParser):
 
     def getboolean(self, sec, key):
         try:
-            return ConfigParser.ConfigParser.getboolean(self, sec, key)
+            return configparser.ConfigParser.getboolean(self, sec, key)
         except:
-            print "Failed to get boolean: %s/%s" % (sec, key)
+            print(("Failed to get boolean: %s/%s" % (sec, key)))
             return False
 
     def getint(self, sec, key):
-        return int(float(ConfigParser.ConfigParser.get(self, sec, key)))
+        return int(float(configparser.ConfigParser.get(self, sec, key)))
 
     def form_source_dir(self):
         d = os.path.join(self.platform.config_dir(), "Form_Templates")
@@ -1783,7 +1784,7 @@ class DratsConfig(ConfigParser.ConfigParser):
 if __name__ == "__main__":
     fn = "/home/dan/.d-rats/d-rats.config"
 
-    cf = ConfigParser.ConfigParser()
+    cf = configparser.ConfigParser()
     cf.read(fn)
     cf.widgets = []
 

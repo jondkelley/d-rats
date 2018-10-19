@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 #
 # Copyright 2009 Dan Smith <dsmith@danplanet.com>
 # Updated 2018 Jonathan Kelley <jonkelley@gmail.com>
@@ -37,12 +39,12 @@ except ImportError:
 
 import gobject
 
-import formgui
-import signals
-import emailgw
-import utils
-import wl2k
-import mainapp
+from . import formgui
+from . import signals
+from . import emailgw
+from . import utils
+from . import wl2k
+from . import mainapp
 import traceback
 
 CALL_TIMEOUT_RETRY = 300
@@ -66,7 +68,7 @@ def msg_lock(fn):
         success = True
     else:
         lf = file(__msg_lockfile(fn), "r")
-        print "------ LOCK OWNED BY -------\n%s------------\n" % lf.read()
+        print(("------ LOCK OWNED BY -------\n%s------------\n" % lf.read()))
         lf.close()
         success = False
     MSG_LOCK_LOCK.release()
@@ -92,13 +94,13 @@ def gratuitous_next_hop(route, path):
     route_nodes = route.split(";")
 
     if len(path_nodes) >= len(route_nodes):
-        print "Nothing left in the routes"
+        print("Nothing left in the routes")
         return None
 
     for i in range(0, len(path_nodes)):
         if path_nodes[i] != route_nodes[i]:
-            print "Path element %i (%s) does not match route %s" % \
-                (i, path_nodes[i], route_nodes[i])
+            print(("Path element %i (%s) does not match route %s" % \
+                (i, path_nodes[i], route_nodes[i])))
             return None
 
     return route_nodes[len(path_nodes)]
@@ -107,35 +109,35 @@ def is_sendable_dest(mycall, string):
 
     # Specifically for me
     if string == mycall:
-        print "for me"
+        print("for me")
         return False
 
     # Empty string
     if not string.strip():
-        print "empty: %s %s" % (string, string.strip())
+        print(("empty: %s %s" % (string, string.strip())))
         return False
 
     # Is an email address:
     if "@" in string:
-        print "is an Email"
+        print("is an Email")
         return True
 
     # Contains lowercase characters
     if string != string.upper():
-        print "lowercase"
+        print("lowercase")
         return False
 
     # Contains spaces
     if string != string.split()[0]:
-        print "spaces"
+        print("spaces")
         return False
 
     # Contains a gratuitous route and we're the last in line
     if ";" in string and string.split(";")[-1] == mycall:
-        print "End of grat"
+        print("End of grat")
         return False
 
-    print "default to call"
+    print("default to call")
 
     # Looks like it's a candidate to be routed
     return True
@@ -214,7 +216,7 @@ class MessageRouter(gobject.GObject):
 
     def __proxy_emit(self, signal):
         def handler(obj, *args):
-            print "Proxy emit %s: %s" % (signal, args)
+            print(("Proxy emit %s: %s" % (signal, args)))
             self._emit(signal, *args)
         return handler
 
@@ -251,8 +253,8 @@ class MessageRouter(gobject.GObject):
             try:
                 dest, gw, port = line.split()
                 routes[dest] = gw
-            except Exception, e:
-                print "Error parsing line '%s': %s" % (line, e)
+            except Exception as e:
+                print(("Error parsing line '%s': %s" % (line, e)))
 
         return routes
 
@@ -261,7 +263,7 @@ class MessageRouter(gobject.GObject):
         time.sleep(t)
 
     def _p(self, string):
-        print "[MR] %s" % string
+        print(("[MR] %s" % string))
         import sys
         sys.stdout.flush()
 
@@ -272,7 +274,7 @@ class MessageRouter(gobject.GObject):
         fl = glob(os.path.join(qd, "*.xml"))
         for f in fl:
             if not msg_lock(f):
-                print "Message %s is locked, skipping" % f
+                print(("Message %s is locked, skipping" % f))
                 continue
 
             form = formgui.FormFile(f)
@@ -282,7 +284,7 @@ class MessageRouter(gobject.GObject):
             if not call:
                 msg_unlock(f)
                 continue
-            elif not queue.has_key(call):
+            elif call not in queue:
                 queue[call] = [f]
             else:
                 queue[call].append(f)
@@ -296,12 +298,12 @@ class MessageRouter(gobject.GObject):
         self._emit("user-send-form", call, port, filename, "Foo")
 
     def _sent_recently(self, call):
-        if self.__sent_call.has_key(call):
+        if call in self.__sent_call:
             return (time.time() - self.__sent_call[call]) < CALL_TIMEOUT_RETRY
         return False
 
     def _port_free(self, port):
-        return not self.__sent_port.has_key(port)
+        return port not in self.__sent_port
 
     def _route_msg(self, src, dst, path, slist, routes):
         invalid = []
@@ -319,20 +321,20 @@ class MessageRouter(gobject.GObject):
             if ";" in dst:
                 # Gratuitous routing takes precedence
                 route = gratuitous_next_hop(dst, path)
-                print "Route for %s: %s (%s)" % (dst, route, path)
+                print(("Route for %s: %s (%s)" % (dst, route, path)))
                 break
             elif "@" in dst and dst not in invalid and \
                     not ":" in dst and \
                     emailgw.validate_incoming(self.__config, src, dst):
                 # Out via email
                 route = dst
-            elif slist.has_key(dst) and dst not in invalid:
+            elif dst in slist and dst not in invalid:
                 # Direct send
                 route = dst
-            elif routes.has_key(dst) and routes[dst] not in invalid:
+            elif dst in routes and routes[dst] not in invalid:
                 # Static route present
                 route = routes[dst]
-            elif routes.has_key("*") and routes["*"] not in invalid:
+            elif "*" in routes and routes["*"] not in invalid:
                 # Default route
                 route = routes["*"]
             elif dst.upper().startswith("WL2K:"):
@@ -346,15 +348,15 @@ class MessageRouter(gobject.GObject):
             if route.upper().startswith("WL2K:"):
                 break # WL2K is easy
             elif route != dst and route in path:
-                print "Route %s in path" % route
+                print(("Route %s in path" % route))
                 invalid.append(route)
                 route = None # Don't route to the same location twice
             elif self._is_station_failed(route):
-                print "Route %s is failed" % route
+                print(("Route %s is failed" % route))
                 invalid.append(route)
                 route = None # This one is not responding lately
             elif old(route) and self._station_pinged_out(route):
-                print "Route %s for %s is pinged out" % (route, dst)
+                print(("Route %s for %s is pinged out" % (route, dst)))
                 invalid.append(route)
                 route = None # This one has been pinged and isn't responding
             else:
@@ -432,7 +434,7 @@ class MessageRouter(gobject.GObject):
             self._p("Call %s is busy" % route)
             return False
 
-        print slist
+        print(slist)
         port = slist[route].get_port()
         if not self._port_free(port):
             self._p("I think port %s is busy" % port)
@@ -451,7 +453,7 @@ class MessageRouter(gobject.GObject):
             if status:
                 self._emit("form-sent", -1, msgfn)
             else:
-                print "Failed to send via WL2K: %s" % error
+                print(("Failed to send via WL2K: %s" % error))
 
         mt = wl2k.wl2k_auto_thread(mainapp.get_mainapp(), src, send_msgs=[msg])
         mt.connect("mail-thread-complete", complete)
@@ -494,11 +496,11 @@ class MessageRouter(gobject.GObject):
 
         routes = self._get_routes()
 
-        for port, stations in plist.items():
+        for port, stations in list(plist.items()):
             for station in stations:
                 slist[str(station)] = station
 
-        for dst, callq in queue.items():
+        for dst, callq in list(queue.items()):
             for msg in callq:
 
                 try:
@@ -514,17 +516,17 @@ class MessageRouter(gobject.GObject):
         while self.__enabled:
             if self.__config.getboolean("settings", "msg_forward") or \
                     self.__event.isSet():
-                print "Running routing loop"
+                print("Running routing loop")
                 queue = self._get_queue()
 
                 try:
                     self._run_one(queue)
-                except Exception, e:
+                except Exception as e:
                     utils.log_exception()
-                    print "Fail-safe unlocking messages in queue:"
-                    for msgs in queue.values():
+                    print("Fail-safe unlocking messages in queue:")
+                    for msgs in list(queue.values()):
                         for msg in msgs:
-                            print "Unlocking %s" % msg
+                            print(("Unlocking %s" % msg))
                             msg_unlock(msg)
 
                 self.__event.clear()
@@ -558,7 +560,7 @@ class MessageRouter(gobject.GObject):
 
     def _station_failed(self, call):
         self.__failed_stations[call] = self.__failed_stations.get(call, 0) + 1
-        print "Fail count for %s is %i" % (call, self.__failed_stations[call])
+        print(("Fail count for %s is %i" % (call, self.__failed_stations[call])))
 
     def _is_station_failed(self, call):
         return self.__failed_stations.get(call, 0) >= 3
@@ -580,7 +582,7 @@ class MessageRouter(gobject.GObject):
             msg_unlock(fn)
 
         call = self.__file_to_call.get(fn, None)
-        if call and self.__sent_call.has_key(call):
+        if call and call in self.__sent_call:
             # This callsign completed (or failed) a transfer
             if failed:
                 self._station_failed(call)
@@ -591,6 +593,6 @@ class MessageRouter(gobject.GObject):
             del self.__sent_call[call]
             del self.__file_to_call[fn]
 
-        if self.__sent_port.has_key(port):
+        if port in self.__sent_port:
             # This port is now open for another transfer
             del self.__sent_port[port]

@@ -66,10 +66,10 @@ This is the D-RATS map download utility.  It will attempt to fetch all of the re
         def byval(x, y):
             try:
                 return int(float(x.split(" ")[0]) - float(y.split(" ")[0]))
-            except Exception, e:
+            except Exception as e:
                 return 0
 
-        choices = sorted(ZOOMS.keys(), cmp=byval)
+        choices = sorted(list(ZOOMS.keys()), cmp=byval)
         c = miscwidgets.make_choice(choices, False, choices[2])
         c.show()
 
@@ -129,7 +129,7 @@ This is the D-RATS map download utility.  It will attempt to fetch all of the re
             if self.enabled:
                 self.download_zoom(tick, zoom + 1, *i)
 
-        print "Downloading %i:%i,%i" % (zoom, x, y)
+        print("Downloading %i:%i,%i" % (zoom, x, y))
         t = mapdisplay.MapTile(0, 0, zoom)
         t.x = x
         t.y = y
@@ -198,27 +198,27 @@ This is the D-RATS map download utility.  It will attempt to fetch all of the re
     def do_start(self, widget, data=None):
         vals = {}
 
-        for k,e in self.vals.items():
+        for k,e in list(self.vals.items()):
             try:
                 if "zoom" in k:
                     dia = e.get_active_text()
                     vals[k] = ZOOMS[dia]
                 else:
                     vals[k] = e.value()
-            except ValueError, e:
+            except ValueError as e:
                 self.show_field_error(self.val_keys[k])
                 return
 
-        print "Zoom is %i" % vals["zoom"]
+        print("Zoom is %i" % vals["zoom"])
 
         self.start_button.set_sensitive(False)
         self.stop_button.set_sensitive(True)
 
-        print "Starting"
+        print("Starting")
         self.thread = threading.Thread(target=self.download_thread, kwargs=vals)
         self.thread.setDaemon(True)
         self.thread.start()        
-        print "Started"
+        print("Started")
 
     def do_stop(self, widget, data=None):
         self.start_button.set_sensitive(True)
