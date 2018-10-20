@@ -29,7 +29,7 @@ Once you have homebrew, install gtk3
 
 ## Support
 
-Support? We don't need no stinking support. We had to hack this together with our own blood and tears.
+I am a starving artist. Paypal me at jonkelley@gmail.com and any amount is greatful.
 
 ## Authors
 
