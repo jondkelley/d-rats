@@ -20,7 +20,9 @@ import os
 from optparse import OptionParser
 
 import traceback
-import gtk
+import gi
+gi.require_version("Gtk", "3.0")
+from gi.repository import Gtk
 
 sys.path.insert(0, os.path.join("/usr/share", "d-rats"))
 from d_rats import utils, spell
@@ -35,8 +37,8 @@ def handle_exception(exctyp, value, tb):
     if exctyp is KeyboardInterrupt or IGNORE_ALL:
         return original_excepthook(exctyp, value, tb)
 
-    gtk.gdk.pointer_ungrab()
-    gtk.gdk.keyboard_ungrab()
+    Gtk.gdk.pointer_ungrab()
+    Gtk.gdk.keyboard_ungrab()
 
     _trace = traceback.format_exception(exctyp, value, tb)
     trace = os.linesep.join(_trace)
@@ -52,25 +54,25 @@ If you need to ignore all additional warnings for this session, click <b>Ignore 
 """
 
     def extra(dialog):
-        dialog.add_button(_("Debug Log"), gtk.RESPONSE_HELP);
-        dialog.add_button(_("Ignore"), gtk.RESPONSE_CLOSE);
+        dialog.add_button(_("Debug Log"), Gtk.RESPONSE_HELP);
+        dialog.add_button(_("Ignore"), Gtk.RESPONSE_CLOSE);
         dialog.add_button(_("Ignore All"), -1);
-        dialog.add_button(gtk.STOCK_QUIT, gtk.RESPONSE_CANCEL);
-        dialog.set_default_response(gtk.RESPONSE_CANCEL)
+        dialog.add_button(Gtk.STOCK_QUIT, Gtk.RESPONSE_CANCEL);
+        dialog.set_default_response(Gtk.RESPONSE_CANCEL)
 
     while True:
         r = utils.make_error_dialog(msg, trace,
-                                    gtk.BUTTONS_NONE,
-                                    gtk.MESSAGE_ERROR,
+                                    Gtk.BUTTONS_NONE,
+                                    Gtk.MESSAGE_ERROR,
                                     extra=extra)
-        if r == gtk.RESPONSE_CANCEL:
+        if r == Gtk.RESPONSE_CANCEL:
             sys.exit(1)
-        elif r == gtk.RESPONSE_CLOSE:
+        elif r == Gtk.RESPONSE_CLOSE:
             break
         elif r == -1:
             IGNORE_ALL=True
             break
-        elif r == gtk.RESPONSE_HELP:
+        elif r == Gtk.RESPONSE_HELP:
             p = platform.get_platform()
             p.open_text_file(p.config_file("debug.log"))
 
@@ -124,4 +126,3 @@ if __name__ == "__main__":
         uninstall_excepthook()
         libxml2.dumpMemory()
         sys.exit(rc)
-

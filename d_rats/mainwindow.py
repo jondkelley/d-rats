@@ -30,7 +30,7 @@ if __name__ == "__main__":
 import os
 import time
 
-import libxml2
+import lxml
 import gtk
 import gtk.glade
 import gobject
@@ -88,7 +88,7 @@ class MainWindow(MainWindowElement):
             verinfo = "GTK %s\nPyGTK %s\nLibXML using %.1f KB\n" % ( \
                 ".".join([str(x) for x in gtk.gtk_version]),
                 ".".join([str(x) for x in gtk.pygtk_version]),
-                libxml2.memoryUsed() / 1024.0)
+                lxml.memoryUsed() / 1024.0)
 
             d.set_name("D-RATS")
             d.set_version(DRATS_VERSION)
