@@ -15,18 +15,21 @@ This is hopefully the future home for D-RATS development. The system is being mo
 
 ## Installation instructions
 
-Use the Debian Linux standard packaging tools, or run, according to
-your system (from inside d-rats root source directory):
+I'm developing this on a Mac but plan to release on Linux and Windows.
 
-     $ cd libexec
-     $ make
-     $ make install
-     $ cd ..
-     $ python setup.py install --prefix=/usr/ --install-lib=/usr/lib/python2.7/dist-packages/
+### Mac Setup
+
+### GTK3
+
+You're going to need GTK3 support for this project, download homebrew `/usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"`
+
+Once you have homebrew, install gtk3
+
+    brew install pygobject3 --with-python@2 gtk+3
 
 ## Support
 
-Support? We don't need no stinking support.
+Support? We don't need no stinking support. We had to hack this together with our own blood and tears.
 
 ## Authors
 
