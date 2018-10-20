@@ -200,9 +200,9 @@ def get_icon(key):
         return None
 
 import io
-
-class NetFile(file):
-    def __init__(self, uri, mode="r", buffering=1):
+class NetFile(io.FileIO):
+    def __init__(self, name, mode='r+b', *args, **kwargs):
+        super(NetFile, self).__init__(uri, mode="r", buffering=1, *args, **kwargs)
         self.__fn = uri
         self.is_temp = False
 
