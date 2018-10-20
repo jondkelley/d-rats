@@ -24,6 +24,11 @@ import subprocess
 import subprocess
 import urllib.request, urllib.parse, urllib.error
 
+def import_gtk():
+    import gi
+    gi.require_version("Gtk", "3.0")
+    from gi.repository import Gtk
+
 def find_me():
     return sys.modules["d_rats.platform"].__file__
 
@@ -80,13 +85,14 @@ class Platform(object):
         return "."
 
     def gui_open_file(self, start_dir=None):
-        import gtk
+        Gtk = import_gtk()
 
-        dlg = gtk.FileChooserDialog("Select a file to open",
+
+        dlg = Gtk.FileChooserDialog("Select a file to open",
                                     None,
-                                    gtk.FILE_CHOOSER_ACTION_OPEN,
-                                    (gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL,
-                                     gtk.STOCK_OPEN, gtk.RESPONSE_OK))
+                                    Gtk.FILE_CHOOSER_ACTION_OPEN,
+                                    (Gtk.STOCK_CANCEL, Gtk.RESPONSE_CANCEL,
+                                     Gtk.STOCK_OPEN, Gtk.RESPONSE_OK))
         if start_dir and os.path.isdir(start_dir):
             dlg.set_current_folder(start_dir)
 
@@ -94,19 +100,19 @@ class Platform(object):
         fname = dlg.get_filename()
         dlg.destroy()
 
-        if res == gtk.RESPONSE_OK:
+        if res == Gtk.RESPONSE_OK:
             return fname
         else:
             return None
 
     def gui_save_file(self, start_dir=None, default_name=None):
-        import gtk
+        Gtk = import_gtk()
 
-        dlg = gtk.FileChooserDialog("Save file as",
+        dlg = Gtk.FileChooserDialog("Save file as",
                                     None,
-                                    gtk.FILE_CHOOSER_ACTION_SAVE,
-                                    (gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL,
-                                     gtk.STOCK_SAVE, gtk.RESPONSE_OK))
+                                    Gtk.FILE_CHOOSER_ACTION_SAVE,
+                                    (Gtk.STOCK_CANCEL, Gtk.RESPONSE_CANCEL,
+                                     Gtk.STOCK_SAVE, Gtk.RESPONSE_OK))
         if start_dir and os.path.isdir(start_dir):
             dlg.set_current_folder(start_dir)
 
@@ -117,19 +123,18 @@ class Platform(object):
         fname = dlg.get_filename()
         dlg.destroy()
 
-        if res == gtk.RESPONSE_OK:
+        if res == Gtk.RESPONSE_OK:
             return fname
         else:
             return None
 
     def gui_select_dir(self, start_dir=None):
-        import gtk
-
-        dlg = gtk.FileChooserDialog("Choose folder",
+        Gtk = import_gtk()
+        dlg = Gtk.FileChooserDialog("Choose folder",
                                     None,
-                                    gtk.FILE_CHOOSER_ACTION_SELECT_FOLDER,
-                                    (gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL,
-                                     gtk.STOCK_SAVE, gtk.RESPONSE_OK))
+                                    Gtk.FILE_CHOOSER_ACTION_SELECT_FOLDER,
+                                    (Gtk.STOCK_CANCEL, Gtk.RESPONSE_CANCEL,
+                                     Gtk.STOCK_SAVE, Gtk.RESPONSE_OK))
         if start_dir and os.path.isdir(start_dir):
             dlg.set_current_folder(start_dir)
 
@@ -137,7 +142,7 @@ class Platform(object):
         fname = dlg.get_filename()
         dlg.destroy()
 
-        if res == gtk.RESPONSE_OK and os.path.isdir(fname):
+        if res == Gtk.RESPONSE_OK and os.path.isdir(fname):
             return fname
         else:
             return None

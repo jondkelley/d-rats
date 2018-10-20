@@ -21,7 +21,10 @@ import os
 import shutil
 from glob import glob
 
-import gtk
+import gi
+gi.require_version("Gtk", "3.0")
+from gi.repository import Gtk
+
 import gobject
 
 from . import map_sources
@@ -42,7 +45,7 @@ class MapSourcesEditor(object):
             return
 
         r = e.run()
-        if r == gtk.RESPONSE_OK:
+        if r == Gtk.RESPONSE_OK:
             e.save()
             self.__store.append((t, e.get_source().get_name(), e))
         e.destroy()
@@ -64,15 +67,15 @@ class MapSourcesEditor(object):
         e.destroy()
 
     def _setup_view(self):
-        self.__store = gtk.ListStore(gobject.TYPE_STRING,
+        self.__store = Gtk.ListStore(gobject.TYPE_STRING,
                                      gobject.TYPE_STRING,
                                      gobject.TYPE_PYOBJECT)
         self.__view.set_model(self.__store)
 
-        c = gtk.TreeViewColumn(_("Type"), gtk.CellRendererText(), text=0)
+        c = Gtk.TreeViewColumn(_("Type"), Gtk.CellRendererText(), text=0)
         self.__view.append_column(c)
 
-        c = gtk.TreeViewColumn(_("Name"), gtk.CellRendererText(), text=1)
+        c = Gtk.TreeViewColumn(_("Name"), Gtk.CellRendererText(), text=1)
         self.__view.append_column(c)
 
     def _setup_typesel(self, wtree):
@@ -90,7 +93,7 @@ class MapSourcesEditor(object):
         if not os.path.exists(fn):
             print(fn)
             raise Exception("Unable to load UI file")
-        wtree = gtk.glade.XML(fn, "srcs_dialog", "D-RATS")
+        wtree = Gtk.glade.XML(fn, "srcs_dialog", "D-RATS")
 
         self.__config = config
         self.__dialog = wtree.get_widget("srcs_dialog")
@@ -133,7 +136,7 @@ class MapSourceEditor(object):
         if not os.path.exists(fn):
             print(fn)
             raise Exception("Unable to load UI file")
-        self._wtree = gtk.glade.XML(fn, "src_dialog", "D-RATS")
+        self._wtree = Gtk.glade.XML(fn, "src_dialog", "D-RATS")
 
         self.__dialog = self._wtree.get_widget("src_dialog")
         self._name = self._wtree.get_widget("src_name")
@@ -179,7 +182,7 @@ class StaticMapSourceEditor(MapSourceEditor):
 
         MapSourceEditor.__init__(self, config, source)
 
-        label = gtk.Label("Nothing to edit here")
+        label = Gtk.Label("Nothing to edit here")
         label.show()
 
         box = self._wtree.get_widget("src_vbox")
@@ -205,14 +208,14 @@ class RiverMapSourceEditor(MapSourceEditor):
 
         box = self._wtree.get_widget("src_vbox")
 
-        hbox = gtk.HBox(False, 2)
+        hbox = Gtk.HBox(False, 2)
         hbox.show()
 
-        label = gtk.Label(_("Sites (comma separated)"))
+        label = Gtk.Label(_("Sites (comma separated)"))
         label.show()
         hbox.pack_start(label, 0, 0, 0)
 
-        self.__sites = gtk.Entry()
+        self.__sites = Gtk.Entry()
         self.__sites.show()
         _sites = [str(x) for x in source.get_sites()]
         self.__sites.set_text(",".join(_sites))
@@ -252,14 +255,14 @@ class BuoyMapSourceEditor(MapSourceEditor):
 
         box = self._wtree.get_widget("src_vbox")
 
-        hbox = gtk.HBox(False, 2)
+        hbox = Gtk.HBox(False, 2)
         hbox.show()
 
-        label = gtk.Label(_("Buoys (comma separated)"))
+        label = Gtk.Label(_("Buoys (comma separated)"))
         label.show()
         hbox.pack_start(label, 0, 0, 0)
 
-        self.__sites = gtk.Entry()
+        self.__sites = Gtk.Entry()
         self.__sites.show()
         _sites = [str(x) for x in source.get_buoys()]
         self.__sites.set_text(",".join(_sites))

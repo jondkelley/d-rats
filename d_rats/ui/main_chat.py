@@ -22,7 +22,10 @@ import re
 from datetime import datetime
 
 import gobject
-import gtk
+import gi
+gi.require_version("Gtk", "3.0")
+from gi.repository import Gtk
+
 import pango
 
 from d_rats.ui.main_common import MainWindowElement, MainWindowTab
@@ -33,16 +36,16 @@ from d_rats import qst
 from d_rats import signals
 from d_rats import spell
 
-class LoggedTextBuffer(gtk.TextBuffer):
+class LoggedTextBuffer(Gtk.TextBuffer):
     def __init__(self, logfile):
-        gtk.TextBuffer.__init__(self)
+        Gtk.TextBuffer.__init__(self)
         self.__logfile = file(logfile, "a", 0)
 
     def get_logfile(self):
         return self.__logfile.name
 
     def insert_with_tags_by_name(self, iter, text, *attrs):
-        gtk.TextBuffer.insert_with_tags_by_name(self, iter, text, *attrs)
+        Gtk.TextBuffer.insert_with_tags_by_name(self, iter, text, *attrs)
         self.__logfile.write(text)
 
 class ChatQM(MainWindowElement):
@@ -62,7 +65,7 @@ class ChatQM(MainWindowElement):
         d = inputdialog.TextInputDialog(title=_("Add Quick Message"))
         d.label.set_text(_("Enter text for the new quick message:"))
         r = d.run()
-        if r == gtk.RESPONSE_OK:
+        if r == Gtk.RESPONSE_OK:
             key = time.strftime("%Y%m%d%H%M%S")
             store.append((d.text.get_text(), key))
             self._config.set("quick", key, d.text.get_text())
@@ -100,15 +103,15 @@ class ChatQM(MainWindowElement):
         qm_add, qm_rem, qm_list = self._getw("qm_add", "qm_remove",
                                              "qm_list")
 
-        store = gtk.ListStore(gobject.TYPE_STRING, gobject.TYPE_STRING)
+        store = Gtk.ListStore(gobject.TYPE_STRING, gobject.TYPE_STRING)
         store.connect("row-deleted", self._reorder_rows)
         qm_list.set_model(store)
         qm_list.set_headers_visible(False)
         qm_list.set_reorderable(True)
         qm_list.connect("row-activated", self._send_qm)
 
-        r = gtk.CellRendererText()
-        col = gtk.TreeViewColumn("", r, text=0)
+        r = Gtk.CellRendererText()
+        col = Gtk.TreeViewColumn("", r, text=0)
         qm_list.append_column(col)
 
         for key in sorted(self._config.options("quick")):
@@ -144,7 +147,7 @@ class ChatQST(MainWindowElement):
     def _add_qst(self, button, view):
         d = qst.QSTEditDialog(self._config,
                               "qst_%s" % time.strftime("%Y%m%d%H%M%S"))
-        if d.run() == gtk.RESPONSE_OK:
+        if d.run() == Gtk.RESPONSE_OK:
             d.save()
             self.reconfigure()
         d.destroy()
@@ -170,7 +173,7 @@ class ChatQST(MainWindowElement):
         ident, = model.get(iter, 0)
 
         d = qst.QSTEditDialog(self._config, ident)
-        if d.run() == gtk.RESPONSE_OK:
+        if d.run() == Gtk.RESPONSE_OK:
             d.save()
             self.reconfigure()
         d.destroy()
@@ -183,7 +186,7 @@ class ChatQST(MainWindowElement):
                                                           "qst_edit",
                                                           "qst_list")
 
-        self._store = gtk.ListStore(gobject.TYPE_STRING,
+        self._store = Gtk.ListStore(gobject.TYPE_STRING,
                                     gobject.TYPE_STRING,
                                     gobject.TYPE_STRING,
                                     gobject.TYPE_FLOAT,
@@ -208,21 +211,21 @@ class ChatQST(MainWindowElement):
 
             rend.set_property("text", s)
 
-        typ = gtk.TreeViewColumn("Type",
-                                 gtk.CellRendererText(), text=1)
-        frq = gtk.TreeViewColumn("Freq",
-                                 gtk.CellRendererText(), text=2)
+        typ = Gtk.TreeViewColumn("Type",
+                                 Gtk.CellRendererText(), text=1)
+        frq = Gtk.TreeViewColumn("Freq",
+                                 Gtk.CellRendererText(), text=2)
 
-        r = gtk.CellRendererProgress()
-        cnt = gtk.TreeViewColumn("Remaining", r, value=3)
+        r = Gtk.CellRendererProgress()
+        cnt = Gtk.TreeViewColumn("Remaining", r, value=3)
         cnt.set_cell_data_func(r, render_remaining)
 
-        msg = gtk.TreeViewColumn("Content",
-                                 gtk.CellRendererText(), text=4)
+        msg = Gtk.TreeViewColumn("Content",
+                                 Gtk.CellRendererText(), text=4)
 
-        r = gtk.CellRendererToggle()
+        r = Gtk.CellRendererToggle()
         r.connect("toggled", self._toggle_qst, self._store, 5, 0, 2)
-        enb = gtk.TreeViewColumn("On", r, active=5)
+        enb = Gtk.TreeViewColumn("On", r, active=5)
 
         qst_list.append_column(typ)
         qst_list.append_column(frq)
@@ -508,7 +511,7 @@ class ChatTab(MainWindowTab):
         if not text:
             return
 
-        if r == gtk.RESPONSE_OK:
+        if r == Gtk.RESPONSE_OK:
             self._build_filter(text)
             self._save_filters()
 
@@ -549,7 +552,7 @@ class ChatTab(MainWindowTab):
     
             if not text:
                 return
-            elif r != gtk.RESPONSE_OK:
+            elif r != Gtk.RESPONSE_OK:
                 return
 
             if text.startswith("#"):
@@ -573,7 +576,7 @@ class ChatTab(MainWindowTab):
     
             if not text:
                 return
-            elif r != gtk.RESPONSE_OK:
+            elif r != Gtk.RESPONSE_OK:
                 return
 
             if text.startswith("@"):
@@ -606,10 +609,10 @@ class ChatTab(MainWindowTab):
 
         c = 0
         for i, l, f in buttons:
-            icon = gtk.Image()
+            icon = Gtk.Image()
             icon.set_from_pixbuf(i)
             icon.show()
-            item = gtk.ToolButton(icon, l)
+            item = Gtk.ToolButton(icon, l)
             item.connect("clicked", f)
             try:
                 item.set_tooltip_text(l)
@@ -643,13 +646,13 @@ class ChatTab(MainWindowTab):
         vlog.connect("activate", self._view_log)
 
         send.connect("clicked", self._send_button, dest, entry)
-        send.set_flags(gtk.CAN_DEFAULT)
+        send.set_flags(Gtk.CAN_DEFAULT)
         send.connect("expose-event", lambda w, e: w.grab_default())
 
         if self._config.getboolean("prefs", "check_spelling"):
             spell.prepare_TextBuffer(entry.get_buffer())
 
-        entry.set_wrap_mode(gtk.WRAP_WORD)
+        entry.set_wrap_mode(Gtk.WRAP_WORD)
         entry.connect("key-press-event", self._enter_to_send, dest)
         entry.grab_focus()
 
@@ -682,19 +685,19 @@ class ChatTab(MainWindowTab):
 
         if not tags.lookup("incomingcolor"):
             for color in ["red", "blue", "green", "grey"]:
-                tag = gtk.TextTag(color)
+                tag = Gtk.TextTag(color)
                 tag.set_property("foreground", color)
                 tags.add(tag)
 
-            tag = gtk.TextTag("bold")
+            tag = Gtk.TextTag("bold")
             tag.set_property("weight", pango.WEIGHT_BOLD)
             tags.add(tag)
 
-            tag = gtk.TextTag("italic")
+            tag = Gtk.TextTag("italic")
             tag.set_property("style", pango.STYLE_ITALIC)
             tags.add(tag)
 
-            tag = gtk.TextTag("default")
+            tag = Gtk.TextTag("default")
             tag.set_property("indent", -40)
             tag.set_property("indent-set", True)
             tags.add(tag)
@@ -706,7 +709,7 @@ class ChatTab(MainWindowTab):
         for i in regular + reverse:
             tag = tags.lookup(i)
             if not tag:
-                tag = gtk.TextTag(i)
+                tag = Gtk.TextTag(i)
                 tags.add(tag)
 
             if i in regular:
@@ -729,22 +732,22 @@ class ChatTab(MainWindowTab):
         buffer = LoggedTextBuffer(fn)
         buffer.create_mark("end", buffer.get_end_iter(), False)
 
-        display = gtk.TextView(buffer)
-        display.set_wrap_mode(gtk.WRAP_WORD_CHAR)
+        display = Gtk.TextView(buffer)
+        display.set_wrap_mode(Gtk.WRAP_WORD_CHAR)
         display.set_editable(False)
         display.set_cursor_visible(False)
 
-        sw = gtk.ScrolledWindow()
-        sw.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
+        sw = Gtk.ScrolledWindow()
+        sw.set_policy(Gtk.POLICY_AUTOMATIC, Gtk.POLICY_AUTOMATIC)
         sw.add(display)
 
         display.show()
         sw.show()
 
         if text:
-            lab = gtk.Label(text)
+            lab = Gtk.Label(text)
         else:
-            lab = gtk.Label(_("Main"))
+            lab = Gtk.Label(_("Main"))
 
         lab.show()
 
@@ -793,7 +796,7 @@ class ChatTab(MainWindowTab):
         if model:
             model.clear()
         else:
-            model = gtk.ListStore(gobject.TYPE_STRING)
+            model = Gtk.ListStore(gobject.TYPE_STRING)
             dest.set_model(model)
         for port in ports:
             model.append((port,))

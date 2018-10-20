@@ -17,7 +17,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import gtk
+import gi
+gi.require_version("Gtk", "3.0")
+from gi.repository import Gtk
+
 import pygtk
 import gobject
 import time
@@ -56,7 +59,7 @@ def do_dprs_calculator(initial=""):
         oversel.set_sensitive(icons[iconsel.get_active()][1][0] == "\\")
 
     d = inputdialog.FieldDialog(title=_("DPRS message"))
-    msg = gtk.Entry(13)
+    msg = Gtk.Entry(13)
 
     overlays = [chr(x) for x in range(ord(" "), ord("_"))]
 
@@ -93,7 +96,7 @@ def do_dprs_calculator(initial=""):
     mstr = msg.get_text().upper()
     over = oversel.get_active_text()
     d.destroy()
-    if r != gtk.RESPONSE_OK:
+    if r != Gtk.RESPONSE_OK:
         return
 
     dicon = gps.APRS_TO_DPRS[aicon]
@@ -367,9 +370,9 @@ class QSTStation(QSTGPSA):
 
         return QSTGPSA.do_qst(self)
 
-class QSTEditWidget(gtk.VBox):
+class QSTEditWidget(Gtk.VBox):
     def __init__(self, *a, **k):
-        gtk.VBox.__init__(self, *a, **k)
+        Gtk.VBox.__init__(self, *a, **k)
 
         self._id = None
 
@@ -394,13 +397,13 @@ class QSTTextEditWidget(QSTEditWidget):
     def __init__(self):
         QSTEditWidget.__init__(self, False, 2)
 
-        lab = gtk.Label(self.label_text)
+        lab = Gtk.Label(self.label_text)
         lab.show()
         self.pack_start(lab, 0, 0, 0)
 
-        self.__tb = gtk.TextBuffer()
+        self.__tb = Gtk.TextBuffer()
 
-        ta = gtk.TextView(self.__tb)
+        ta = Gtk.TextView(self.__tb)
         ta.show()
 
         self.pack_start(ta, 1, 1, 1)
@@ -427,7 +430,7 @@ class QSTFileEditWidget(QSTEditWidget):
     def __init__(self):
         QSTEditWidget.__init__(self, False, 2)
 
-        lab = gtk.Label(self.label_text)
+        lab = Gtk.Label(self.label_text)
         lab.set_line_wrap(True)
         lab.show()
         self.pack_start(lab, 1, 1, 1)
@@ -471,20 +474,20 @@ class QSTGPSEditWidget(QSTEditWidget):
     def __init__(self, config):
         QSTEditWidget.__init__(self, False, 2)
 
-        lab = gtk.Label(_("Enter your GPS message:"))
+        lab = Gtk.Label(_("Enter your GPS message:"))
         lab.set_line_wrap(True)
         lab.show()
         self.pack_start(lab, 1, 1, 1)
 
-        hbox = gtk.HBox(False, 2)
+        hbox = Gtk.HBox(False, 2)
         hbox.show()
         self.pack_start(hbox, 0, 0, 0)
 
-        self.__msg = gtk.Entry(self.msg_limit)
+        self.__msg = Gtk.Entry(self.msg_limit)
         self.__msg.show()
         hbox.pack_start(self.__msg, 1, 1, 1)
 
-        dprs = gtk.Button("DPRS")
+        dprs = Gtk.Button("DPRS")
 
         if not isinstance(self, QSTGPSAEditWidget):
             dprs.show()
@@ -520,11 +523,11 @@ class QSTRSSEditWidget(QSTEditWidget):
     def __init__(self):
         QSTEditWidget.__init__(self, False, 2)
 
-        lab = gtk.Label(self.label_string)
+        lab = Gtk.Label(self.label_string)
         lab.show()
         self.pack_start(lab, 1, 1, 1)
 
-        self.__url = gtk.Entry()
+        self.__url = Gtk.Entry()
         self.__url.set_text("http://")
         self.__url.show()
         self.pack_start(self.__url, 0, 0, 0)
@@ -573,11 +576,11 @@ class QSTStationEditWidget(QSTEditWidget):
     def __init__(self):
         QSTEditWidget.__init__(self, False, 2)
 
-        lab = gtk.Label(_("Choose a station whose position will be sent"))
+        lab = Gtk.Label(_("Choose a station whose position will be sent"))
         lab.show()
         self.pack_start(lab, 1, 1, 1)
 
-        hbox = gtk.HBox(False, 10)
+        hbox = Gtk.HBox(False, 10)
 
         # This is really ugly, but to fix it requires more work
         self.__sources = mainapp.get_mainapp().map.get_map_sources()
@@ -617,15 +620,15 @@ class QSTWUEditWidget(QSTEditWidget):
     def __init__(self):
         QSTEditWidget.__init__(self)
 
-        lab = gtk.Label(self.label_text)
+        lab = Gtk.Label(self.label_text)
         lab.show()
         self.pack_start(lab, 1, 1, 1)
 
-        hbox = gtk.HBox(False, 2)
+        hbox = Gtk.HBox(False, 2)
         hbox.show()
         self.pack_start(hbox, 0, 0, 0)
 
-        self.__station = gtk.Entry()
+        self.__station = Gtk.Entry()
         self.__station.show()
         hbox.pack_start(self.__station, 0, 0, 0)
 
@@ -652,7 +655,7 @@ class QSTWUEditWidget(QSTEditWidget):
     def to_human(self):
         return self.to_qst()
 
-class QSTEditDialog(gtk.Dialog):
+class QSTEditDialog(Gtk.Dialog):
     def _select_type(self, box):
         wtype = box.get_active_text()
 
@@ -662,7 +665,7 @@ class QSTEditDialog(gtk.Dialog):
         self.__current.show()
 
     def _make_controls(self):
-        hbox = gtk.HBox(False, 2)
+        hbox = Gtk.HBox(False, 2)
 
         self._type = make_choice(list(self._types.keys()), False, default=_("Text"))
         self._type.set_size_request(100, -1)
@@ -692,10 +695,10 @@ class QSTEditDialog(gtk.Dialog):
             _("Weather (WU)") : QSTWUEditWidget(),
             }
 
-        gtk.Dialog.__init__(self,
+        Gtk.Dialog.__init__(self,
                             parent=parent,
-                            buttons=(gtk.STOCK_OK, gtk.RESPONSE_OK,
-                                     gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL))
+                            buttons=(Gtk.STOCK_OK, Gtk.RESPONSE_OK,
+                                     Gtk.STOCK_CANCEL, Gtk.RESPONSE_CANCEL))
         self._ident = ident
         self._config = config
 

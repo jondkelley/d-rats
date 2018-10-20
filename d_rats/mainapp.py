@@ -46,7 +46,10 @@ import shutil
 import datetime
 
 import serial
-import gtk
+import gi
+gi.require_version("Gtk", "3.0")
+from gi.repository import Gtk
+
 import gobject
 
 from . import mainwindow
@@ -452,8 +455,8 @@ class MainApp(object):
                                        localedir=localedir,
                                        languages=[locale])
             lang.install()
-            gtk.glade.bindtextdomain("D-RATS", localedir)
-            gtk.glade.textdomain("D-RATS")
+            Gtk.glade.bindtextdomain("D-RATS", localedir)
+            Gtk.glade.textdomain("D-RATS")
         except LookupError:
             print(("Unable to load language `%s'" % locale))
             gettext.install("D-RATS")
@@ -978,7 +981,7 @@ class MainApp(object):
                     "the ratflector initially for testing.")
 
         while self.config.get("user", "callsign") == "":
-            d = gtk.MessageDialog(buttons=gtk.BUTTONS_OK)
+            d = Gtk.MessageDialog(buttons=Gtk.BUTTONS_OK)
             d.set_markup(message)
             d.run()
             d.destroy()
@@ -1120,7 +1123,7 @@ class MainApp(object):
             self.msgrouter = None
 
         try:
-            gtk.main()
+            Gtk.main()
         except KeyboardInterrupt:
             pass
         except Exception as e:

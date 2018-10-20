@@ -507,9 +507,12 @@ class RPCActionSet(gobject.GObject):
         result["os"] = self.__config.platform.os_version_string()
         result["pyver"] = ".".join([str(x) for x in sys.version_info[:3]])
         try:
-            import gtk
-            result["pygtkver"] = ".".join([str(x) for x in gtk.pygtk_version])
-            result["gtkver"] = ".".join([str(x) for x in gtk.gtk_version])
+            import gi
+gi.require_version("Gtk", "3.0")
+from gi.repository import Gtk
+
+            result["pygtkver"] = ".".join([str(x) for x in Gtk.pygtk_version])
+            result["gtkver"] = ".".join([str(x) for x in Gtk.gtk_version])
         except ImportError:
             result["pygtkver"] = result["gtkver"] = "Unknown"
 

@@ -1,6 +1,9 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-import gtk
+import gi
+gi.require_version("Gtk", "3.0")
+from gi.repository import Gtk
+
 import tempfile
 import os
 
@@ -80,24 +83,24 @@ def build_image_dialog(filename, image, dlgParent=None):
     def update():
         update_image(filename, d)
 
-    d.add_field(_("Filename"), gtk.Label(os.path.basename(filename)))
+    d.add_field(_("Filename"), Gtk.Label(os.path.basename(filename)))
 
-    d.sizelabel = gtk.Label("--")
+    d.sizelabel = Gtk.Label("--")
     d.add_field(_("Size"), d.sizelabel)
 
     d.size = miscwidgets.make_choice(sizes, False, sizes[1])
     d.size.connect("changed", lambda x: update())
     d.add_field(_("Resize to"), d.size)
 
-    quality = gtk.HScale(gtk.Adjustment(50, 1, 100, 10, 10))
+    quality = Gtk.HScale(Gtk.Adjustment(50, 1, 100, 10, 10))
     quality.connect("format-value",
                     lambda s,v: "%i" % v)
     quality.connect("change-value", set_quality, d)
     d.add_field(_("Quality"), quality)
 
-    d.preview = gtk.Image()
+    d.preview = Gtk.Image()
     d.preview.show()
-    sw = gtk.ScrolledWindow()
+    sw = Gtk.ScrolledWindow()
     sw.add_with_viewport(d.preview)
     sw.set_size_request(320,320)
     d.add_field(_("Preview"), sw, full=True)
@@ -125,7 +128,7 @@ def send_image(fn, dlgParent=None):
         img = IMAGE.open(fn)
     except IOError as e:
         print(("%s: %s" % (fn, e)))
-        d = gtk.MessageDialog(buttons=gtk.BUTTONS_OK, parent=dlgParent)
+        d = Gtk.MessageDialog(buttons=Gtk.BUTTONS_OK, parent=dlgParent)
         d.set_property("text", _("Unknown image type"))
         d.run()
         d.destroy()
@@ -136,7 +139,7 @@ def send_image(fn, dlgParent=None):
     f = d.resized
     d.destroy()
 
-    if r == gtk.RESPONSE_OK:
+    if r == Gtk.RESPONSE_OK:
         return f
     else:
         return None
@@ -144,4 +147,4 @@ def send_image(fn, dlgParent=None):
 if __name__ == "__main__":
     has_image_support()
     print((send_image()))
-    gtk.main()
+    Gtk.main()

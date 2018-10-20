@@ -123,11 +123,14 @@ def __do_fly_spell(buffer):
         buffer.remove_tag_by_name("misspelled", start_iter, end_iter)
 
 def prepare_TextBuffer(buf):
-    import gtk
+    import gi
+gi.require_version("Gtk", "3.0")
+from gi.repository import Gtk
+
     import pango
 
     tags = buf.get_tag_table()
-    tag = gtk.TextTag("misspelled")
+    tag = Gtk.TextTag("misspelled")
     tag.set_property("underline", pango.UNDERLINE_SINGLE)
     tag.set_property("underline-set", True)
     tag.set_property("foreground", "red")

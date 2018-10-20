@@ -21,7 +21,10 @@ import os
 from datetime import datetime
 
 import gobject
-import gtk
+import gi
+gi.require_version("Gtk", "3.0")
+from gi.repository import Gtk
+
 
 from d_rats.ui.main_common import MainWindowElement, MainWindowTab
 from d_rats import utils
@@ -156,18 +159,18 @@ class EventTab(MainWindowTab):
   </popup>
 </ui>
 """
-        ag = gtk.ActionGroup("menu")
+        ag = Gtk.ActionGroup("menu")
 
         actions = [("stop", _("Stop"), not event.is_final()),
                    ("cancel", _("Cancel"), not event.is_final()),
                    ("restart", _("Restart"), event.get_restart_info())]
         for action, label, sensitive in actions:
-            a = gtk.Action(action, label, None, None)
+            a = Gtk.Action(action, label, None, None)
             a.connect("activate", self._mh_xfer, event)
             a.set_sensitive(bool(sensitive))
             ag.add_action(a)
 
-        uim = gtk.UIManager()
+        uim = Gtk.UIManager()
         uim.insert_action_group(ag, 0)
         uim.add_ui_from_string(xml)
 
@@ -234,10 +237,10 @@ class EventTab(MainWindowTab):
     def __change_sort(self, column):
         srt = column.get_sort_order()
 
-        if srt == gtk.SORT_ASCENDING:
-            srt = gtk.SORT_DESCENDING
+        if srt == Gtk.SORT_ASCENDING:
+            srt = Gtk.SORT_DESCENDING
         else:
-            srt = gtk.SORT_ASCENDING
+            srt = Gtk.SORT_ASCENDING
 
         self._config.set("state", "events_sort", int(srt))
 
@@ -246,7 +249,7 @@ class EventTab(MainWindowTab):
 
     def _get_sort_asc(self):
         srt = self._config.getint("state", "events_sort")
-        return srt == gtk.SORT_ASCENDING
+        return srt == Gtk.SORT_ASCENDING
 
     def __init__(self, wtree, config):
         MainWindowTab.__init__(self, wtree, config, "event")
@@ -257,7 +260,7 @@ class EventTab(MainWindowTab):
 
         eventlist.connect("button_press_event", self._mouse_cb)
 
-        self.store = gtk.ListStore(gobject.TYPE_STRING,  # 0: id
+        self.store = Gtk.ListStore(gobject.TYPE_STRING,  # 0: id
                                    gobject.TYPE_OBJECT,  # 1: icon
                                    gobject.TYPE_INT,     # 2: timestamp
                                    gobject.TYPE_STRING,  # 3: message
@@ -270,7 +273,7 @@ class EventTab(MainWindowTab):
         filter.set_visible_func(filter_rows, self)
         eventlist.set_model(filter)
 
-        col = gtk.TreeViewColumn("", gtk.CellRendererPixbuf(), pixbuf=1)
+        col = Gtk.TreeViewColumn("", Gtk.CellRendererPixbuf(), pixbuf=1)
         eventlist.append_column(col)
 
         def render_time(col, rend, model, iter):
@@ -278,8 +281,8 @@ class EventTab(MainWindowTab):
             stamp = datetime.fromtimestamp(val)
             rend.set_property("text", stamp.strftime("%Y-%m-%d %H:%M:%S"))
 
-        r = gtk.CellRendererText()
-        col = gtk.TreeViewColumn(_("Time"), r, text=2)
+        r = Gtk.CellRendererText()
+        col = Gtk.TreeViewColumn(_("Time"), r, text=2)
         col.set_cell_data_func(r, render_time)
         col.set_sort_column_id(5)
         col.connect("clicked", self.__change_sort)
@@ -288,13 +291,13 @@ class EventTab(MainWindowTab):
         try:
             srt = int(self._config.get("state", "events_sort"))
         except ValueError:
-            srt = gtk.SORT_DESCENDING
+            srt = Gtk.SORT_DESCENDING
         self.store.set_sort_column_id(5, srt)
         col.set_sort_indicator(True)
         col.set_sort_order(srt)
 
-        r = gtk.CellRendererText()
-        col = gtk.TreeViewColumn(_("Description"), r, text=3)
+        r = Gtk.CellRendererText()
+        col = Gtk.TreeViewColumn(_("Description"), r, text=3)
         eventlist.append_column(col)
 
         typesel, = self._getw("typesel")

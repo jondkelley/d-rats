@@ -19,7 +19,10 @@
 import re
 
 import gobject
-import gtk
+import gi
+gi.require_version("Gtk", "3.0")
+from gi.repository import Gtk
+
 
 from d_rats import inputdialog, miscwidgets
 from d_rats import signals
@@ -27,22 +30,22 @@ from d_rats import signals
 STATION_REGEX = "^[A-Z0-9- /_]+$"
 
 def ask_for_confirmation(question, parent=None):
-    d = gtk.MessageDialog(buttons=gtk.BUTTONS_YES_NO,
+    d = Gtk.MessageDialog(buttons=Gtk.BUTTONS_YES_NO,
                           parent=parent,
                           message_format=question)
     r = d.run()
     d.destroy()
 
-    return r == gtk.RESPONSE_YES
+    return r == Gtk.RESPONSE_YES
 
 def display_error(message, parent=None):
-    d = gtk.MessageDialog(buttons=gtk.BUTTONS_OK,
+    d = Gtk.MessageDialog(buttons=Gtk.BUTTONS_OK,
                           parent=parent,
                           message_format=message)
     r = d.run()
     d.destroy()
 
-    return r == gtk.RESPONSE_OK
+    return r == Gtk.RESPONSE_OK
 
 def prompt_for_station(_station_list, config, parent=None):
     station_list = [str(x) for x in _station_list]
@@ -71,7 +74,7 @@ def prompt_for_station(_station_list, config, parent=None):
 
     while True:
         res = d.run()
-        if res != gtk.RESPONSE_OK:
+        if res != Gtk.RESPONSE_OK:
             break
         s = station.get_active_text().upper()
         if "@" in s:
@@ -85,16 +88,16 @@ def prompt_for_station(_station_list, config, parent=None):
 
     p = port.get_active_text()
     d.destroy()
-    if res == gtk.RESPONSE_OK:
+    if res == Gtk.RESPONSE_OK:
         return s, p
     else:
         return None, None
 
 def prompt_for_string(message, parent=None, orig=""):
-    d = gtk.MessageDialog(buttons=gtk.BUTTONS_OK_CANCEL,
+    d = Gtk.MessageDialog(buttons=Gtk.BUTTONS_OK_CANCEL,
                           parent=parent,
                           message_format=message)
-    e = gtk.Entry()
+    e = Gtk.Entry()
     e.set_text(orig)
     e.show()
     d.vbox.pack_start(e, 1, 1, 1)
@@ -102,7 +105,7 @@ def prompt_for_string(message, parent=None, orig=""):
     r = d.run()
     d.destroy()
 
-    if r == gtk.RESPONSE_OK:
+    if r == Gtk.RESPONSE_OK:
         return e.get_text()
     else:
         return None
@@ -113,11 +116,11 @@ def set_toolbar_buttons(config, tb):
         tb.unset_style()
         tb.unset_icon_size()
     elif tbsize == _("Small"):
-        tb.set_style(gtk.TOOLBAR_ICONS)
-        tb.set_icon_size(gtk.ICON_SIZE_SMALL_TOOLBAR)
+        tb.set_style(Gtk.TOOLBAR_ICONS)
+        tb.set_icon_size(Gtk.ICON_SIZE_SMALL_TOOLBAR)
     elif tbsize == _("Large"):
-        tb.set_style(gtk.TOOLBAR_BOTH)
-        tb.set_icon_size(gtk.ICON_SIZE_LARGE_TOOLBAR)
+        tb.set_style(Gtk.TOOLBAR_BOTH)
+        tb.set_icon_size(Gtk.ICON_SIZE_LARGE_TOOLBAR)
 
 class MainWindowElement(gobject.GObject):
     def __init__(self, wtree, config, prefix):

@@ -22,7 +22,10 @@ from glob import glob
 from datetime import datetime
 
 import gobject
-import gtk
+import gi
+gi.require_version("Gtk", "3.0")
+from gi.repository import Gtk
+
 
 from d_rats.ui.main_common import MainWindowElement, MainWindowTab
 from d_rats.ui.main_common import ask_for_confirmation, set_toolbar_buttons
@@ -41,11 +44,11 @@ class FileView(object):
         self._view = view
         self._path = path
 
-        self._store = gtk.ListStore(gobject.TYPE_OBJECT,
+        self._store = Gtk.ListStore(gobject.TYPE_OBJECT,
                                     gobject.TYPE_STRING,
                                     gobject.TYPE_INT,
                                     gobject.TYPE_INT)
-        self._store.set_sort_column_id(1, gtk.SORT_ASCENDING)
+        self._store.set_sort_column_id(1, Gtk.SORT_ASCENDING)
         view.set_model(self._store)
 
         self._file_icon = config.ship_img("file.png")
@@ -190,7 +193,7 @@ class FilesTab(MainWindowTab):
 
         throbber, = self._getw("remote_throb")
         img = self._config.ship_obj_fn(os.path.join("images", THROB_IMAGE))
-        anim = gtk.gdk.PixbufAnimation(img)
+        anim = Gtk.gdk.PixbufAnimation(img)
         throbber.set_from_animation(anim)
 
         job = self._remote.refresh()
@@ -282,7 +285,7 @@ class FilesTab(MainWindowTab):
         d = inputdialog.TextInputDialog()
         d.label.set_text(_("Password for %s (blank if none):" % station))
         d.text.set_visibility(False)
-        if d.run() != gtk.RESPONSE_OK:
+        if d.run() != Gtk.RESPONSE_OK:
             return
         passwd = d.text.get_text()
         d.destroy()
@@ -311,10 +314,10 @@ class FilesTab(MainWindowTab):
         def populate_tb(tb, buttons):
             c = 0
             for i, l, f, d in buttons:
-                icon = gtk.Image()
+                icon = Gtk.Image()
                 icon.set_from_pixbuf(i)
                 icon.show()
-                item = gtk.ToolButton(icon, l)
+                item = Gtk.ToolButton(icon, l)
                 item.connect("clicked", f, d)
                 try:
                     item.set_tooltip_text(l)
@@ -366,21 +369,21 @@ class FilesTab(MainWindowTab):
                 s = "%.1f KB" % (sz / 1024.0)
             rend.set_property("text", s)
 
-        col = gtk.TreeViewColumn("", gtk.CellRendererPixbuf(), pixbuf=0)
+        col = Gtk.TreeViewColumn("", Gtk.CellRendererPixbuf(), pixbuf=0)
         view.append_column(col)
 
-        col = gtk.TreeViewColumn(_("Filename"), gtk.CellRendererText(), text=1)
+        col = Gtk.TreeViewColumn(_("Filename"), Gtk.CellRendererText(), text=1)
         col.set_sort_column_id(1)
         view.append_column(col)
 
-        r = gtk.CellRendererText()
-        col = gtk.TreeViewColumn(_("Size"), r, text=2)
+        r = Gtk.CellRendererText()
+        col = Gtk.TreeViewColumn(_("Size"), r, text=2)
         col.set_sort_column_id(2)
         col.set_cell_data_func(r, render_size)
         view.append_column(col)
 
-        r = gtk.CellRendererText()
-        col = gtk.TreeViewColumn(_("Date"), r, text=3)
+        r = Gtk.CellRendererText()
+        col = Gtk.TreeViewColumn(_("Date"), r, text=3)
         col.set_sort_column_id(2)
         col.set_cell_data_func(r, render_date)
         view.append_column(col)

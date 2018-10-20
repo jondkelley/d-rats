@@ -17,17 +17,20 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import gtk
+import gi
+gi.require_version("Gtk", "3.0")
+from gi.repository import Gtk
+
 import gobject
 
 from . import miscwidgets
 
-class RequestRemoteObjectUI(gtk.Dialog):
+class RequestRemoteObjectUI(Gtk.Dialog):
     def __init__(self, rpcsession, station, parent=None):
-        gtk.Dialog.__init__(self,
+        Gtk.Dialog.__init__(self,
                             title="Request remote object",
-                            buttons=("Retrieve", gtk.RESPONSE_OK,
-                                     gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL),
+                            buttons=("Retrieve", Gtk.RESPONSE_OK,
+                                     Gtk.STOCK_CANCEL, Gtk.RESPONSE_CANCEL),
                             parent=parent)
 
         self.__list = miscwidgets.KeyedListWidget(\
@@ -37,8 +40,8 @@ class RequestRemoteObjectUI(gtk.Dialog):
         self.__list.set_resizable(0, True)
         self.__list.show()
 
-        sw = gtk.ScrolledWindow()
-        sw.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
+        sw = Gtk.ScrolledWindow()
+        sw.set_policy(Gtk.POLICY_AUTOMATIC, Gtk.POLICY_AUTOMATIC)
         sw.add_with_viewport(self.__list)
         sw.show()
 

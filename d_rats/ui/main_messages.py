@@ -23,7 +23,10 @@ import random
 from datetime import datetime
 
 import gobject
-import gtk
+import gi
+gi.require_version("Gtk", "3.0")
+from gi.repository import Gtk
+
 import pango
 
 from configparser import ConfigParser,DuplicateSectionError
@@ -345,18 +348,18 @@ class MessageFolders(MainWindowElement):
 
         can_del = bool(folder and (folder not in BASE_FOLDERS))
 
-        ag = gtk.ActionGroup("menu")
-        actions = [("delete", _("Delete"), gtk.STOCK_DELETE, can_del),
-                   ("create", _("Create"), gtk.STOCK_NEW, True),
+        ag = Gtk.ActionGroup("menu")
+        actions = [("delete", _("Delete"), Gtk.STOCK_DELETE, can_del),
+                   ("create", _("Create"), Gtk.STOCK_NEW, True),
                    ("rename", _("Rename"), None, can_del)]
 
         for action, label, stock, sensitive in actions:
-            a = gtk.Action(action, label, None, stock)
+            a = Gtk.Action(action, label, None, stock)
             a.set_sensitive(sensitive)
             a.connect("activate", self._mh, store, iter, view)
             ag.add_action(a)
 
-        uim = gtk.UIManager()
+        uim = Gtk.UIManager()
         uim.insert_action_group(ag, 0)
         uim.add_ui_from_string(xml)
         uim.get_widget("/menu").popup(None, None, None,
@@ -425,22 +428,22 @@ class MessageFolders(MainWindowElement):
 
         folderlist, = self._getw("folderlist")
 
-        store = gtk.TreeStore(gobject.TYPE_STRING, gobject.TYPE_OBJECT)
+        store = Gtk.TreeStore(gobject.TYPE_STRING, gobject.TYPE_OBJECT)
         folderlist.set_model(store)
         folderlist.set_headers_visible(False)
         folderlist.enable_model_drag_dest([("text/d-rats_message", 0, 0)],
-                                          gtk.gdk.ACTION_DEFAULT)
+                                          Gtk.gdk.ACTION_DEFAULT)
         folderlist.connect("drag-data-received", self._dragged_to)
         folderlist.connect("button_press_event", self._mouse_cb)
         folderlist.connect_after("move-cursor", self._move_cursor)
 
-        col = gtk.TreeViewColumn("", gtk.CellRendererPixbuf(), pixbuf=1)
+        col = Gtk.TreeViewColumn("", Gtk.CellRendererPixbuf(), pixbuf=1)
         folderlist.append_column(col)
 
-        rnd = gtk.CellRendererText()
+        rnd = Gtk.CellRendererText()
         #rnd.set_property("editable", True)
         rnd.connect("edited", self._folder_rename, store)
-        col = gtk.TreeViewColumn("", rnd, text=0)
+        col = Gtk.TreeViewColumn("", rnd, text=0)
         folderlist.append_column(col)
 
         self.folder_pixbuf = self._config.ship_img("folder.png")
@@ -482,7 +485,7 @@ class MessageList(MainWindowElement):
     def open_msg(self, filename, editable, cb=None, cbdata=None):
         if not msgrouting.msg_lock(filename):
             display_error(_("Unable to open: message in use by another task"))
-            return gtk.RESPONSE_CANCEL
+            return Gtk.RESPONSE_CANCEL
 
         parent = self._wtree.get_widget("mainwindow")
         form = formgui.FormDialog(_("Form"), filename, parent=parent)
@@ -563,7 +566,7 @@ class MessageList(MainWindowElement):
 
         msglist, = self._getw("msglist")
 
-        self.store = gtk.ListStore(gobject.TYPE_OBJECT,
+        self.store = Gtk.ListStore(gobject.TYPE_OBJECT,
                                    gobject.TYPE_STRING,
                                    gobject.TYPE_STRING,
                                    gobject.TYPE_STRING,
@@ -572,14 +575,14 @@ class MessageList(MainWindowElement):
                                    gobject.TYPE_BOOLEAN,
                                    gobject.TYPE_STRING)
         msglist.set_model(self.store)
-        msglist.get_selection().set_mode(gtk.SELECTION_MULTIPLE)
-        msglist.enable_model_drag_source(gtk.gdk.BUTTON1_MASK,
+        msglist.get_selection().set_mode(Gtk.SELECTION_MULTIPLE)
+        msglist.enable_model_drag_source(Gtk.gdk.BUTTON1_MASK,
                                          [("text/d-rats_message", 0, 0)],
-                                         gtk.gdk.ACTION_DEFAULT|
-                                         gtk.gdk.ACTION_MOVE)
+                                         Gtk.gdk.ACTION_DEFAULT|
+                                         Gtk.gdk.ACTION_MOVE)
         msglist.connect("drag-data-get", self._dragged_from)
 
-        col = gtk.TreeViewColumn("", gtk.CellRendererPixbuf(), pixbuf=0)
+        col = Gtk.TreeViewColumn("", Gtk.CellRendererPixbuf(), pixbuf=0)
         msglist.append_column(col)
 
         def bold_if_unread(col, rend, model, iter, cnum):
@@ -592,37 +595,37 @@ class MessageList(MainWindowElement):
                 val = val.replace(">", "&gt;")
                 rend.set_property("markup", "<b>%s</b>" % val)
 
-        r = gtk.CellRendererText()
+        r = Gtk.CellRendererText()
         r.set_property("ellipsize", pango.ELLIPSIZE_END)
-        col = gtk.TreeViewColumn(_("Sender"), r, text=ML_COL_SEND)
+        col = Gtk.TreeViewColumn(_("Sender"), r, text=ML_COL_SEND)
         col.set_cell_data_func(r, bold_if_unread, ML_COL_SEND)
         col.set_sort_column_id(ML_COL_SEND)
-        col.set_sizing(gtk.TREE_VIEW_COLUMN_AUTOSIZE)
+        col.set_sizing(Gtk.TREE_VIEW_COLUMN_AUTOSIZE)
         col.set_resizable(True)
         msglist.append_column(col)
 
-        r = gtk.CellRendererText()
+        r = Gtk.CellRendererText()
         r.set_property("ellipsize", pango.ELLIPSIZE_END)
-        col = gtk.TreeViewColumn(_("Recipient"), r, text=ML_COL_RECP)
+        col = Gtk.TreeViewColumn(_("Recipient"), r, text=ML_COL_RECP)
         col.set_cell_data_func(r, bold_if_unread, ML_COL_RECP)
         col.set_sort_column_id(ML_COL_RECP)
-        col.set_sizing(gtk.TREE_VIEW_COLUMN_AUTOSIZE)
+        col.set_sizing(Gtk.TREE_VIEW_COLUMN_AUTOSIZE)
         col.set_resizable(True)
         msglist.append_column(col)
 
-        r = gtk.CellRendererText()
+        r = Gtk.CellRendererText()
         r.set_property("ellipsize", pango.ELLIPSIZE_END)
-        col = gtk.TreeViewColumn(_("Subject"), r, text=ML_COL_SUBJ)
+        col = Gtk.TreeViewColumn(_("Subject"), r, text=ML_COL_SUBJ)
         col.set_cell_data_func(r, bold_if_unread, ML_COL_SUBJ)
         col.set_expand(True)
         col.set_sort_column_id(ML_COL_SUBJ)
-        col.set_sizing(gtk.TREE_VIEW_COLUMN_AUTOSIZE)
+        col.set_sizing(Gtk.TREE_VIEW_COLUMN_AUTOSIZE)
         col.set_resizable(True)
         msglist.append_column(col)
 
-        r = gtk.CellRendererText()
+        r = Gtk.CellRendererText()
         r.set_property("ellipsize", pango.ELLIPSIZE_END)
-        col = gtk.TreeViewColumn(_("Type"), r, text=ML_COL_TYPE)
+        col = Gtk.TreeViewColumn(_("Type"), r, text=ML_COL_TYPE)
         col.set_cell_data_func(r, bold_if_unread, ML_COL_TYPE)
         col.set_sort_column_id(ML_COL_TYPE)
         col.set_resizable(True)
@@ -636,16 +639,16 @@ class MessageList(MainWindowElement):
             else:
                 rend.set_property("markup", "<b>%s</b>" % stamp)
 
-        r = gtk.CellRendererText()
+        r = Gtk.CellRendererText()
         r.set_property("ellipsize", pango.ELLIPSIZE_END)
-        col = gtk.TreeViewColumn(_("Date"), r, text=ML_COL_DATE)
+        col = Gtk.TreeViewColumn(_("Date"), r, text=ML_COL_DATE)
         col.set_cell_data_func(r, render_date)
         col.set_sort_column_id(ML_COL_DATE)
         col.set_resizable(True)
         msglist.append_column(col)
 
         msglist.connect("row-activated", self._open_msg)
-        self.store.set_sort_column_id(ML_COL_DATE, gtk.SORT_DESCENDING)
+        self.store.set_sort_column_id(ML_COL_DATE, Gtk.SORT_DESCENDING)
 
         self.message_pixbuf = self._config.ship_img("message.png")
         self.unread_pixbuf = self._config.ship_img("msg-markunread.png")
@@ -783,7 +786,7 @@ class MessagesTab(MainWindowTab):
             r = d.run()
             msgtype = d.choice.get_active_text()
             d.destroy()
-            if r != gtk.RESPONSE_OK:
+            if r != Gtk.RESPONSE_OK:
                 return
 
         current = self._messages.current_info.name()
@@ -801,7 +804,7 @@ class MessagesTab(MainWindowTab):
         form.save_to(newfn)
 
         def close_msg_cb(response, info):
-            if response == int(gtk.RESPONSE_CLOSE):
+            if response == int(Gtk.RESPONSE_CLOSE):
                 info.delete(newfn)
             if self._messages.current_info == info:
                 self._messages.refresh()
@@ -884,8 +887,8 @@ class MessagesTab(MainWindowTab):
 
         def close_msg_cb(response, info):
             if self._messages.current_info == info:
-                print(("Respone was %i (%i)" % (response, gtk.RESPONSE_CANCEL)))
-                if response in [gtk.RESPONSE_CANCEL, gtk.RESPONSE_CLOSE]:
+                print(("Respone was %i (%i)" % (response, Gtk.RESPONSE_CANCEL)))
+                if response in [Gtk.RESPONSE_CANCEL, Gtk.RESPONSE_CLOSE]:
                     info.delete(newfn)
                     self._folders.select_folder(current)
                 else:
@@ -990,9 +993,9 @@ class MessagesTab(MainWindowTab):
         self.emit("trigger-msg-router", account)
 
     def _make_sndrcv_menu(self):
-        menu = gtk.Menu()
+        menu = Gtk.Menu()
 
-        mi = gtk.MenuItem("Outbox")
+        mi = Gtk.MenuItem("Outbox")
         try:
             mi.set_tooltip_text("Send messages in the Outbox")
         except AttributeError:
@@ -1001,7 +1004,7 @@ class MessagesTab(MainWindowTab):
         mi.show()
         menu.append(mi)
 
-        mi = gtk.MenuItem("WL2K")
+        mi = Gtk.MenuItem("WL2K")
         try:
             mi.set_tooltip_text("Check Winlink messages")
         except AttributeError:
@@ -1013,7 +1016,7 @@ class MessagesTab(MainWindowTab):
         for section in self._config.options("incoming_email"):
             info = self._config.get("incoming_email", section).split(",")
             lab = "%s on %s" % (info[1], info[0])
-            mi = gtk.MenuItem(lab)
+            mi = Gtk.MenuItem(lab)
             try:
                 mi.set_tooltip_text("Check for new mail on this account")
             except AttributeError:
@@ -1025,13 +1028,13 @@ class MessagesTab(MainWindowTab):
         return menu
 
     def _make_new_menu(self):
-        menu = gtk.Menu()
+        menu = Gtk.Menu()
 
         td = self._config.form_source_dir()
         for i in sorted(glob(os.path.join(td, "*.xml"))):
             msgtype = os.path.basename(i).replace(".xml", "")
             label = msgtype.replace("_", " ")
-            mi = gtk.MenuItem(label)
+            mi = Gtk.MenuItem(label)
             try:
                 mi.set_tooltip_text("Create a new %s form" % label)
             except AttributeError:
@@ -1076,11 +1079,11 @@ class MessagesTab(MainWindowTab):
 
         c = 0
         for i, l, f in buttons:
-            icon = gtk.Image()
+            icon = Gtk.Image()
             icon.set_from_pixbuf(self._config.ship_img(i))
             icon.show()
             if i in menus:
-                item = gtk.MenuToolButton(icon, l)
+                item = Gtk.MenuToolButton(icon, l)
                 item.set_menu(menus[i])
                 try:
                     item.set_arrow_tooltip_text("%s %s %s" % (_("More"),
@@ -1089,7 +1092,7 @@ class MessagesTab(MainWindowTab):
                 except AttributeError:
                     pass
             else:
-                item = gtk.ToolButton(icon, l)
+                item = Gtk.ToolButton(icon, l)
             item.show()
             item.connect("clicked", f)
             if l in tips:

@@ -22,17 +22,23 @@ import os
 import tempfile
 import urllib.request, urllib.parse, urllib.error
 
+
+def import_gtk():
+    import gi
+    gi.require_version("Gtk", "3.0")
+    from gi.repository import Gtk
+    return Gtk
+
 from . import platform
 
 def open_icon_map(iconfn):
-    import gtk
-
+    Gtk = import_gtk()
     if not os.path.exists(iconfn):
         print("Icon file %s not found" % iconfn)
         return None
 
     try:
-        return gtk.gdk.pixbuf_new_from_file(iconfn)
+        return Gtk.gdk.pixbuf_new_from_file(iconfn)
     except Exception as e:
         print("Error opening icon map %s: %s" % (iconfn, e))
         return None
@@ -113,22 +119,23 @@ def run_safe(f):
     return runner
 
 def run_gtk_locked(f):
-    import gtk
+    Gtk = import_gtk()
 
     def runner(*args, **kwargs):
-        gtk.gdk.threads_enter()
+        Gtk.gdk.threads_enter()
         try:
             f(*args, **kwargs)
         except Exception as e:
-            gtk.gdk.threads_leave()
+            Gtk.gdk.threads_leave()
             raise
 
-        gtk.gdk.threads_leave()
+        Gtk.gdk.threads_leave()
 
     return runner
 
 def run_or_error(f):
-    import gtk
+    Gtk = import_gtk()
+
     from d_rats.ui import main_common
 
     def runner(*args, **kwargs):
@@ -145,13 +152,13 @@ def print_stack():
     traceback.print_stack(file=sys.stdout)
 
 def get_sub_image(iconmap, i, j, size=20):
-    import gtk
+    Gtk = import_gtk()
 
     # Account for division lines (1px per icon)
     x = (i * size) + i + 1
     y = (j * size) + j + 1
 
-    icon = gtk.gdk.Pixbuf(gtk.gdk.COLORSPACE_RGB, 1, 8, size, size)
+    icon = Gtk.gdk.Pixbuf(Gtk.gdk.COLORSPACE_RGB, 1, 8, size, size)
     iconmap.copy_area(x, y, size, size, icon, 0, 0)
 
     return icon
@@ -191,6 +198,8 @@ def get_icon(key):
     except Exception as e:
         print("Error cutting icon %s: %s" % (key, e))
         return None
+
+import io
 
 class NetFile(file):
     def __init__(self, uri, mode="r", buffering=1):
@@ -253,18 +262,17 @@ def log_exception():
         print("------")
 
 def set_entry_hint(entry, hint, default_focused=False):
-    import gtk
-
+    Gtk = import_gtk()
     def focus(entry, event, direction):
         if direction == "out" and not entry.get_text():
             entry.set_text(hint)
-            c = gtk.gdk.color_parse("grey")
+            c = Gtk.gdk.color_parse("grey")
         elif direction == "in" and entry.get_text() == hint:
             entry.set_text("")
-            c = gtk.gdk.color_parse("black")
+            c = Gtk.gdk.color_parse("black")
         else:
             return
-        entry.modify_text(gtk.STATE_NORMAL, c)
+        entry.modify_text(Gtk.STATE_NORMAL, c)
 
     entry.connect("focus-in-event", focus, "in")
     entry.connect("focus-out-event", focus, "out")
@@ -279,21 +287,21 @@ def port_for_station(ports, station):
     return None
 
 def make_error_dialog(msg, stack, buttons, type, extra):
-    import gtk
-    d = gtk.MessageDialog(buttons=buttons, type=type)
+    Gtk = import_gtk()
+    d = Gtk.MessageDialog(buttons=buttons, type=type)
 
     if extra:
         extra(d)
 
-    dvbox = gtk.VBox(False, 3)
+    dvbox = Gtk.VBox(False, 3)
 
-    sv = gtk.TextView()
+    sv = Gtk.TextView()
     sv.get_buffer().set_text(stack)
 
     dvbox.pack_start(sv, 1, 1, 1)
     sv.show()
 
-    se = gtk.Expander(_("Details"))
+    se = Gtk.Expander(_("Details"))
     se.add(dvbox)
     dvbox.show()
 

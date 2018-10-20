@@ -33,8 +33,11 @@ import os
 import time
 
 import libxml2
-import gtk
-import gtk.glade
+import gi
+gi.require_version("Gtk", "3.0")
+from gi.repository import Gtk
+
+import Gtk.glade
 import gobject
 import subprocess
 
@@ -76,7 +79,7 @@ class MainWindow(MainWindowElement):
             self._config.set("state", "main_size_x", w)
             self._config.set("state", "main_size_y", h)
 
-        gtk.main_quit()
+        Gtk.main_quit()
 
     def _connect_menu_items(self, window):
         def do_save_and_quit(but):
@@ -84,12 +87,12 @@ class MainWindow(MainWindowElement):
             window.destroy()
 
         def do_about(but):
-            d = gtk.AboutDialog()
+            d = Gtk.AboutDialog()
             d.set_transient_for(self._wtree.get_widget("mainwindow"))
 
             verinfo = "GTK %s\nPyGTK %s\nLibXML using %.1f KB\n" % ( \
-                ".".join([str(x) for x in gtk.gtk_version]),
-                ".".join([str(x) for x in gtk.pygtk_version]),
+                ".".join([str(x) for x in Gtk.gtk_version]),
+                ".".join([str(x) for x in Gtk.pygtk_version]),
                 libxml2.memoryUsed() / 1024.0)
 
             d.set_name("D-RATS")
@@ -109,7 +112,7 @@ class MainWindow(MainWindowElement):
             if os.path.exists(path):
                 self._config.platform.open_text_file(path)
             else:
-                d = gtk.MessageDialog(buttons=gtk.BUTTONS_OK,
+                d = Gtk.MessageDialog(buttons=Gtk.BUTTONS_OK,
                                       parent=window)
                 d.set_property("text",
                                "Debug log not available")
@@ -151,7 +154,7 @@ class MainWindow(MainWindowElement):
 
         def do_dq(but):
             c = self._config
-            wtree = gtk.glade.XML(c.ship_obj_fn("ui/mainwindow.glade"),
+            wtree = Gtk.glade.XML(c.ship_obj_fn("ui/mainwindow.glade"),
                                   "dquery_dialog", "D-RATS")
             dlg = wtree.get_widget("dquery_dialog")
             cmd = wtree.get_widget("dq_cmd")
@@ -160,7 +163,7 @@ class MainWindow(MainWindowElement):
             r = dlg.run()
             d = cmd.get_text()
             dlg.destroy()
-            if r == gtk.RESPONSE_OK:
+            if r == Gtk.RESPONSE_OK:
                 port = self.emit("get-chat-port")
                 self.emit("user-send-chat", "CQCQCQ", port, "?D*%s?" % d, True)
 
@@ -189,7 +192,7 @@ class MainWindow(MainWindowElement):
         menu_prefs.connect("activate", do_prefs)
 
         menu_map = self._wtree.get_widget("main_menu_map")
-        img = gtk.Image()
+        img = Gtk.Image()
         img.set_from_file("images/map.png")
         menu_map.set_image(img)
         menu_map.connect("activate", do_map)
@@ -198,7 +201,7 @@ class MainWindow(MainWindowElement):
         menu_templates.connect("activate", do_message_templates)
 
         ping = self._wtree.get_widget("main_menu_ping")
-        img = gtk.Image()
+        img = Gtk.Image()
         img.set_from_file("images/event_ping.png")
         ping.set_image(img)
         ping.connect("activate", do_ping)
@@ -251,7 +254,7 @@ class MainWindow(MainWindowElement):
         self.__window.set_urgency_hint(False)
 
     def __init__(self, config):
-        wtree = gtk.glade.XML(config.ship_obj_fn("ui/mainwindow.glade"),
+        wtree = Gtk.glade.XML(config.ship_obj_fn("ui/mainwindow.glade"),
                               "mainwindow", "D-RATS")
 
         MainWindowElement.__init__(self, wtree, config, "")
@@ -322,7 +325,7 @@ class MainWindow(MainWindowElement):
         cb.push(0, call)
 
 if __name__ == "__main__":
-    wtree = gtk.glade.XML("ui/mainwindow.glade", "mainwindow")
+    wtree = Gtk.glade.XML("ui/mainwindow.glade", "mainwindow")
 
     from d_rats import config
     conf = config.DratsConfig(None)
@@ -335,4 +338,4 @@ if __name__ == "__main__":
 
     msgs = MessagesTab(wtree, conf)
 
-    gtk.main()
+    Gtk.main()

@@ -17,8 +17,11 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import gtk
-import gtk.glade
+import gi
+gi.require_version("Gtk", "3.0")
+from gi.repository import Gtk
+
+import Gtk.glade
 import gobject
 import configparser
 import os
@@ -148,7 +151,7 @@ _DEF_STATE = {
     "sidepane_visible" : "True",
     "status_msg" : "Online (D-RATS)",
     "status_state" : "Online",
-    "events_sort" : str(int(gtk.SORT_DESCENDING)),
+    "events_sort" : str(int(Gtk.SORT_DESCENDING)),
     "form_email_x" : "600",
     "form_email_y" : "500",
 }
@@ -222,7 +225,7 @@ def load_portspec(wtree, portspec, info, name):
 
 def prompt_for_port(portspec=None, info=None, pname=None):
     p = os.path.join(platform.get_platform().source_dir(), "ui/addport.glade")
-    wtree = gtk.glade.XML(p, "addport", "D-RATS")
+    wtree = Gtk.glade.XML(p, "addport", "D-RATS")
 
     ports = platform.get_platform().list_serial_ports()
 
@@ -347,22 +350,22 @@ def disable_by_combo(combo, map):
     combo.connect("changed", set_disables, map)
     set_disables(combo, map)
 
-class AddressLookup(gtk.Button):
+class AddressLookup(Gtk.Button):
     def __init__(self, caption, latw, lonw, window=None):
-        gtk.Button.__init__(self, caption)
+        Gtk.Button.__init__(self, caption)
         self.connect("clicked", self.clicked, latw, lonw, window)
 
     def clicked(self, me, latw, lonw, window):
         aa = geocode_ui.AddressAssistant()
         aa.set_transient_for(window)
         r = aa.run()
-        if r == gtk.RESPONSE_OK:
+        if r == Gtk.RESPONSE_OK:
             latw.latlon.set_text("%.5f" % aa.lat)
             lonw.latlon.set_text("%.5f" % aa.lon)
 
-class DratsConfigWidget(gtk.HBox):
+class DratsConfigWidget(Gtk.HBox):
     def __init__(self, config, sec, name, have_revert=False):
-        gtk.HBox.__init__(self, False, 2)
+        Gtk.HBox.__init__(self, False, 2)
 
         self.do_not_expand = False
 
@@ -385,7 +388,7 @@ class DratsConfigWidget(gtk.HBox):
             self.value = None
 
         if have_revert:
-            rb = gtk.Button(None, gtk.STOCK_REVERT_TO_SAVED)
+            rb = Gtk.Button(None, Gtk.STOCK_REVERT_TO_SAVED)
             rb.connect("clicked", self._revert)
             rb.show()
             self.pack_end(rb, 0, 0, 0)
@@ -401,11 +404,11 @@ class DratsConfigWidget(gtk.HBox):
             print("AAACK: No _widget in revert")
             return
 
-        if isinstance(self._widget, gtk.Entry):
+        if isinstance(self._widget, Gtk.Entry):
             self._widget.set_text(str(self.value))
-        elif isinstance(self._widget, gtk.SpinButton):
+        elif isinstance(self._widget, Gtk.SpinButton):
             self._widget.set_value(float(self.value))
-        elif isinstance(self._widget, gtk.CheckButton):
+        elif isinstance(self._widget, Gtk.CheckButton):
             self._widget.set_active(self.value.upper() == "TRUE")
         elif isinstance(self._widget, miscwidgets.FilenameBox):
             self._widget.set_filename(self.value)
@@ -426,7 +429,7 @@ class DratsConfigWidget(gtk.HBox):
             else:
                 self.value = entry.get_text()
 
-        w = gtk.Entry(limit)
+        w = Gtk.Entry(limit)
         w.connect("changed", changed)
         w.set_text(self.value)
         w.set_size_request(50, -1)
@@ -442,7 +445,7 @@ class DratsConfigWidget(gtk.HBox):
         def changed(entry):
             self.value = entry.get_text().upper()
 
-        w = gtk.Entry(limit)
+        w = Gtk.Entry(limit)
         w.connect("changed", changed)
         w.set_text(self.value)
         w.set_size_request(50, -1)
@@ -455,7 +458,7 @@ class DratsConfigWidget(gtk.HBox):
         def changed(entry):
             self.value = entry.get_text()
 
-        w = gtk.Entry(limit)
+        w = Gtk.Entry(limit)
         w.connect("changed", changed)
         w.set_text(self.value)
         w.set_visibility(False)
@@ -487,7 +490,7 @@ class DratsConfigWidget(gtk.HBox):
         def toggled(but, confwidget):
             confwidget.value = str(but.get_active())
 
-        w = gtk.CheckButton(label)
+        w = Gtk.CheckButton(label)
         w.connect("toggled", toggled, self)
         w.set_active(self.value == "True")
         w.show()
@@ -521,8 +524,8 @@ class DratsConfigWidget(gtk.HBox):
         def value_changed(sb):
             self.value = "%f" % sb.get_value()
 
-        adj = gtk.Adjustment(float(self.value), min, max, increment, increment)
-        w = gtk.SpinButton(adj, digits)
+        adj = Gtk.Adjustment(float(self.value), min, max, increment, increment)
+        w = Gtk.SpinButton(adj, digits)
         w.connect("value-changed", value_changed)
         w.show()
         self._widget = w
@@ -533,8 +536,8 @@ class DratsConfigWidget(gtk.HBox):
         def color_set(but):
             self.value = color_string(but.get_color())
 
-        w = gtk.ColorButton()
-        w.set_color(gtk.gdk.color_parse(self.value))
+        w = Gtk.ColorButton()
+        w.set_color(Gtk.gdk.color_parse(self.value))
         w.connect("color-set", color_set)
         w.show()
 
@@ -544,7 +547,7 @@ class DratsConfigWidget(gtk.HBox):
         def font_set(but):
             self.value = but.get_font_name()
 
-        w = gtk.FontButton()
+        w = Gtk.FontButton()
         w.set_font_name(self.value)
         w.connect("font-set", font_set)
         w.show()
@@ -577,11 +580,11 @@ class DratsConfigWidget(gtk.HBox):
         w.connect("filename-changed", filename_changed)
         w.show()
 
-        b = gtk.Button(_("Test"), gtk.STOCK_MEDIA_PLAY)
+        b = Gtk.Button(_("Test"), Gtk.STOCK_MEDIA_PLAY)
         b.connect("clicked", test_sound)
         b.show()
 
-        box = gtk.HBox(False, 2)
+        box = Gtk.HBox(False, 2)
         box.show()
         box.pack_start(w, 1, 1, 1)
         box.pack_start(b, 0, 0, 0)
@@ -672,12 +675,12 @@ class DratsListConfigWidget(DratsConfigWidget):
             self.config.set(self.vsec, label, value)
             count += 1
 
-class DratsPanel(gtk.Table):
+class DratsPanel(Gtk.Table):
     INITIAL_ROWS = 13
     INITIAL_COLS = 2
 
     def __init__(self, config):
-        gtk.Table.__init__(self, self.INITIAL_ROWS, self.INITIAL_COLS)
+        Gtk.Table.__init__(self, self.INITIAL_ROWS, self.INITIAL_COLS)
         self.config = config
         self.vals = []
 
@@ -690,11 +693,11 @@ class DratsPanel(gtk.Table):
             print(("Resizing box to %i" % self.rows))
             self.resize(self.rows, 2)
 
-        hbox = gtk.HBox(False, 2)
+        hbox = Gtk.HBox(False, 2)
 
-        lab = gtk.Label(title)
+        lab = Gtk.Label(title)
         lab.show()
-        self.attach(lab, 0, 1, self.row, self.row+1, gtk.SHRINK, gtk.SHRINK, 5)
+        self.attach(lab, 0, 1, self.row, self.row+1, Gtk.SHRINK, Gtk.SHRINK, 5)
 
         for i in args:
             i.show()
@@ -708,7 +711,7 @@ class DratsPanel(gtk.Table):
                 hbox.pack_start(i, 0, 0, 0)
 
         hbox.show()
-        self.attach(hbox, 1, 2, self.row, self.row+1, yoptions=gtk.SHRINK)
+        self.attach(hbox, 1, 2, self.row, self.row+1, yoptions=Gtk.SHRINK)
 
         self.row += 1
 
@@ -716,17 +719,17 @@ class DratsPanel(gtk.Table):
         if len(args) % 2:
             raise Exception("Need label,widget pairs")
 
-        table = gtk.Table(len(args)/2, 2)
+        table = Gtk.Table(len(args)/2, 2)
 
         row = 0
 
-        k = { "yoptions" : gtk.SHRINK,
-              "xoptions" : gtk.SHRINK,
+        k = { "yoptions" : Gtk.SHRINK,
+              "xoptions" : Gtk.SHRINK,
               "xpadding" : 10,
               "ypadding" : 0}
 
         for i in range(0, len(args), 2):
-            label = gtk.Label(args[i])
+            label = Gtk.Label(args[i])
             widget = args[i+1]
 
             label.show()
@@ -738,7 +741,7 @@ class DratsPanel(gtk.Table):
             row += 1
 
         table.show()
-        frame = gtk.Frame(title)
+        frame = Gtk.Frame(title)
         frame.show()
         frame.add(table)
 
@@ -858,12 +861,12 @@ class DratsGPSPanel(DratsPanel):
         val2 = DratsConfigWidget(config, "settings", "aprssymbol")
         val2.add_text(1)
         self.mv(_("GPS-A Symbol"),
-                gtk.Label(_("Table:")), val1,
-                gtk.Label(_("Symbol:")), val2)
+                Gtk.Label(_("Table:")), val1,
+                Gtk.Label(_("Symbol:")), val2)
 
         val = DratsConfigWidget(config, "settings", "map_tile_ttl")
         val.add_numeric(0, 9999999999999, 1)
-        self.mv(_("Freshen map after"), val, gtk.Label(_("hours")))
+        self.mv(_("Freshen map after"), val, Gtk.Label(_("hours")))
 
         def gps_comment_from_dprs(button, val):
             from . import qst
@@ -875,7 +878,7 @@ class DratsGPSPanel(DratsPanel):
 
         val = DratsConfigWidget(config, "settings", "default_gps_comment")
         val.add_text(20)
-        but = gtk.Button(_("DPRS"))
+        but = Gtk.Button(_("DPRS"))
         but.connect("clicked", gps_comment_from_dprs, val)
         self.mv(_("Default GPS comment"), val, but)
 
@@ -981,14 +984,14 @@ class DratsRadioPanel(DratsPanel):
         widgets[0].show()
 
         if len(widgets) > 1:
-            box = gtk.HBox(True, 2)
+            box = Gtk.HBox(True, 2)
 
             for i in widgets[1:]:
                 box.pack_start(i, 0, 0, 0)
                 i.show()
 
             box.show()
-            self.attach(box, 0, 2, 1, 2, yoptions=gtk.SHRINK)
+            self.attach(box, 0, 2, 1, 2, yoptions=Gtk.SHRINK)
 
     def but_add(self, button, lw):
         name, port, info = prompt_for_port()
@@ -1016,7 +1019,7 @@ class DratsRadioPanel(DratsPanel):
                 (gobject.TYPE_BOOLEAN, _("Raw Text")),
                 (gobject.TYPE_STRING, _("Name"))]
 
-        lab = gtk.Label(_("Configure data paths below.  This may include any number of serial-attached radios and network-attached proxies."))
+        lab = Gtk.Label(_("Configure data paths below.  This may include any number of serial-attached radios and network-attached proxies."))
 
         val = DratsListConfigWidget(config, "ports")
 
@@ -1024,11 +1027,11 @@ class DratsRadioPanel(DratsPanel):
             return vals[5]
 
         lw = val.add_list(cols, make_key)
-        add = gtk.Button(_("Add"), gtk.STOCK_ADD)
+        add = Gtk.Button(_("Add"), Gtk.STOCK_ADD)
         add.connect("clicked", self.but_add, lw)
-        mod = gtk.Button(_("Edit"), gtk.STOCK_EDIT)
+        mod = Gtk.Button(_("Edit"), Gtk.STOCK_EDIT)
         mod.connect("clicked", self.but_mod, lw)
-        rem = gtk.Button(_("Remove"), gtk.STOCK_DELETE)
+        rem = Gtk.Button(_("Remove"), Gtk.STOCK_DELETE)
         rem.connect("clicked", self.but_rem, lw)
 
         val.set_sort_column(6);
@@ -1083,13 +1086,13 @@ class DratsMessagePanel(DratsPanel):
 
         val = DratsConfigWidget(config, "settings", "msg_flush")
         val.add_numeric(15, 9999, 1)
-        lab = gtk.Label(_("seconds"))
+        lab = Gtk.Label(_("seconds"))
         self.mv(_("Queue flush interval"), val, lab)
         disable_with_toggle(vala._widget, val._widget)
 
         val = DratsConfigWidget(config, "settings", "station_msg_ttl")
         val.add_numeric(0, 99999, 1)
-        lab = gtk.Label(_("seconds"))
+        lab = Gtk.Label(_("seconds"))
         self.mv(_("Station TTL"), val, lab)
         disable_with_toggle(vala._widget, val._widget)
 
@@ -1118,13 +1121,13 @@ class DratsMessagePanel(DratsPanel):
         srv.add_combo(wl2k_servers, True)
         prt = DratsConfigWidget(config, "prefs", "msg_wl2k_port")
         prt.add_numeric(1, 65535, 1)
-        lab = gtk.Label(_("Port"))
+        lab = Gtk.Label(_("Port"))
         self.mv(_("WL2K Network Server"), srv, lab, prt)
 
         rms = DratsConfigWidget(config, "prefs", "msg_wl2k_rmscall")
         rms.add_upper_text(10)
 
-        lab = gtk.Label(_(" on port "))
+        lab = Gtk.Label(_(" on port "))
 
         ports = []
         for port in self.config.options("ports"):
@@ -1150,7 +1153,7 @@ class DratsMessagePanel(DratsPanel):
 
         p3s = DratsConfigWidget(config, "settings", "msg_pop3_server")
         p3s.add_bool()
-        lab = gtk.Label(_("on port"))
+        lab = Gtk.Label(_("on port"))
         p3p = DratsConfigWidget(config, "settings", "msg_pop3_port")
         p3p.add_numeric(1, 65535, 1)
         self.mv(_("POP3 Server"), p3s, lab, p3p)
@@ -1158,7 +1161,7 @@ class DratsMessagePanel(DratsPanel):
 
         sms = DratsConfigWidget(config, "settings", "msg_smtp_server")
         sms.add_bool()
-        lab = gtk.Label(_("on port"))
+        lab = Gtk.Label(_("on port"))
         smp = DratsConfigWidget(config, "settings", "msg_smtp_port")
         smp.add_numeric(1, 65535, 1)
         self.mv(_("SMTP Server"), sms, lab, smp)
@@ -1175,14 +1178,14 @@ class DratsTCPPanel(DratsPanel):
         widgets[0].show()
 
         if len(widgets) > 1:
-            box = gtk.HBox(True, 2)
+            box = Gtk.HBox(True, 2)
 
             for i in widgets[1:]:
                 box.pack_start(i, 0, 0, 0)
                 i.show()
 
             box.show()
-            self.attach(box, 0, 2, 1, 2, yoptions=gtk.SHRINK)
+            self.attach(box, 0, 2, 1, 2, yoptions=Gtk.SHRINK)
 
     def but_rem(self, button, lw):
         lw.del_item(lw.get_selected())
@@ -1190,12 +1193,12 @@ class DratsTCPPanel(DratsPanel):
     def prompt_for(self, fields):
         d = inputdialog.FieldDialog()
         for n, t in fields:
-            d.add_field(n, gtk.Entry())
+            d.add_field(n, Gtk.Entry())
 
         ret = {}
 
         done = False
-        while not done and d.run() == gtk.RESPONSE_OK:
+        while not done and d.run() == Gtk.RESPONSE_OK:
             done = True
             for n, t in fields:
                 try:
@@ -1204,7 +1207,7 @@ class DratsTCPPanel(DratsPanel):
                         raise ValueError("empty")
                     ret[n] = t(s)
                 except ValueError as e:
-                    ed = gtk.MessageDialog(buttons=gtk.BUTTONS_OK)
+                    ed = Gtk.MessageDialog(buttons=Gtk.BUTTONS_OK)
                     ed.set_property("text",
                                     _("Invalid value for") + " %s: %s" % (n, e))
                     ed.run()
@@ -1242,9 +1245,9 @@ class DratsTCPOutgoingPanel(DratsTCPPanel):
 
         val = DratsListConfigWidget(config, "tcp_out")
         lw = val.add_list(outcols)
-        add = gtk.Button(_("Add"), gtk.STOCK_ADD)
+        add = Gtk.Button(_("Add"), Gtk.STOCK_ADD)
         add.connect("clicked", self.but_add, lw)
-        rem = gtk.Button(_("Remove"), gtk.STOCK_DELETE)
+        rem = Gtk.Button(_("Remove"), Gtk.STOCK_DELETE)
         rem.connect("clicked", self.but_rem, lw)
         self.mv(_("Outgoing"), val, add, rem)
 
@@ -1268,9 +1271,9 @@ class DratsTCPIncomingPanel(DratsTCPPanel):
 
         val = DratsListConfigWidget(config, "tcp_in")
         lw = val.add_list(incols)
-        add = gtk.Button(_("Add"), gtk.STOCK_ADD)
+        add = Gtk.Button(_("Add"), Gtk.STOCK_ADD)
         add.connect("clicked", self.but_add, lw)
-        rem = gtk.Button(_("Remove"), gtk.STOCK_DELETE)
+        rem = Gtk.Button(_("Remove"), Gtk.STOCK_DELETE)
         rem.connect("clicked", self.but_rem, lw)
         self.mv(_("Incoming"), val, add, rem)
 
@@ -1319,14 +1322,14 @@ class DratsInEmailPanel(DratsPanel):
         widgets[0].show()
 
         if len(widgets) > 1:
-            box = gtk.HBox(True, 2)
+            box = Gtk.HBox(True, 2)
 
             for i in widgets[1:]:
                 box.pack_start(i, 0, 0, 0)
                 i.show()
 
             box.show()
-            self.attach(box, 0, 2, 1, 2, yoptions=gtk.SHRINK)
+            self.attach(box, 0, 2, 1, 2, yoptions=Gtk.SHRINK)
 
     def but_rem(self, button, lw):
         lw.del_item(lw.get_selected())
@@ -1337,21 +1340,21 @@ class DratsInEmailPanel(DratsPanel):
             if n in list(self.choices.keys()):
                 w = miscwidgets.make_choice(self.choices[n], False, d)
             elif n == _("Password"):
-                w = gtk.Entry()
+                w = Gtk.Entry()
                 w.set_visibility(False)
                 w.set_text(str(d))
             elif t == bool:
-                w = gtk.CheckButton(_("Enabled"))
+                w = Gtk.CheckButton(_("Enabled"))
                 w.set_active(d)
             else:
-                w = gtk.Entry()
+                w = Gtk.Entry()
                 w.set_text(str(d))
             dlg.add_field(n, w)
 
         ret = {}
 
         done = False
-        while not done and dlg.run() == gtk.RESPONSE_OK:
+        while not done and dlg.run() == Gtk.RESPONSE_OK:
             done = True
             for n, t, d in fields:
                 try:
@@ -1365,7 +1368,7 @@ class DratsInEmailPanel(DratsPanel):
                             raise ValueError("empty")
                     ret[n] = t(v)
                 except ValueError as e:
-                    ed = gtk.MessageDialog(buttons=gtk.BUTTONS_OK)
+                    ed = Gtk.MessageDialog(buttons=Gtk.BUTTONS_OK)
                     ed.set_property("text",
                                     _("Invalid value for") + " %s: %s" % (n, e))
                     ed.run()
@@ -1469,11 +1472,11 @@ class DratsInEmailPanel(DratsPanel):
 
         lw = val.add_list(cols, make_key)
         lw.set_password(2);
-        add = gtk.Button(_("Add"), gtk.STOCK_ADD)
+        add = Gtk.Button(_("Add"), Gtk.STOCK_ADD)
         add.connect("clicked", self.but_add, lw)
-        edit = gtk.Button(_("Edit"), gtk.STOCK_EDIT)
+        edit = Gtk.Button(_("Edit"), Gtk.STOCK_EDIT)
         edit.connect("clicked", self.but_edit, lw)
-        rem = gtk.Button(_("Remove"), gtk.STOCK_DELETE)
+        rem = Gtk.Button(_("Remove"), Gtk.STOCK_DELETE)
         rem.connect("clicked", self.but_rem, lw)
 
         lw.set_sort_column(1)
@@ -1488,14 +1491,14 @@ class DratsEmailAccessPanel(DratsPanel):
         widgets[0].show()
 
         if len(widgets) > 1:
-            box = gtk.HBox(True, 2)
+            box = Gtk.HBox(True, 2)
 
             for i in widgets[1:]:
                 box.pack_start(i, 0, 0, 0)
                 i.show()
 
             box.show()
-            self.attach(box, 0, 2, 1, 2, yoptions=gtk.SHRINK)
+            self.attach(box, 0, 2, 1, 2, yoptions=Gtk.SHRINK)
 
     def but_rem(self, button, lw):
         lw.del_item(lw.get_selected())
@@ -1506,14 +1509,14 @@ class DratsEmailAccessPanel(DratsPanel):
             if n in list(self.choices.keys()):
                 w = miscwidgets.make_choice(self.choices[n], False, d)
             else:
-                w = gtk.Entry()
+                w = Gtk.Entry()
                 w.set_text(str(d))
             dlg.add_field(n, w)
 
         ret = {}
 
         done = False
-        while not done and dlg.run() == gtk.RESPONSE_OK:
+        while not done and dlg.run() == Gtk.RESPONSE_OK:
             done = True
             for n, t, d in fields:
                 try:
@@ -1529,7 +1532,7 @@ class DratsEmailAccessPanel(DratsPanel):
                             v = v.upper()
                     ret[n] = t(v)
                 except ValueError as e:
-                    ed = gtk.MessageDialog(buttons=gtk.BUTTONS_OK)
+                    ed = Gtk.MessageDialog(buttons=Gtk.BUTTONS_OK)
                     ed.set_property("text",
                                     _("Invalid value for") + "%s: %s" % (n, e))
                     ed.run()
@@ -1590,18 +1593,18 @@ class DratsEmailAccessPanel(DratsPanel):
             return "%s/%i" % (vals[0], random.randint(0, 1000))
 
         lw = val.add_list(cols, make_key)
-        add = gtk.Button(_("Add"), gtk.STOCK_ADD)
+        add = Gtk.Button(_("Add"), Gtk.STOCK_ADD)
         add.connect("clicked", self.but_add, lw)
-        edit = gtk.Button(_("Edit"), gtk.STOCK_EDIT)
+        edit = Gtk.Button(_("Edit"), Gtk.STOCK_EDIT)
         edit.connect("clicked", self.but_edit, lw)
-        rem = gtk.Button(_("Remove"), gtk.STOCK_DELETE)
+        rem = Gtk.Button(_("Remove"), Gtk.STOCK_DELETE)
         rem.connect("clicked", self.but_rem, lw)
 
         lw.set_sort_column(1)
 
         self.mv(_("Email Access"), val, add, edit, rem)
 
-class DratsConfigUI(gtk.Dialog):
+class DratsConfigUI(Gtk.Dialog):
 
     def mouse_event(self, view, event):
         x, y = event.get_coords()
@@ -1633,16 +1636,16 @@ class DratsConfigUI(gtk.Dialog):
         self.panels[selected].show()
 
     def build_ui(self):
-        hbox = gtk.HBox(False, 2)
+        hbox = Gtk.HBox(False, 2)
 
-        self.__store = gtk.TreeStore(gobject.TYPE_STRING, gobject.TYPE_STRING)
-        self.__tree = gtk.TreeView(self.__store)
+        self.__store = Gtk.TreeStore(gobject.TYPE_STRING, gobject.TYPE_STRING)
+        self.__tree = Gtk.TreeView(self.__store)
 
         hbox.pack_start(self.__tree, 0, 0, 0)
         self.__tree.set_size_request(150, -1)
         self.__tree.set_headers_visible(False)
-        rend = gtk.CellRendererText()
-        col = gtk.TreeViewColumn(None, rend, text=1)
+        rend = Gtk.CellRendererText()
+        col = Gtk.TreeViewColumn(None, rend, text=1)
         self.__tree.append_column(col)
         self.__tree.show()
         self.__tree.connect("button_press_event", self.mouse_event)
@@ -1651,8 +1654,8 @@ class DratsConfigUI(gtk.Dialog):
         def add_panel(c, s, l, par, *args):
             p = c(self.config, *args)
             p.show()
-            sw = gtk.ScrolledWindow()
-            sw.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
+            sw = Gtk.ScrolledWindow()
+            sw.set_policy(Gtk.POLICY_AUTOMATIC, Gtk.POLICY_AUTOMATIC)
             sw.add_with_viewport(p)
             hbox.pack_start(sw, 1, 1, 1)
 
@@ -1695,14 +1698,14 @@ class DratsConfigUI(gtk.Dialog):
             widget.save()
 
     def __init__(self, config, parent=None):
-        gtk.Dialog.__init__(self,
+        Gtk.Dialog.__init__(self,
                             title=_("Config"),
-                            buttons=(gtk.STOCK_SAVE, gtk.RESPONSE_OK,
-                                     gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL),
+                            buttons=(Gtk.STOCK_SAVE, Gtk.RESPONSE_OK,
+                                     Gtk.STOCK_CANCEL, Gtk.RESPONSE_CANCEL),
                             parent=parent)
         self.config = config
         self.panels = {}
-        self.tips = gtk.Tooltips()
+        self.tips = Gtk.Tooltips()
         self.build_ui()
         self.set_default_size(600, 400)
 
@@ -1738,12 +1741,12 @@ class DratsConfig(configparser.ConfigParser):
     def show(self, parent=None):
         ui = DratsConfigUI(self, parent)
         r = ui.run()
-        if r == gtk.RESPONSE_OK:
+        if r == Gtk.RESPONSE_OK:
             ui.save()
             self.save()
         ui.destroy()
 
-        return r == gtk.RESPONSE_OK
+        return r == Gtk.RESPONSE_OK
 
     def save(self):
         f = file(self.filename, "w")
@@ -1779,7 +1782,7 @@ class DratsConfig(configparser.ConfigParser):
 
     def ship_img(self, name):
         path = self.ship_obj_fn(os.path.join("images", name))
-        return gtk.gdk.pixbuf_new_from_file(path)
+        return Gtk.gdk.pixbuf_new_from_file(path)
 
 if __name__ == "__main__":
     fn = "/home/dan/.d-rats/d-rats.config"
@@ -1789,5 +1792,5 @@ if __name__ == "__main__":
     cf.widgets = []
 
     c = DratsConfigUI(cf)
-    if c.run() == gtk.RESPONSE_OK:
+    if c.run() == Gtk.RESPONSE_OK:
         c.save(fn)
