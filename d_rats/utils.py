@@ -61,13 +61,14 @@ def hexprint(data):
     line_sz = 8
     csum = 0
 
-    lines = len(data) / line_sz
+    lines = len(data) // line_sz
 
     if (len(data) % line_sz) != 0:
         lines += 1
-        data += "\x00" * ((lines * line_sz) - len(data))
+        print(line_sz, lines, data)
+        #data += "\x00" * ((lines * line_sz) - len(data))
 
-    for i in range(0, (len(data)/line_sz)):
+    for i in range(0, (len(data)//line_sz)):
 
 
         print("%03i: " % (i * line_sz), end=' ')
