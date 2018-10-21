@@ -1,5 +1,4 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
+#!/usr/bin/python
 #
 # Copyright 2009 Dan Smith <dsmith@danplanet.com>
 #
@@ -16,10 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import gi
-gi.require_version("Gtk", "3.0")
-from gi.repository import Gtk
-
+import gtk
 import gobject
 
 import time
@@ -50,14 +46,14 @@ def prompt_for_account(config):
 
     accounts["Other"] = ["", "", "", "", "", "110"]
     accounts["WL2K"] = ["@WL2K", wl2k_call, "", "", "", "0"]
-    default = list(accounts.keys())[0]
+    default = accounts.keys()[0]
 
-    account = miscwidgets.make_choice(list(accounts.keys()), False, default)
-    host = Gtk.Entry()
-    user = Gtk.Entry()
-    pasw = Gtk.Entry()
-    ussl = Gtk.CheckButton()
-    port = Gtk.SpinButton(Gtk.Adjustment(110, 1, 65535, 1), digits=0)
+    account = miscwidgets.make_choice(accounts.keys(), False, default)
+    host = gtk.Entry()
+    user = gtk.Entry()
+    pasw = gtk.Entry()
+    ussl = gtk.CheckButton()
+    port = gtk.SpinButton(gtk.Adjustment(110, 1, 65535, 1), digits=0)
 
     disable = [host, user, pasw, ussl, port]
 
@@ -84,7 +80,7 @@ def prompt_for_account(config):
     d.add_field("Port", port)
     r = d.run()
     d.destroy()
-    if r == Gtk.RESPONSE_CANCEL:
+    if r == gtk.RESPONSE_CANCEL:
         return None
 
     return host.get_text(), user.get_text(), pasw.get_text(), \
@@ -144,7 +140,7 @@ class StationsList(MainWindowTab):
                                                              _("says"),
                                                              msg))
                     self.emit("event", event)
-                print(("Result: %s" % str(result)))
+                print "Result: %s" % str(result)
             job.set_station(station)
             job.connect("state-change", log_result)
 
@@ -156,14 +152,14 @@ class StationsList(MainWindowTab):
             self._update_station_count()
         elif action == "pingall":
             stationlist = self.emit("get-station-list")
-            for port in list(stationlist.keys()):
-                print(("Doing CQCQCQ ping on port %s" % port))
+            for port in stationlist.keys():
+                print "Doing CQCQCQ ping on port %s" % port
                 self.emit("ping-station", "CQCQCQ", port)
         elif action == "reqposall":
             job = rpc.RPCPositionReport("CQCQCQ", "Position Request")
             job.set_station(".")
             stationlist = self.emit("get-station-list")
-            for port in list(stationlist.keys()):
+            for port in stationlist.keys():
                 self.emit("submit-rpc-job", job, port)
         elif action == "sendfile":
             fn = self._config.platform.gui_open_file()
@@ -186,8 +182,8 @@ class StationsList(MainWindowTab):
                         job.get_dest(),
                         result.get("version", "Unknown"),
                         result.get("os", "Unknown"))
-                    print(("Station %s reports version info: %s" % (\
-                        job.get_dest(), result)))
+                    print "Station %s reports version info: %s" % (\
+                        job.get_dest(), result)
 
                 else:
                     msg = "No version response from %s" % job.get_dest()
@@ -234,31 +230,31 @@ class StationsList(MainWindowTab):
   </popup>
 </ui>
 """
-        ag = Gtk.ActionGroup("menu")
+        ag = gtk.ActionGroup("menu")
         actions = [("ping", _("Ping"), None),
                    ("conntest", _("Test Connectivity"), None),
                    ("reqpos", _("Request Position"), None),
                    ("sendfile", _("Send file"), None),
-                   ("remove", _("Remove"), Gtk.STOCK_DELETE),
-                   ("reset", _("Reset"), Gtk.STOCK_JUMP_TO),
-                   ("version", _("Get version"), Gtk.STOCK_ABOUT),
+                   ("remove", _("Remove"), gtk.STOCK_DELETE),
+                   ("reset", _("Reset"), gtk.STOCK_JUMP_TO),
+                   ("version", _("Get version"), gtk.STOCK_ABOUT),
                    ("mcheck", _("Request mail check"), None)]
 
         for action, label, stock in actions:
-            a = Gtk.Action(action, label, None, stock)
+            a = gtk.Action(action, label, None, stock)
             a.connect("activate", self._mh, station, port)
             a.set_sensitive(station is not None)
             ag.add_action(a)
 
-        actions = [("clearall", _("Clear All"), Gtk.STOCK_CLEAR),
+        actions = [("clearall", _("Clear All"), gtk.STOCK_CLEAR),
                    ("pingall", _("Ping All Stations"), None),
                    ("reqposall", _("Request all positions"), None)]
         for action, label, stock in actions:
-            a = Gtk.Action(action, label, None, stock)
+            a = gtk.Action(action, label, None, stock)
             a.connect("activate", self._mh, station, port)
             ag.add_action(a)
 
-        uim = Gtk.UIManager()
+        uim = gtk.UIManager()
         uim.insert_action_group(ag, 0)
         uim.add_ui_from_string(xml)
 
@@ -287,19 +283,19 @@ class StationsList(MainWindowTab):
 
         frame, self.__view, = self._getw("stations_frame", "stations_view")
 
-        store = Gtk.ListStore(gobject.TYPE_STRING,  # Station
+        store = gtk.ListStore(gobject.TYPE_STRING,  # Station
                               gobject.TYPE_INT,     # Timestamp
                               gobject.TYPE_STRING,  # Message
                               gobject.TYPE_INT,     # Status
                               gobject.TYPE_STRING,  # Status message
                               gobject.TYPE_STRING)  # Port
-        store.set_sort_column_id(1, Gtk.SORT_DESCENDING)
+        store.set_sort_column_id(1, gtk.SORT_DESCENDING)
         self.__view.set_model(store)
 
         try:
             self.__view.set_tooltip_column(2)
         except AttributeError:
-            print("This version of GTK is old; disabling station tooltips")
+            print "This version of GTK is old; disabling station tooltips"
 
         self.__view.connect("button_press_event", self._mouse_cb)
 
@@ -331,8 +327,8 @@ class StationsList(MainWindowTab):
             rend.set_property("markup", "<span color='%s'>%s</span>" % (color,
                                                                         msg))
 
-        r = Gtk.CellRendererText()
-        col = Gtk.TreeViewColumn(_("Stations"), r, text=0)
+        r = gtk.CellRendererText()
+        col = gtk.TreeViewColumn(_("Stations"), r, text=0)
         col.set_cell_data_func(r, render_call)
         self.__view.append_column(col)
 
@@ -367,7 +363,7 @@ class StationsList(MainWindowTab):
         prev_status = self._config.get("state", "status_state")
         if not utils.combo_select(status, prev_status):
             utils.combo_select(status,
-                               list(station_status.get_status_msgs().values())[0])
+                               station_status.get_status_msgs().values()[0])
         msg.set_text(self._config.get("state", "status_msg"))
         set_status(status)
         set_smsg(msg)

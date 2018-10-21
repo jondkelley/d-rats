@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 import UserDict
 import struct
 import os
@@ -22,7 +20,7 @@ class FileTransferSession(stateful.StatefulSession):
     type = base.T_FILEXFER
 
     def internal_status(self, vals):
-        print("XFER STATUS: %s" % vals["msg"])
+        print "XFER STATUS: %s" % vals["msg"]
 
     def status(self, msg):
         vals = dict(self.stats)
@@ -63,7 +61,7 @@ class FileTransferSession(stateful.StatefulSession):
         f = file(filename, "wb")
         f.write(data)
         f.close()
-
+    
     def send_file(self, filename):
         data = self.get_file_data(filename)
         if not data:
@@ -72,8 +70,8 @@ class FileTransferSession(stateful.StatefulSession):
         try:
             offer = struct.pack("I", len(data)) + os.path.basename(filename)
             self.write(offer)
-        except base.SessionClosedError as e:
-            print("Session closed while sending file information")
+        except base.SessionClosedError, e:
+            print "Session closed while sending file information"
             return False
 
         self.filename = os.path.basename(filename)
@@ -81,11 +79,11 @@ class FileTransferSession(stateful.StatefulSession):
         offset = None
 
         for i in range(40):
-            print("Waiting for start")
+            print "Waiting for start"
             try:
                 resp = self.read()
-            except base.SessionClosedError as e:
-                print("Session closed while waiting for start ack")
+            except base.SessionClosedError, e:
+                print "Session closed while waiting for start ack"
                 return False
 
             if not resp:
@@ -96,21 +94,21 @@ class FileTransferSession(stateful.StatefulSession):
                 break
             elif resp.startswith("RESUME:"):
                 resume, _offset = resp.split(":", 1)
-                print("Got RESUME request at %s" % _offset)
+                print "Got RESUME request at %s" % _offset
                 try:
                     offset = int(_offset)
-                except Exception as e:
-                    print("Unable to parse RESUME value: %s" % e)
+                except Exception, e:
+                    print "Unable to parse RESUME value: %s" % e
                     offset = 0
                 self.status(_("Resuming at") + "%i" % offset)
                 break
             else:
-                print("Got unknown start: `%s'" % resp)
+                print "Got unknown start: `%s'" % resp
 
             time.sleep(0.5)
 
         if offset is None:
-            print("Did not get start response")
+            print "Did not get start response"
             return False
 
         self.stats["total_size"] = len(data) + len(offer) - offset
@@ -120,7 +118,7 @@ class FileTransferSession(stateful.StatefulSession):
             self.status("Sending")
             self.write(data[offset:], timeout=120)
         except base.SessionClosedError:
-            print("Session closed while doing write")
+            print "Session closed while doing write"
             pass
 
         sent = self.stats["sent_size"]
@@ -141,8 +139,8 @@ class FileTransferSession(stateful.StatefulSession):
         for i in range(40):
             try:
                 data = self.read()
-            except base.SessionClosedError as e:
-                print("Session closed while waiting for start")
+            except base.SessionClosedError, e:
+                print "Session closed while waiting for start"
                 return None
 
             if data:
@@ -167,7 +165,7 @@ class FileTransferSession(stateful.StatefulSession):
         if os.path.exists(partfilename):
             data = self.get_file_data(self, partfilename)
             offset = os.path.getsize(partfilename)
-            print("Part file exists, resuming at %i" % offset)
+            print "Part file exists, resuming at %i" % offset
         else:
             data = ""
             offset = 0
@@ -182,12 +180,12 @@ class FileTransferSession(stateful.StatefulSession):
 
         try:
             if offset:
-                print("Sending resume at %i" % offset)
+                print "Sending resume at %i" % offset
                 self.write("RESUME:%i" % offset)
             else:
                 self.write("OK")
-        except base.SessionClosedError as e:
-            print("Session closed while sending start ack")
+        except base.SessionClosedError, e:
+            print "Session closed while sending start ack"
             return None
 
         self.status(_("Waiting for first block"))
@@ -196,7 +194,7 @@ class FileTransferSession(stateful.StatefulSession):
             try:
                 d = self.read()
             except base.SessionClosedError:
-                print("SESSION IS CLOSED")
+                print "SESSION IS CLOSED"
                 break
 
             if d:
@@ -206,10 +204,10 @@ class FileTransferSession(stateful.StatefulSession):
         try:
             self.put_file_data(filename, data)
             if os.path.exists(partfilename):
-                print("Removing old file part")
+                print "Removing old file part"
                 os.remove(partfilename)
-        except Exception as e:
-            print("Failed to write transfer data: %s" % e)
+        except Exception, e:
+            print "Failed to write transfer data: %s" % e
             self.put_file_data(self, partfilename, data)
             return None
 
@@ -235,5 +233,5 @@ class FileTransferSession(stateful.StatefulSession):
             f = file(filename, "wb")
             f.write(data)
             f.close()
-        except zlib.error as e:
+        except zlib.error, e:
             raise e

@@ -47,34 +47,20 @@ def macos_build():
 
     APP = ['d-rats-%s.py' % DRATS_VERSION]
     shutil.copy("d-rats", APP[0])
-    DATA_FILES  = []
-    # DATA_FILES = [
-    #             #    ('../Frameworks',
-    #                #['/opt/local/lib/libpangox-1.0.0.2203.1.dylib']),
-    #               #('../Resources/pango/1.6.0/modules', ['/opt/local/lib/pango/1.6.0/modules/pango-basic-atsui.so']
-    #              # ),
-    #               ('../Resources',
-    #                ['./images/', 'ui']),
-    #               ]
+    DATA_FILES = [('../Frameworks',
+                   ['/opt/local/lib/libpangox-1.0.0.2203.1.dylib']),
+                  ('../Resources/pango/1.6.0/modules', ['/opt/local/lib/pango/1.6.0/modules/pango-basic-atsui.so']),
+                  ('../Resources',
+                   ['images', 'ui']),
+                  ]
     OPTIONS = {'argv_emulation': True, "includes" : "gtk,atk,pangocairo,cairo"}
 
     setup(
-        name="d-rats",
-        ptions={'py2app': OPTIONS},
-        description="D-RATS",
-        long_description="A communications tool for D-STAR",
-        author="Dan Smith, KK7DS",
-        author_email="kk7ds@danplanet.com",
-        packages=["d_rats", "d_rats.geopy", "d_rats.ui", "d_rats.sessions"],
-        version=DRATS_VERSION,
-        scripts=["d-rats", "d-rats_mapdownloader", "d-rats_repeater"]
-    )
-    # setup(
-    #     app=APP,
-    #     data_files=DATA_FILES,
-    #     options={'py2app': OPTIONS},
-    #     setup_requires=['py2app'],
-    #     )
+        app=APP,
+        data_files=DATA_FILES,
+        options={'py2app': OPTIONS},
+        setup_requires=['py2app'],
+        )
 
 def default_build():
     from distutils.core import setup
@@ -98,7 +84,7 @@ def default_build():
     for f in _locale_files:
         locale_files.append(("/usr/share/d-rats/%s" % os.path.dirname(f), [f]))
 
-    print("LOC: %s" % str(ui_files))
+    print ("LOC: %s" % str(ui_files))
 
     setup(
         name="d-rats",
@@ -114,14 +100,16 @@ def default_build():
                     ('/usr/share/d-rats/forms', form_files),
                     ('/usr/share/d-rats/images', image_files),
                     ('/usr/share/d-rats/ui', ui_files),
-                    ('/usr/local/share/d-rats/libexec/', ["libexec/lzhuf"]),
+                    ('/usr/share/d-rats/libexec', ["libexec/lzhuf"]),
                     ('/usr/share/man/man1', man_files),
                     ('/usr/share/doc/d-rats', ['COPYING']),
                     ] + locale_files)
-
+                    
 if sys.platform == "darwin":
     macos_build()
 elif sys.platform == "win32":
     win32_build()
 else:
     default_build()
+
+

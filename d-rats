@@ -20,9 +20,7 @@ import os
 from optparse import OptionParser
 
 import traceback
-import gi
-gi.require_version("Gtk", "3.0")
-from gi.repository import Gtk
+import gtk
 
 sys.path.insert(0, os.path.join("/usr/share", "d-rats"))
 from d_rats import utils, spell
@@ -37,13 +35,13 @@ def handle_exception(exctyp, value, tb):
     if exctyp is KeyboardInterrupt or IGNORE_ALL:
         return original_excepthook(exctyp, value, tb)
 
-    Gtk.gdk.pointer_ungrab()
-    Gtk.gdk.keyboard_ungrab()
+    gtk.gdk.pointer_ungrab()
+    gtk.gdk.keyboard_ungrab()
 
     _trace = traceback.format_exception(exctyp, value, tb)
     trace = os.linesep.join(_trace)
 
-    print(("---- GUI Exception ----\n%s\n---- End ----\n" % trace))
+    print("---- GUI Exception ----\n%s\n---- End ----\n" % trace)
 
     msg = """
 <b><big>D-RATS has encountered an error.</big></b>
@@ -54,25 +52,25 @@ If you need to ignore all additional warnings for this session, click <b>Ignore 
 """
 
     def extra(dialog):
-        dialog.add_button(_("Debug Log"), Gtk.RESPONSE_HELP);
-        dialog.add_button(_("Ignore"), Gtk.RESPONSE_CLOSE);
+        dialog.add_button(_("Debug Log"), gtk.RESPONSE_HELP);
+        dialog.add_button(_("Ignore"), gtk.RESPONSE_CLOSE);
         dialog.add_button(_("Ignore All"), -1);
-        dialog.add_button(Gtk.STOCK_QUIT, Gtk.RESPONSE_CANCEL);
-        dialog.set_default_response(Gtk.RESPONSE_CANCEL)
+        dialog.add_button(gtk.STOCK_QUIT, gtk.RESPONSE_CANCEL);
+        dialog.set_default_response(gtk.RESPONSE_CANCEL)
 
     while True:
         r = utils.make_error_dialog(msg, trace,
-                                    Gtk.BUTTONS_NONE,
-                                    Gtk.MESSAGE_ERROR,
+                                    gtk.BUTTONS_NONE,
+                                    gtk.MESSAGE_ERROR,
                                     extra=extra)
-        if r == Gtk.RESPONSE_CANCEL:
+        if r == gtk.RESPONSE_CANCEL:
             sys.exit(1)
-        elif r == Gtk.RESPONSE_CLOSE:
+        elif r == gtk.RESPONSE_CLOSE:
             break
         elif r == -1:
             IGNORE_ALL=True
             break
-        elif r == Gtk.RESPONSE_HELP:
+        elif r == gtk.RESPONSE_HELP:
             p = platform.get_platform()
             p.open_text_file(p.config_file("debug.log"))
 
@@ -126,3 +124,4 @@ if __name__ == "__main__":
         uninstall_excepthook()
         libxml2.dumpMemory()
         sys.exit(rc)
+

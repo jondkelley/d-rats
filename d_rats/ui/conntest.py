@@ -1,5 +1,4 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
+#!/usr/bin/python
 #
 # Copyright 2009 Dan Smith <dsmith@danplanet.com>
 #
@@ -16,16 +15,13 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import gi
-gi.require_version("Gtk", "3.0")
-from gi.repository import Gtk
-
+import gtk
 import gobject
 
 try:
     from gtk import Assistant as baseclass
 except ImportError:
-    print("No Assistant support")
+    print "No Assistant support"
     from d_rats.geocode_ui import baseclass
 
 if __name__ == "__main__":
@@ -40,7 +36,7 @@ def calc_watchdog(size):
     bytes_per_sec = 950 / 8           # 950 bits per second
     sec = 10 + (size / bytes_per_sec)  # Time to transmit, plus padding
 
-    print(("Waiting %i seconds for send of %i" % (sec, size)))
+    print "Waiting %i seconds for send of %i" % (sec, size)
 
     return int(sec * 1000)
 
@@ -56,7 +52,7 @@ class ConnTestAssistant(baseclass):
         }
 
     def make_start_page(self, station, port):
-        vbox = Gtk.VBox(False, 0)
+        vbox = gtk.VBox(False, 0)
 
         def set_station(entry):
             self.__station = entry.get_text()
@@ -65,21 +61,21 @@ class ConnTestAssistant(baseclass):
         def set_type(rb, type):
             self.__type = type
 
-            for v in list(self.__tests.values()):
+            for v in self.__tests.values():
                 v.hide()
             self.__tests[type].show()
 
-        box = Gtk.HBox(False, 0)
-        slb = Gtk.Label(_("Remote station:"))
+        box = gtk.HBox(False, 0)
+        slb = gtk.Label(_("Remote station:"))
         slb.show()
-        sta = Gtk.Entry(8)
+        sta = gtk.Entry(8)
         sta.set_text(station)
         sta.set_sensitive(False)
         sta.connect("changed", set_station)
         sta.show()
-        plb = Gtk.Label(_("Port:"))
+        plb = gtk.Label(_("Port:"))
         plb.show()
-        prt = Gtk.Entry()
+        prt = gtk.Entry()
         prt.set_text(port)
         prt.set_sensitive(False)
         prt.show()
@@ -90,14 +86,14 @@ class ConnTestAssistant(baseclass):
         box.show()
         vbox.pack_start(box, 0, 0, 0)
 
-        frame = Gtk.Frame("Test Type")
+        frame = gtk.Frame("Test Type")
         frame.show()
 
-        box = Gtk.VBox(False, 0)
-        rb1 = Gtk.RadioButton(None, _("Multiple fixed-size packets"))
+        box = gtk.VBox(False, 0)
+        rb1 = gtk.RadioButton(None, _("Multiple fixed-size packets"))
         rb1.connect("clicked", set_type, TEST_TYPE_FIXEDMULTI)
         rb1.show()
-        rb2 = Gtk.RadioButton(rb1, _("Gradually increasing packet sizes"))
+        rb2 = gtk.RadioButton(rb1, _("Gradually increasing packet sizes"))
         rb2.connect("clicked", set_type, TEST_TYPE_GRADMULTI)
         rb2.show()
         box.pack_start(rb1, 0, 0, 0)
@@ -119,22 +115,22 @@ class ConnTestAssistant(baseclass):
             return False
 
         for l, s, i, u in gridspec:
-            lab = Gtk.Label(l + ":")
+            lab = gtk.Label(l + ":")
             lab.show()
-            table.attach(lab, 0, 1, row, row+1, Gtk.SHRINK)
+            table.attach(lab, 0, 1, row, row+1, gtk.SHRINK)
 
-            adj = Gtk.Adjustment(s, i, u, i)
-            val = Gtk.SpinButton(adj, digits=0)
+            adj = gtk.Adjustment(s, i, u, i)
+            val = gtk.SpinButton(adj, digits=0)
             val.connect("input", set_value, l)
             val.show()
-            table.attach(val, 1, 2, row, row+1, Gtk.SHRINK)
+            table.attach(val, 1, 2, row, row+1, gtk.SHRINK)
 
             set_value(val, None, l)
 
             row += 1
 
     def make_gradmulti_settings(self):
-        table = Gtk.Table(8, 2)
+        table = gtk.Table(8, 2)
 
         rows = [
             (_("Attempts per size"), 3, 1, 10),
@@ -147,7 +143,7 @@ class ConnTestAssistant(baseclass):
         return table
 
     def make_fixedmulti_settings(self):
-        table = Gtk.Table(2, 2)
+        table = gtk.Table(2, 2)
 
         rows = [
             (_("Packet size"), 256, 128, 4096),
@@ -161,8 +157,8 @@ class ConnTestAssistant(baseclass):
         self.__tests[TEST_TYPE_FIXEDMULTI] = self.make_fixedmulti_settings()
         self.__tests[TEST_TYPE_GRADMULTI] = self.make_gradmulti_settings()
 
-        box = Gtk.VBox(False, 0)
-        for v in list(self.__tests.values()):
+        box = gtk.VBox(False, 0)
+        for v in self.__tests.values():
             box.pack_start(v, 1, 1, 1)
 
         self.__tests[TEST_TYPE_FIXEDMULTI].show()
@@ -171,21 +167,21 @@ class ConnTestAssistant(baseclass):
         return box
 
     def make_stats_table(self):
-        table = Gtk.Table(3, 4)
+        table = gtk.Table(3, 4)
 
         col = 0
         row = 0
         for i in ["", _("Sent"), _("Received"), _("Total")]:
-            lab = Gtk.Label(i)
+            lab = gtk.Label(i)
             lab.show()
             table.attach(lab, col, col+1, 0, 1)
             col += 1
 
-        lab = Gtk.Label(_("Packets"))
+        lab = gtk.Label(_("Packets"))
         lab.show()
         table.attach(lab, 0, 1, 1, 2)
 
-        lab = Gtk.Label(_("Bytes"))
+        lab = gtk.Label(_("Bytes"))
         lab.show()
         table.attach(lab, 0, 1, 2, 3)
         
@@ -198,7 +194,7 @@ class ConnTestAssistant(baseclass):
         for row in spec:
             _col = 1
             for col in row:
-                lab = Gtk.Label()
+                lab = gtk.Label()
                 lab.show()
                 self.__stats_vals[col] = lab
                 table.attach(lab, _col, _col+1, _row, _row+1)
@@ -209,28 +205,28 @@ class ConnTestAssistant(baseclass):
         return table
 
     def make_test_page(self):
-        vbox = Gtk.VBox(False, 0)
+        vbox = gtk.VBox(False, 0)
 
-        frame = Gtk.Frame(_("Status"))
-        self.__test_status = Gtk.Entry()
+        frame = gtk.Frame(_("Status"))
+        self.__test_status = gtk.Entry()
         self.__test_status.show()
         self.__test_status.set_editable(False)
         frame.add(self.__test_status)
         frame.show()
         vbox.pack_start(frame, 0, 0, 0)
 
-        frame = Gtk.Frame(_("Statistics"))
+        frame = gtk.Frame(_("Statistics"))
         frame.add(self.make_stats_table())
         frame.show()
         vbox.pack_start(frame, 1, 1, 1)
 
-        hbox = Gtk.HBox(False, 2)
+        hbox = gtk.HBox(False, 2)
 
-        self.__loss = Gtk.Label("")
+        self.__loss = gtk.Label("")
         self.__loss.show()
         hbox.pack_start(self.__loss, 0, 0, 0)
 
-        self.__prog = Gtk.ProgressBar()
+        self.__prog = gtk.ProgressBar()
         self.__prog.set_fraction(0.0)
         self.__prog.show()
         hbox.pack_start(self.__prog, 1, 1, 1)
@@ -238,7 +234,7 @@ class ConnTestAssistant(baseclass):
         hbox.show()
         vbox.pack_start(hbox)
 
-        button = Gtk.Button(_("Start"))
+        button = gtk.Button(_("Start"))
         button.connect("clicked", self.start_test)
         button.show()
         vbox.pack_start(button, 0, 0, 0)
@@ -248,7 +244,7 @@ class ConnTestAssistant(baseclass):
 
     def set_test_val(self, *pairs):
         if len(pairs) % 2:
-            print("Ack! need name=value pairs!")
+            print "Ack! need name=value pairs!"
             return
 
         for i in range(0, len(pairs), 2):
@@ -416,7 +412,7 @@ class ConnTestAssistant(baseclass):
     def exit(self, foo, response):
         self.response = response
         self.enabled = False
-        Gtk.main_quit()
+        gtk.main_quit()
 
     def __init__(self, station="", port="DEFAULT"):
         baseclass.__init__(self)
@@ -435,32 +431,32 @@ class ConnTestAssistant(baseclass):
         self.__start_page = self.make_start_page(station, port)
         self.append_page(self.__start_page)
         self.set_page_title(self.__start_page, _("Test Type"))
-        self.set_page_type(self.__start_page, Gtk.ASSISTANT_PAGE_CONTENT)
+        self.set_page_type(self.__start_page, gtk.ASSISTANT_PAGE_CONTENT)
         self.set_page_complete(self.__start_page, True)
 
         self.__settings_page = self.make_settings_page()
         self.append_page(self.__settings_page)
         self.set_page_title(self.__settings_page, _("Test Parameters"))
-        self.set_page_type(self.__settings_page, Gtk.ASSISTANT_PAGE_CONTENT)
+        self.set_page_type(self.__settings_page, gtk.ASSISTANT_PAGE_CONTENT)
         self.set_page_complete(self.__settings_page, True)
 
         self.__test_page = self.make_test_page()
         self.append_page(self.__test_page)
         self.set_page_title(self.__test_page, _("Run Test"))
-        self.set_page_type(self.__test_page, Gtk.ASSISTANT_PAGE_CONFIRM)
+        self.set_page_type(self.__test_page, gtk.ASSISTANT_PAGE_CONFIRM)
         self.set_page_complete(self.__test_page, False)
 
-        self.connect("cancel", self.exit, Gtk.RESPONSE_CANCEL)
-        self.connect("apply", self.exit, Gtk.RESPONSE_OK)
+        self.connect("cancel", self.exit, gtk.RESPONSE_CANCEL)
+        self.connect("apply", self.exit, gtk.RESPONSE_OK)
 
     def run(self):
         self.show()
         self.set_modal(True)
-        self.set_type_hint(Gtk.gdk.WINDOW_TYPE_HINT_DIALOG)
-        Gtk.main()
+        self.set_type_hint(gtk.gdk.WINDOW_TYPE_HINT_DIALOG)
+        gtk.main()
         self.hide()
 
 if __name__ == "__main__":
     a = ConnTestAssistant("KK7DS")
     a.show()
-    Gtk.main()
+    gtk.main()

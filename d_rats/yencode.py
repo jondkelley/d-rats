@@ -1,8 +1,6 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
+#!/usr/bin/python
 #
 # Copyright 2008 Dan Smith <dsmith@danplanet.com>
-# Updated 2018 Jonathan Kelley <jonkelley@gmail.com>
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -28,7 +26,7 @@ def yencode_buffer(buf, banned=None):
 
     banned += "="
     out = ""
-
+        
     for char in buf:
         if char in banned:
             out += "=" + chr((ord(char) + OFFSET) % 256)
@@ -39,7 +37,7 @@ def yencode_buffer(buf, banned=None):
 
 def ydecode_buffer(buf):
     out = ""
-
+    
     i = 0
     while i < len(buf):
         char = buf[i]

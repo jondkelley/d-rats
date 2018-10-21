@@ -1,8 +1,6 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
+#!/usr/bin/python
 #
 # Copyright 2008 Dan Smith <dsmith@danplanet.com>
-# Updated 2018 Jonathan Kelley <jonkelley@gmail.com>
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -20,14 +18,9 @@
 import os
 import sys
 import glob
+import commands
 import subprocess
-import subprocess
-import urllib.request, urllib.parse, urllib.error
-
-def import_gtk():
-    import gi
-    gi.require_version("Gtk", "3.0")
-    from gi.repository import Gtk
+import urllib
 
 def find_me():
     return sys.modules["d_rats.platform"].__file__
@@ -85,14 +78,13 @@ class Platform(object):
         return "."
 
     def gui_open_file(self, start_dir=None):
-        Gtk = import_gtk()
+        import gtk
 
-
-        dlg = Gtk.FileChooserDialog("Select a file to open",
+        dlg = gtk.FileChooserDialog("Select a file to open",
                                     None,
-                                    Gtk.FILE_CHOOSER_ACTION_OPEN,
-                                    (Gtk.STOCK_CANCEL, Gtk.RESPONSE_CANCEL,
-                                     Gtk.STOCK_OPEN, Gtk.RESPONSE_OK))
+                                    gtk.FILE_CHOOSER_ACTION_OPEN,
+                                    (gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL,
+                                     gtk.STOCK_OPEN, gtk.RESPONSE_OK))
         if start_dir and os.path.isdir(start_dir):
             dlg.set_current_folder(start_dir)
 
@@ -100,19 +92,19 @@ class Platform(object):
         fname = dlg.get_filename()
         dlg.destroy()
 
-        if res == Gtk.RESPONSE_OK:
+        if res == gtk.RESPONSE_OK:
             return fname
         else:
             return None
 
     def gui_save_file(self, start_dir=None, default_name=None):
-        Gtk = import_gtk()
+        import gtk
 
-        dlg = Gtk.FileChooserDialog("Save file as",
+        dlg = gtk.FileChooserDialog("Save file as",
                                     None,
-                                    Gtk.FILE_CHOOSER_ACTION_SAVE,
-                                    (Gtk.STOCK_CANCEL, Gtk.RESPONSE_CANCEL,
-                                     Gtk.STOCK_SAVE, Gtk.RESPONSE_OK))
+                                    gtk.FILE_CHOOSER_ACTION_SAVE,
+                                    (gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL,
+                                     gtk.STOCK_SAVE, gtk.RESPONSE_OK))
         if start_dir and os.path.isdir(start_dir):
             dlg.set_current_folder(start_dir)
 
@@ -123,18 +115,19 @@ class Platform(object):
         fname = dlg.get_filename()
         dlg.destroy()
 
-        if res == Gtk.RESPONSE_OK:
+        if res == gtk.RESPONSE_OK:
             return fname
         else:
             return None
 
     def gui_select_dir(self, start_dir=None):
-        Gtk = import_gtk()
-        dlg = Gtk.FileChooserDialog("Choose folder",
+        import gtk
+
+        dlg = gtk.FileChooserDialog("Choose folder",
                                     None,
-                                    Gtk.FILE_CHOOSER_ACTION_SELECT_FOLDER,
-                                    (Gtk.STOCK_CANCEL, Gtk.RESPONSE_CANCEL,
-                                     Gtk.STOCK_SAVE, Gtk.RESPONSE_OK))
+                                    gtk.FILE_CHOOSER_ACTION_SELECT_FOLDER,
+                                    (gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL,
+                                     gtk.STOCK_SAVE, gtk.RESPONSE_OK))
         if start_dir and os.path.isdir(start_dir):
             dlg.set_current_folder(start_dir)
 
@@ -142,7 +135,7 @@ class Platform(object):
         fname = dlg.get_filename()
         dlg.destroy()
 
-        if res == Gtk.RESPONSE_OK and os.path.isdir(fname):
+        if res == gtk.RESPONSE_OK and os.path.isdir(fname):
             return fname
         else:
             return None
@@ -158,7 +151,7 @@ class Platform(object):
 
     def retrieve_url(self, url):
         if self._connected:
-            return urllib.request.urlretrieve(url)
+            return urllib.urlretrieve(url)
 
         raise Exception("Not connected")
 
@@ -166,14 +159,14 @@ class Platform(object):
         self._connected = connected
 
     def play_sound(self, soundfile):
-        print("Sound is unsupported on this platform!")
+        print "Sound is unsupported on this platform!"
 
 class UnixPlatform(Platform):
     def __init__(self, basepath):
         if not basepath:
             basepath = os.path.abspath(os.path.join(self.default_dir(),
                                                     ".d-rats"))
-
+        
         if not os.path.isdir(basepath):
             os.mkdir(basepath)
 
@@ -204,13 +197,13 @@ class UnixPlatform(Platform):
         if pid1 == 0:
             pid2 = os.fork()
             if pid2 == 0:
-                print(("Exec'ing %s" % str(args)))
+                print "Exec'ing %s" % str(args)
                 os.execlp(args[0], *args)
             else:
                 sys.exit(0)
         else:
             os.waitpid(pid1, 0)
-            print("Exec child exited")
+            print "Exec child exited"
 
     def open_text_file(self, path):
         self._unix_doublefork_run("gedit", path)
@@ -234,7 +227,7 @@ class UnixPlatform(Platform):
         return ver
 
     def run_sync(self, command):
-        return subprocess.getstatusoutput(command)
+        return commands.getstatusoutput(command)
 
     def play_sound(self, soundfile):
         import ossaudiodev
@@ -242,16 +235,16 @@ class UnixPlatform(Platform):
 
         try:
             (t, r, c, f, b) = sndhdr.what(soundfile)
-        except Exception as e:
-            print(("Unable to determine sound header of %s: %s" % (soundfile, e)))
+        except Exception, e:
+            print "Unable to determine sound header of %s: %s" % (soundfile, e)
             return
 
         if t != "wav":
-            print(("Unable to play non-wav file %s" % soundfile))
+            print "Unable to play non-wav file %s" % soundfile
             return
 
         if b != 16:
-            print(("Unable to support strange non-16-bit audio (%i)" % b))
+            print "Unable to support strange non-16-bit audio (%i)" % b
             return
 
         dev = None
@@ -266,17 +259,17 @@ class UnixPlatform(Platform):
             f.close()
 
             dev.close()
-        except Exception as e:
-            print(("Error playing sound %s: %s" % (soundfile, e)))
-
+        except Exception, e:
+            print "Error playing sound %s: %s" % (soundfile, e)
+        
         if dev:
             dev.close()
 
 class MacOSXPlatform(UnixPlatform):
     def __init__(self, basepath):
         # We need to make sure DISPLAY is set
-        if "DISPLAY" not in os.environ:
-            print("Forcing DISPLAY for MacOS")
+        if not os.environ.has_key("DISPLAY"):
+            print "Forcing DISPLAY for MacOS"
             os.environ["DISPLAY"] = ":0"
 
         os.environ["PANGO_RC_FILE"] = "../Resources/etc/pango/pangorc"
@@ -334,7 +327,7 @@ class Win32Platform(Platform):
 
     def open_html_file(self, path):
         subprocess.Popen(["explorer", path])
-
+    
     def list_serial_ports(self):
         import win32file
         import win32con
@@ -366,8 +359,8 @@ class Win32Platform(Platform):
 
         try:
             fname, _, _ = win32gui.GetOpenFileNameW()
-        except Exception as e:
-            print(("Failed to get filename: %s" % e))
+        except Exception, e:
+            print "Failed to get filename: %s" % e
             return None
 
         return str(fname)
@@ -378,8 +371,8 @@ class Win32Platform(Platform):
 
         try:
             fname, _, _ = win32gui.GetSaveFileNameW(File=default_name)
-        except Exception as e:
-            print(("Failed to get filename: %s" % e))
+        except Exception, e:
+            print "Failed to get filename: %s" % e
             return None
 
         return str(fname)
@@ -391,8 +384,8 @@ class Win32Platform(Platform):
         try:
             pidl, _, _ = shell.SHBrowseForFolder()
             fname = shell.SHGetPathFromIDList(pidl)
-        except Exception as e:
-            print(("Failed to get directory: %s" % e))
+        except Exception, e:
+            print "Failed to get directory: %s" % e
             return None
 
         return str(fname)
@@ -438,11 +431,11 @@ if __name__ == "__main__":
     def do_test():
         __pform = get_platform()
 
-        print(("Config dir: %s" % __pform.config_dir()))
-        print(("Default dir: %s" % __pform.default_dir()))
-        print(("Log file (foo): %s" % __pform.log_file("foo")))
-        print(("Serial ports: %s" % __pform.list_serial_ports()))
-        print(("OS Version: %s" % __pform.os_version_string()))
+        print "Config dir: %s" % __pform.config_dir()
+        print "Default dir: %s" % __pform.default_dir()
+        print "Log file (foo): %s" % __pform.log_file("foo")
+        print "Serial ports: %s" % __pform.list_serial_ports()
+        print "OS Version: %s" % __pform.os_version_string()
         #__pform.open_text_file("d-rats.py")
 
         #print "Open file: %s" % __pform.gui_open_file()

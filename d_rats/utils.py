@@ -1,8 +1,5 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 #
 # Copyright 2008 Dan Smith <dsmith@danplanet.com>
-# Updated 2018 Jonathan Kelley <jonkelley@gmail.com>
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -20,27 +17,21 @@
 import re
 import os
 import tempfile
-import urllib.request, urllib.parse, urllib.error
+import urllib
 
-
-def import_gtk():
-    import gi
-    gi.require_version("Gtk", "3.0")
-    from gi.repository import Gtk
-    return Gtk
-
-from . import platform
+import platform
 
 def open_icon_map(iconfn):
-    Gtk = import_gtk()
-    if not os.path.exists(iconfn):
-        print("Icon file %s not found" % iconfn)
-        return None
+    import gtk
 
+    if not os.path.exists(iconfn):
+        print "Icon file %s not found" % iconfn
+        return None
+    
     try:
-        return Gtk.gdk.pixbuf_new_from_file(iconfn)
-    except Exception as e:
-        print("Error opening icon map %s: %s" % (iconfn, e))
+        return gtk.gdk.pixbuf_new_from_file(iconfn)
+    except Exception, e:
+        print "Error opening icon map %s: %s" % (iconfn, e)
         return None
 
 ICON_MAPS = None
@@ -62,38 +53,38 @@ def hexprint(data):
     csum = 0
 
     lines = len(data) / line_sz
-
+    
     if (len(data) % line_sz) != 0:
         lines += 1
         data += "\x00" * ((lines * line_sz) - len(data))
-
+        
     for i in range(0, (len(data)/line_sz)):
 
 
-        print("%03i: " % (i * line_sz), end=' ')
+        print "%03i: " % (i * line_sz),
 
         left = len(data) - (i * line_sz)
         if left < line_sz:
             limit = left
         else:
             limit = line_sz
-
+            
         for j in range(0,limit):
-            print("%02x " % ord(data[(i * line_sz) + j]), end=' ')
+            print "%02x " % ord(data[(i * line_sz) + j]),
             csum += ord(data[(i * line_sz) + j])
             csum = csum & 0xFF
 
-        print("  ", end=' ')
+        print "  ",
 
         for j in range(0,limit):
             char = data[(i * line_sz) + j]
 
             if ord(char) > 0x20 and ord(char) < 0x7E:
-                print("%s" % char, end=' ')
+                print "%s" % char,
             else:
-                print(".", end=' ')
+                print ".",
 
-        print("")
+        print ""
 
     return csum
 
@@ -112,36 +103,35 @@ def run_safe(f):
     def runner(*args, **kwargs):
         try:
             return f(*args, **kwargs)
-        except Exception as e:
-            print("<<<%s>>> %s" % (f, e))
+        except Exception, e:
+            print "<<<%s>>> %s" % (f, e)
             return None
 
     return runner
 
 def run_gtk_locked(f):
-    Gtk = import_gtk()
+    import gtk
 
     def runner(*args, **kwargs):
-        Gtk.gdk.threads_enter()
+        gtk.gdk.threads_enter()
         try:
             f(*args, **kwargs)
-        except Exception as e:
-            Gtk.gdk.threads_leave()
+        except Exception, e:
+            gtk.gdk.threads_leave()
             raise
 
-        Gtk.gdk.threads_leave()
+        gtk.gdk.threads_leave()
 
     return runner
 
 def run_or_error(f):
-    Gtk = import_gtk()
-
+    import gtk
     from d_rats.ui import main_common
 
     def runner(*args, **kwargs):
         try:
             f(*args, **kwargs)
-        except Exception as e:
+        except Exception, e:
             log_exception()
             main_common.display_error(_("An error occurred: ") + str(e))
 
@@ -152,15 +142,15 @@ def print_stack():
     traceback.print_stack(file=sys.stdout)
 
 def get_sub_image(iconmap, i, j, size=20):
-    Gtk = import_gtk()
+    import gtk
 
     # Account for division lines (1px per icon)
     x = (i * size) + i + 1
     y = (j * size) + j + 1
 
-    icon = Gtk.gdk.Pixbuf(Gtk.gdk.COLORSPACE_RGB, 1, 8, size, size)
+    icon = gtk.gdk.Pixbuf(gtk.gdk.COLORSPACE_RGB, 1, 8, size, size)
     iconmap.copy_area(x, y, size, size, icon, 0, 0)
-
+    
     return icon
 
 def get_icon_from_map(iconmap, symbol):
@@ -183,26 +173,24 @@ def get_icon(key):
         elif key[0] == "\\":
             set = "\\"
         else:
-            print("Unknown APRS symbol table: %s" % key[0])
+            print "Unknown APRS symbol table: %s" % key[0]
             return None
 
         key = key[1]
     elif len(key) == 1:
         set = "/"
     else:
-        print("Unknown APRS symbol: `%s'" % key)
+        print "Unknown APRS symbol: `%s'" % key
         return None
 
     try:
         return get_icon_from_map(ICON_MAPS[set], key)
-    except Exception as e:
-        print("Error cutting icon %s: %s" % (key, e))
+    except Exception, e:
+        print "Error cutting icon %s: %s" % (key, e)
         return None
 
-import io
-class NetFile(io.FileIO):
-    def __init__(self, name, mode='r+b', *args, **kwargs):
-        super(NetFile, self).__init__(uri, mode="r", buffering=1, *args, **kwargs)
+class NetFile(file):
+    def __init__(self, uri, mode="r", buffering=1):
         self.__fn = uri
         self.is_temp = False
 
@@ -214,10 +202,10 @@ class NetFile(io.FileIO):
                 self.__fn = tmpf.name
                 tmpf.close()
 
-                print("Retrieving %s -> %s" % (uri, self.__fn))
-                urllib.request.urlretrieve(uri, self.__fn)
+                print "Retrieving %s -> %s" % (uri, self.__fn)
+                urllib.urlretrieve(uri, self.__fn)
                 break
-
+        
         file.__init__(self, self.__fn, mode, buffering)
 
     def close(self):
@@ -257,23 +245,24 @@ def log_exception():
         import traceback
         import sys
 
-        print("-- Exception: --")
+        print "-- Exception: --"
         traceback.print_exc(limit=30, file=sys.stdout)
-        print("------")
+        print "------"
 
 def set_entry_hint(entry, hint, default_focused=False):
-    Gtk = import_gtk()
+    import gtk
+
     def focus(entry, event, direction):
         if direction == "out" and not entry.get_text():
             entry.set_text(hint)
-            c = Gtk.gdk.color_parse("grey")
+            c = gtk.gdk.color_parse("grey")
         elif direction == "in" and entry.get_text() == hint:
             entry.set_text("")
-            c = Gtk.gdk.color_parse("black")
+            c = gtk.gdk.color_parse("black")
         else:
             return
-        entry.modify_text(Gtk.STATE_NORMAL, c)
-
+        entry.modify_text(gtk.STATE_NORMAL, c)
+        
     entry.connect("focus-in-event", focus, "in")
     entry.connect("focus-out-event", focus, "out")
 
@@ -281,27 +270,27 @@ def set_entry_hint(entry, hint, default_focused=False):
         focus(entry, None, "out")
 
 def port_for_station(ports, station):
-    for port, stations in list(ports.items()):
+    for port, stations in ports.items():
         if station in stations:
             return port
     return None
 
 def make_error_dialog(msg, stack, buttons, type, extra):
-    Gtk = import_gtk()
-    d = Gtk.MessageDialog(buttons=buttons, type=type)
+    import gtk
+    d = gtk.MessageDialog(buttons=buttons, type=type)
 
     if extra:
         extra(d)
 
-    dvbox = Gtk.VBox(False, 3)
+    dvbox = gtk.VBox(False, 3)
 
-    sv = Gtk.TextView()
+    sv = gtk.TextView()
     sv.get_buffer().set_text(stack)
 
     dvbox.pack_start(sv, 1, 1, 1)
     sv.show()
 
-    se = Gtk.Expander(_("Details"))
+    se = gtk.Expander(_("Details"))
     se.add(dvbox)
     dvbox.show()
 
@@ -316,9 +305,9 @@ def make_error_dialog(msg, stack, buttons, type, extra):
 
 def dict_rev(target_dict, key):
     reverse = {}
-    for k,v in list(target_dict.items()):
+    for k,v in target_dict.items():
         reverse[v] = k
 
-    print("Reversed dict: %s" % reverse)
+    print "Reversed dict: %s" % reverse
 
     return reverse[key]

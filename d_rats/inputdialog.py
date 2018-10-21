@@ -1,8 +1,6 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
+#!/usr/bin/python
 #
 # Copyright 2008 Dan Smith <dsmith@danplanet.com>
-# Updated 2018 Jonathan Kelley <jonkelley@gmail.com>
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -17,28 +15,25 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import gi
-gi.require_version("Gtk", "3.0")
-from gi.repository import Gtk
+import gtk
 
+from miscwidgets import make_choice
 
-from .miscwidgets import make_choice
-
-class TextInputDialog(Gtk.Dialog):
+class TextInputDialog(gtk.Dialog):
     def respond_ok(self, *args):
-        self.response(Gtk.RESPONSE_OK)
+        self.response(gtk.RESPONSE_OK)
 
     def __init__(self, **args):
-        buttons = (Gtk.STOCK_CANCEL, Gtk.RESPONSE_CANCEL,
-                   Gtk.STOCK_OK, Gtk.RESPONSE_OK)
-        Gtk.Dialog.__init__(self, buttons=buttons, **args)
+        buttons = (gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL,
+                   gtk.STOCK_OK, gtk.RESPONSE_OK)
+        gtk.Dialog.__init__(self, buttons=buttons, **args)
 
-        self.label = Gtk.Label()
+        self.label = gtk.Label()
         self.label.set_size_request(300, 100)
         # pylint: disable-msg=E1101
         self.vbox.pack_start(self.label, 1, 1, 0)
-
-        self.text = Gtk.Entry()
+       
+        self.text = gtk.Entry()
         self.text.connect("activate", self.respond_ok, None)
         # pylint: disable-msg=E1101
         self.vbox.pack_start(self.text, 1, 1, 0)
@@ -46,15 +41,15 @@ class TextInputDialog(Gtk.Dialog):
         self.label.show()
         self.text.show()
 
-class ChoiceDialog(Gtk.Dialog):
+class ChoiceDialog(gtk.Dialog):
     editable = False
 
     def __init__(self, choices, **args):
-        buttons = (Gtk.STOCK_CANCEL, Gtk.RESPONSE_CANCEL,
-                   Gtk.STOCK_OK, Gtk.RESPONSE_OK)
-        Gtk.Dialog.__init__(self, buttons=buttons, **args)
+        buttons = (gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL,
+                   gtk.STOCK_OK, gtk.RESPONSE_OK)
+        gtk.Dialog.__init__(self, buttons=buttons, **args)
 
-        self.label = Gtk.Label()
+        self.label = gtk.Label()
         self.label.set_size_request(300, 100)
         # pylint: disable-msg=E1101
         self.vbox.pack_start(self.label, 1, 1, 0)
@@ -70,7 +65,7 @@ class ChoiceDialog(Gtk.Dialog):
         self.vbox.pack_start(self.choice, 1, 1, 0)
         self.choice.show()
 
-        self.set_default_response(Gtk.RESPONSE_OK)
+        self.set_default_response(gtk.RESPONSE_OK)
 
 class EditableChoiceDialog(ChoiceDialog):
     editable = True
@@ -80,37 +75,37 @@ class EditableChoiceDialog(ChoiceDialog):
 
         self.choice.child.set_activates_default(True)
 
-class ExceptionDialog(Gtk.MessageDialog):
+class ExceptionDialog(gtk.MessageDialog):
     def __init__(self, exception, **args):
-        Gtk.MessageDialog.__init__(self, buttons=Gtk.BUTTONS_OK, **args)
+        gtk.MessageDialog.__init__(self, buttons=gtk.BUTTONS_OK, **args)
         self.set_property("text", _("An error has occurred"))
         self.format_secondary_text(str(exception))
 
-class FieldDialog(Gtk.Dialog):
+class FieldDialog(gtk.Dialog):
     def __init__(self, **kwargs):
-        if "buttons" not in list(kwargs.keys()):
-            kwargs["buttons"] = (Gtk.STOCK_OK, Gtk.RESPONSE_OK,
-                                 Gtk.STOCK_CANCEL, Gtk.RESPONSE_CANCEL)
+        if "buttons" not in kwargs.keys():
+            kwargs["buttons"] = (gtk.STOCK_OK, gtk.RESPONSE_OK,
+                                 gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL)
 
         self.__fields = {}
 
-        Gtk.Dialog.__init__(self, **kwargs)
-        self.set_default_response(Gtk.RESPONSE_OK)
+        gtk.Dialog.__init__(self, **kwargs)
+        self.set_default_response(gtk.RESPONSE_OK)
 
         self.set_modal(True)
-        self.set_type_hint(Gtk.gdk.WINDOW_TYPE_HINT_DIALOG)
+        self.set_type_hint(gtk.gdk.WINDOW_TYPE_HINT_DIALOG)        
 
     def response(self, _):
-        print("Blocking response")
+        print "Blocking response"
         return
 
     def add_field(self, label, widget, validator=None, full=False):
         if full:
-            box = Gtk.VBox(False, 2)
+            box = gtk.VBox(False, 2)
         else:
-            box = Gtk.HBox(True, 2)
+            box = gtk.HBox(True, 2)
 
-        lab = Gtk.Label(label)
+        lab = gtk.Label(label)
         lab.show()
 
         widget.set_size_request(150, -1)
@@ -128,7 +123,7 @@ class FieldDialog(Gtk.Dialog):
             self.vbox.pack_start(box, 1, 1, 1)
         else:
             self.vbox.pack_start(box, 0, 0, 0)
-
+    
         self.__fields[label] = widget
 
     def get_field(self, label):
@@ -136,9 +131,9 @@ class FieldDialog(Gtk.Dialog):
 
 if __name__ == "__main__":
     # pylint: disable-msg=C0103
-    d = FieldDialog(buttons=(Gtk.STOCK_OK, Gtk.RESPONSE_OK))
-    d.add_field("Foo", Gtk.Entry())
+    d = FieldDialog(buttons=(gtk.STOCK_OK, gtk.RESPONSE_OK))
+    d.add_field("Foo", gtk.Entry())
     d.add_field("Bar", make_choice(["A", "B"]))
     d.run()
-    Gtk.main()
+    gtk.main()
     d.destroy()

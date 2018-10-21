@@ -1,8 +1,6 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
+#!/usr/bin/python
 #
 # Copyright 2009 Dan Smith <dsmith@danplanet.com>
-# Updated 2018 Jonathan Kelley <jonkelley@gmail.com>
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -21,15 +19,12 @@ import os
 import shutil
 from glob import glob
 
-import gi
-gi.require_version("Gtk", "3.0")
-from gi.repository import Gtk
-
+import gtk
 import gobject
 
-from . import map_sources
-from . import miscwidgets
-from . import utils
+import map_sources
+import miscwidgets
+import utils
 
 class EditorInitCancel(Exception):
     pass
@@ -45,7 +40,7 @@ class MapSourcesEditor(object):
             return
 
         r = e.run()
-        if r == Gtk.RESPONSE_OK:
+        if r == gtk.RESPONSE_OK:
             e.save()
             self.__store.append((t, e.get_source().get_name(), e))
         e.destroy()
@@ -67,19 +62,19 @@ class MapSourcesEditor(object):
         e.destroy()
 
     def _setup_view(self):
-        self.__store = Gtk.ListStore(gobject.TYPE_STRING,
+        self.__store = gtk.ListStore(gobject.TYPE_STRING,
                                      gobject.TYPE_STRING,
                                      gobject.TYPE_PYOBJECT)
         self.__view.set_model(self.__store)
 
-        c = Gtk.TreeViewColumn(_("Type"), Gtk.CellRendererText(), text=0)
+        c = gtk.TreeViewColumn(_("Type"), gtk.CellRendererText(), text=0)
         self.__view.append_column(c)
 
-        c = Gtk.TreeViewColumn(_("Name"), Gtk.CellRendererText(), text=1)
+        c = gtk.TreeViewColumn(_("Name"), gtk.CellRendererText(), text=1)
         self.__view.append_column(c)
 
     def _setup_typesel(self, wtree):
-        choice = miscwidgets.make_choice(list(SOURCE_TYPES.keys()),
+        choice = miscwidgets.make_choice(SOURCE_TYPES.keys(),
                                          False,
                                          "Static")
         choice.show()
@@ -91,9 +86,9 @@ class MapSourcesEditor(object):
     def __init__(self, config):
         fn = config.ship_obj_fn("ui/mainwindow.glade")
         if not os.path.exists(fn):
-            print(fn)
+            print fn
             raise Exception("Unable to load UI file")
-        wtree = Gtk.glade.XML(fn, "srcs_dialog", "D-RATS")
+        wtree = gtk.glade.XML(fn, "srcs_dialog", "D-RATS")
 
         self.__config = config
         self.__dialog = wtree.get_widget("srcs_dialog")
@@ -109,7 +104,7 @@ class MapSourcesEditor(object):
         editbtn.connect("clicked", self._edit)
         delbtn.connect("clicked", self._rem)
 
-        for stype, (edclass, srcclass) in list(SOURCE_TYPES.items()):
+        for stype, (edclass, srcclass) in SOURCE_TYPES.items():
             for key in srcclass.enumerate(self.__config):
                 try:
                     src = srcclass.open_source_by_name(self.__config, key)
@@ -117,9 +112,9 @@ class MapSourcesEditor(object):
                     self.__store.append((stype,
                                          sed.get_source().get_name(),
                                          sed))
-                except Exception as e:
+                except Exception, e:
                     utils.log_exception()
-                    print(("Failed to open source %s:%s" % (stype, key)))
+                    print "Failed to open source %s:%s" % (stype, key)
 
     def run(self):
         return self.__dialog.run()
@@ -134,9 +129,9 @@ class MapSourceEditor(object):
 
         fn = config.ship_obj_fn("ui/mainwindow.glade")
         if not os.path.exists(fn):
-            print(fn)
+            print fn
             raise Exception("Unable to load UI file")
-        self._wtree = Gtk.glade.XML(fn, "src_dialog", "D-RATS")
+        self._wtree = gtk.glade.XML(fn, "src_dialog", "D-RATS")
 
         self.__dialog = self._wtree.get_widget("src_dialog")
         self._name = self._wtree.get_widget("src_name")
@@ -182,7 +177,7 @@ class StaticMapSourceEditor(MapSourceEditor):
 
         MapSourceEditor.__init__(self, config, source)
 
-        label = Gtk.Label("Nothing to edit here")
+        label = gtk.Label("Nothing to edit here")
         label.show()
 
         box = self._wtree.get_widget("src_vbox")
@@ -207,15 +202,15 @@ class RiverMapSourceEditor(MapSourceEditor):
         MapSourceEditor.__init__(self, config, source)
 
         box = self._wtree.get_widget("src_vbox")
-
-        hbox = Gtk.HBox(False, 2)
+        
+        hbox = gtk.HBox(False, 2)
         hbox.show()
 
-        label = Gtk.Label(_("Sites (comma separated)"))
+        label = gtk.Label(_("Sites (comma separated)"))
         label.show()
         hbox.pack_start(label, 0, 0, 0)
 
-        self.__sites = Gtk.Entry()
+        self.__sites = gtk.Entry()
         self.__sites.show()
         _sites = [str(x) for x in source.get_sites()]
         self.__sites.set_text(",".join(_sites))
@@ -230,9 +225,9 @@ class RiverMapSourceEditor(MapSourceEditor):
         try:
             self._config.remove_option("rivers", id)
             self._config.remove_option("rivers", "%s.label" % id)
-        except Exception as e:
+        except Exception, e:
             log_exception()
-            print(("Error deleting rivers/%s: %s" % (id, e)))
+            print "Error deleting rivers/%s: %s" % (id, e)
 
     def save(self):
         if not self._config.has_section("rivers"):
@@ -254,15 +249,15 @@ class BuoyMapSourceEditor(MapSourceEditor):
         MapSourceEditor.__init__(self, config, source)
 
         box = self._wtree.get_widget("src_vbox")
-
-        hbox = Gtk.HBox(False, 2)
+        
+        hbox = gtk.HBox(False, 2)
         hbox.show()
 
-        label = Gtk.Label(_("Buoys (comma separated)"))
+        label = gtk.Label(_("Buoys (comma separated)"))
         label.show()
         hbox.pack_start(label, 0, 0, 0)
 
-        self.__sites = Gtk.Entry()
+        self.__sites = gtk.Entry()
         self.__sites.show()
         _sites = [str(x) for x in source.get_buoys()]
         self.__sites.set_text(",".join(_sites))
@@ -277,9 +272,9 @@ class BuoyMapSourceEditor(MapSourceEditor):
         try:
             self._config.remove_option("buoys", id)
             self._config.remove_option("buoys", "%s.label" % id)
-        except Exception as e:
+        except Exception, e:
             log_exception()
-            print(("Error deleting buoys/%s: %s" % (id, e)))
+            print "Error deleting buoys/%s: %s" % (id, e)
 
 
     def save(self):
@@ -297,3 +292,4 @@ SOURCE_TYPES = {
     "NWIS River" : (RiverMapSourceEditor, map_sources.MapUSGSRiverSource),
     "NBDC Buoy" : (BuoyMapSourceEditor, map_sources.MapNBDCBuoySource),
     }
+

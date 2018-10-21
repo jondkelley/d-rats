@@ -1,8 +1,6 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
+#!/usr/bin/python
 #
 # Copyright 2009 Dan Smith <dsmith@danplanet.com>
-# Updated 2018 Jonathan Kelley <jonkelley@gmail.com>
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -17,22 +15,19 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import gi
-gi.require_version("Gtk", "3.0")
-from gi.repository import Gtk
-
+import gtk
 import gobject
 
-from . import miscwidgets
-from .geopy import geocoders
+import miscwidgets
+from geopy import geocoders
 
 YID = "eHRO5K_V34FXWnljF5BJYvTc.lXh.kQ0MaJpnq3BhgaX.IJrvtd6cvGgtWEPNAb7"
 
 try:
     from gtk import Assistant as baseclass
 except ImportError:
-    print("No Gtk.Assistant support")
-    class baseclass(Gtk.MessageDialog):
+    print "No gtk.Assistant support"
+    class baseclass(gtk.MessageDialog):
         __gsignals__ = {
             "prepare" : (gobject.SIGNAL_RUN_LAST,
                          gobject.TYPE_NONE, ()),
@@ -43,7 +38,7 @@ except ImportError:
             }
 
         def __init__(self):
-            Gtk.MessageDialog.__init__(self, buttons=Gtk.BUTTONS_OK)
+            gtk.MessageDialog.__init__(self, buttons=gtk.BUTTONS_OK)
             self.set_property("text", "Unsupported")
             self.format_secondary_text("The version of GTK you're using "
                                        "is too old and does not support "
@@ -52,7 +47,7 @@ except ImportError:
 
             def close(d, r):
                 self.destroy()  # make the dialog go away
-                Gtk.main_quit() # The run method calls Gtk.main()
+                gtk.main_quit() # The run method calls gtk.main()
 
             self.connect("response", close)
 
@@ -70,14 +65,14 @@ class AddressAssistant(baseclass):
         def complete_cb(label, page):
             self.set_page_complete(page, len(label.get_text()) > 1)
 
-        vbox = Gtk.VBox(False, 0)
+        vbox = gtk.VBox(False, 0)
 
-        lab = Gtk.Label(_("Enter an address, postal code, or intersection") +\
+        lab = gtk.Label(_("Enter an address, postal code, or intersection") +\
                             ":")
         lab.show()
         vbox.pack_start(lab, 1, 1, 1)
 
-        ent = Gtk.Entry()
+        ent = gtk.Entry()
         ent.connect("changed", complete_cb, vbox)
         ent.show()
         vbox.pack_start(ent, 0, 0, 0)
@@ -99,17 +94,17 @@ class AddressAssistant(baseclass):
         return listbox
 
     def make_address_confirm_page(self):
-        vbox = Gtk.VBox(False, 0)
+        vbox = gtk.VBox(False, 0)
 
         def make_kv(key, value):
-            hbox = Gtk.HBox(False, 2)
-
-            lab = Gtk.Label(key)
+            hbox = gtk.HBox(False, 2)
+            
+            lab = gtk.Label(key)
             lab.set_size_request(100, -1)
             lab.show()
             hbox.pack_start(lab, 0, 0, 0)
 
-            lab = Gtk.Label(value)
+            lab = gtk.Label(value)
             lab.show()
             hbox.pack_start(lab, 0, 0, 0)
 
@@ -134,12 +129,12 @@ class AddressAssistant(baseclass):
             g = geocoders.Yahoo(YID)
             places = g.geocode(address, exactly_one=False)
             self.set_page_complete(page, True)
-        except Exception as e:
-            print(("Did not find `%s': %s" % (address, e)))
+        except Exception, e:
+            print "Did not find `%s': %s" % (address, e)
             places = []
             lat = lon = 0
             self.set_page_complete(page, False)
-
+        
         i = 0
         self.vals["AddressList"].set_values([])
         for place, (lat, lon) in places:
@@ -149,7 +144,7 @@ class AddressAssistant(baseclass):
         if i == -1:
             page.hide()
             self.set_current_page(self.get_current_page() + 1)
-
+        
     def prepare_conf(self, assistant, page):
         self.place, self.lat, self.lon = self.vals["AddressList"].get_selected(True)
 
@@ -161,26 +156,26 @@ class AddressAssistant(baseclass):
 
     def prepare_page(self, assistant, page):
         if page == self.sel_page:
-            print("Sel")
+            print "Sel"
             return self.prepare_sel(assistant, page)
         elif page == self.conf_page:
-            print("Conf")
+            print "Conf"
             return self.prepare_conf(assistant, page)
         elif page == self.entry_page:
-            print("Ent")
+            print "Ent"
             self.sel_page.show()
         else:
-            print("I dunno")
+            print "I dunno"
 
     def exit(self, _, response):
         self.response = response
-        Gtk.main_quit()
+        gtk.main_quit()
 
     def run(self):
         self.show()
         self.set_modal(True)
-        self.set_type_hint(Gtk.gdk.WINDOW_TYPE_HINT_DIALOG)
-        Gtk.main()
+        self.set_type_hint(gtk.gdk.WINDOW_TYPE_HINT_DIALOG)
+        gtk.main()
         self.hide()
 
         return self.response
@@ -197,25 +192,25 @@ class AddressAssistant(baseclass):
         self.entry_page = self.make_address_entry_page()
         self.append_page(self.entry_page)
         self.set_page_title(self.entry_page, _("Locate an address"))
-        self.set_page_type(self.entry_page, Gtk.ASSISTANT_PAGE_CONTENT)
+        self.set_page_type(self.entry_page, gtk.ASSISTANT_PAGE_CONTENT)
 
         self.sel_page = self.make_address_selection()
         self.append_page(self.sel_page)
         self.set_page_title(self.sel_page, _("Locations found"))
-        self.set_page_type(self.sel_page, Gtk.ASSISTANT_PAGE_CONTENT)
+        self.set_page_type(self.sel_page, gtk.ASSISTANT_PAGE_CONTENT)
 
         self.conf_page = self.make_address_confirm_page()
         self.append_page(self.conf_page)
         self.set_page_title(self.conf_page, _("Confirm address"))
-        self.set_page_type(self.conf_page, Gtk.ASSISTANT_PAGE_CONFIRM)
+        self.set_page_type(self.conf_page, gtk.ASSISTANT_PAGE_CONFIRM)
 
         self.connect("prepare", self.prepare_page)
         self.set_size_request(500, 300)
 
-        self.connect("cancel", self.exit, Gtk.RESPONSE_CANCEL)
-        self.connect("apply", self.exit, Gtk.RESPONSE_OK)
+        self.connect("cancel", self.exit, gtk.RESPONSE_CANCEL)
+        self.connect("apply", self.exit, gtk.RESPONSE_OK)
 
 if __name__ == "__main__":
     a = AddressAssistant()
     a.show()
-    Gtk.main()
+    gtk.main()

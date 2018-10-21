@@ -1,5 +1,4 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
+#!/usr/bin/python
 #
 # Copyright 2009 Dan Smith <dsmith@danplanet.com>
 #
@@ -23,13 +22,10 @@ import random
 from datetime import datetime
 
 import gobject
-import gi
-gi.require_version("Gtk", "3.0")
-from gi.repository import Gtk
-
+import gtk
 import pango
 
-from configparser import ConfigParser,DuplicateSectionError
+from ConfigParser import ConfigParser,DuplicateSectionError
 from glob import glob
 
 from d_rats.ui.main_common import MainWindowElement, MainWindowTab
@@ -57,7 +53,7 @@ class MessageFolderInfo(object):
     def __init__(self, folder_path):
         self._path = folder_path
 
-        if folder_path in _FOLDER_CACHE:
+        if _FOLDER_CACHE.has_key(folder_path):
             self._config = _FOLDER_CACHE[folder_path]
         else:
             self._config = ConfigParser()
@@ -169,7 +165,7 @@ class MessageFolderInfo(object):
         exists = os.path.exists(os.path.join(self._path, name))
         try:
             self._config.add_section(name)
-        except DuplicateSectionError as e:
+        except DuplicateSectionError, e:
             if exists:
                 raise e
 
@@ -182,7 +178,7 @@ class MessageFolderInfo(object):
 
     def rename(self, new_name):
         newpath = os.path.join(os.path.dirname(self._path), new_name)
-        print(("Renaming %s -> %s" % (self._path, newpath)))
+        print "Renaming %s -> %s" % (self._path, newpath)
         os.rename(self._path, newpath)
         self._path = newpath
 
@@ -211,7 +207,7 @@ class MessageFolders(MainWindowElement):
 
         try:
             return info.create_subfolder(os.path.basename(name))
-        except Exception as e:
+        except Exception, e:
             raise Exception("Intermediate folder of %s does not exist" % name)
 
     def create_folder(self, name):
@@ -255,7 +251,7 @@ class MessageFolders(MainWindowElement):
         for folder in BASE_FOLDERS:
             try:
                 info = self._create_folder(root, folder)
-                print((info.subfolders()))
+                print info.subfolders()
             except Exception:
                 pass
 
@@ -282,7 +278,7 @@ class MessageFolders(MainWindowElement):
             info = self.get_folder(self._get_folder_by_iter(store, iter))
             try:
                 info.delete_self()
-            except OSError as e:
+            except OSError, e:
                 display_error("Unable to delete folder: %s" % e)
                 return
             store.remove(iter)
@@ -302,7 +298,7 @@ class MessageFolders(MainWindowElement):
 
             try:
                 info.rename(new_text)
-            except Exception as e:
+            except Exception, e:
                 display_error("Unable to rename: %s" % e)
                 return
 
@@ -318,8 +314,8 @@ class MessageFolders(MainWindowElement):
     def _move_cursor(self, view, step, count):
         try:
             (store, iter) = view.get_selection().get_selected()
-        except Exception as e:
-            print(("Unable to find selected: %s" % e))
+        except Exception, e:
+            print "Unable to find selected: %s" % e
             return
 
         self.emit("user-selected-folder", self._get_folder_by_iter(store, iter))
@@ -348,18 +344,18 @@ class MessageFolders(MainWindowElement):
 
         can_del = bool(folder and (folder not in BASE_FOLDERS))
 
-        ag = Gtk.ActionGroup("menu")
-        actions = [("delete", _("Delete"), Gtk.STOCK_DELETE, can_del),
-                   ("create", _("Create"), Gtk.STOCK_NEW, True),
+        ag = gtk.ActionGroup("menu")
+        actions = [("delete", _("Delete"), gtk.STOCK_DELETE, can_del),
+                   ("create", _("Create"), gtk.STOCK_NEW, True),
                    ("rename", _("Rename"), None, can_del)]
 
         for action, label, stock, sensitive in actions:
-            a = Gtk.Action(action, label, None, stock)
+            a = gtk.Action(action, label, None, stock)
             a.set_sensitive(sensitive)
             a.connect("activate", self._mh, store, iter, view)
             ag.add_action(a)
 
-        uim = Gtk.UIManager()
+        uim = gtk.UIManager()
         uim.insert_action_group(ag, 0)
         uim.add_ui_from_string(xml)
         uim.get_widget("/menu").popup(None, None, None,
@@ -389,8 +385,8 @@ class MessageFolders(MainWindowElement):
                                 
         for record in msgs:
             fn, subj, type, read, send, recp = record.split("\0")
-            print(("Dragged %s from %s into %s" % (fn, src_folder, dst_folder)))
-            print(("  %s %s %s %s->%s" % (subj, type, read, send, recp)))
+            print "Dragged %s from %s into %s" % (fn, src_folder, dst_folder)
+            print "  %s %s %s %s->%s" % (subj, type, read, send, recp)
 
             try:
                 dst.delete(os.path.basename(fn))
@@ -416,7 +412,7 @@ class MessageFolders(MainWindowElement):
         info = self.get_folder(self._get_folder_by_iter(store, iter))
         try:
             info.rename(new_text)
-        except Exception as e:
+        except Exception, e:
             display_error("Unable to rename: %s" % e)
             return
 
@@ -428,22 +424,22 @@ class MessageFolders(MainWindowElement):
 
         folderlist, = self._getw("folderlist")
 
-        store = Gtk.TreeStore(gobject.TYPE_STRING, gobject.TYPE_OBJECT)
+        store = gtk.TreeStore(gobject.TYPE_STRING, gobject.TYPE_OBJECT)
         folderlist.set_model(store)
         folderlist.set_headers_visible(False)
         folderlist.enable_model_drag_dest([("text/d-rats_message", 0, 0)],
-                                          Gtk.gdk.ACTION_DEFAULT)
+                                          gtk.gdk.ACTION_DEFAULT)
         folderlist.connect("drag-data-received", self._dragged_to)
         folderlist.connect("button_press_event", self._mouse_cb)
         folderlist.connect_after("move-cursor", self._move_cursor)
 
-        col = Gtk.TreeViewColumn("", Gtk.CellRendererPixbuf(), pixbuf=1)
+        col = gtk.TreeViewColumn("", gtk.CellRendererPixbuf(), pixbuf=1)
         folderlist.append_column(col)
 
-        rnd = Gtk.CellRendererText()
+        rnd = gtk.CellRendererText()
         #rnd.set_property("editable", True)
         rnd.connect("edited", self._folder_rename, store)
-        col = Gtk.TreeViewColumn("", rnd, text=0)
+        col = gtk.TreeViewColumn("", rnd, text=0)
         folderlist.append_column(col)
 
         self.folder_pixbuf = self._config.ship_img("folder.png")
@@ -485,7 +481,7 @@ class MessageList(MainWindowElement):
     def open_msg(self, filename, editable, cb=None, cbdata=None):
         if not msgrouting.msg_lock(filename):
             display_error(_("Unable to open: message in use by another task"))
-            return Gtk.RESPONSE_CANCEL
+            return gtk.RESPONSE_CANCEL
 
         parent = self._wtree.get_widget("mainwindow")
         form = formgui.FormDialog(_("Form"), filename, parent=parent)
@@ -500,10 +496,10 @@ class MessageList(MainWindowElement):
             dlg.update_dst()
             msgrouting.msg_unlock(filename)
             if response in saveable_actions:
-                print(("Saving to %s" % filename))
+                print "Saving to %s" % filename
                 dlg.save_to(filename)
             else:
-                print("Not saving")
+                print "Not saving"
             dlg.destroy()
             self.refresh(filename)
             if cb:
@@ -530,17 +526,17 @@ class MessageList(MainWindowElement):
         def close_msg_cb(response, info):
             if self.current_info == info:
                 iter = self.iter_from_fn(path)
-                print(("Updating iter %s" % iter))
+                print "Updating iter %s" % iter
                 if iter:
                     self._update_message_info(iter)
             else:
-                print("Not current, not updating")
+                print "Not current, not updating"
 
         editable = "Outbox" in path or "Drafts" in path # Dirty hack
         self.open_msg(path, editable, close_msg_cb, self.current_info)
         self.current_info.set_msg_read(path, True)
         iter = self.iter_from_fn(path)
-        print(("Updating iter %s" % iter))
+        print "Updating iter %s" % iter
         if iter:
             self._update_message_info(iter)
 
@@ -566,7 +562,7 @@ class MessageList(MainWindowElement):
 
         msglist, = self._getw("msglist")
 
-        self.store = Gtk.ListStore(gobject.TYPE_OBJECT,
+        self.store = gtk.ListStore(gobject.TYPE_OBJECT,
                                    gobject.TYPE_STRING,
                                    gobject.TYPE_STRING,
                                    gobject.TYPE_STRING,
@@ -575,14 +571,14 @@ class MessageList(MainWindowElement):
                                    gobject.TYPE_BOOLEAN,
                                    gobject.TYPE_STRING)
         msglist.set_model(self.store)
-        msglist.get_selection().set_mode(Gtk.SELECTION_MULTIPLE)
-        msglist.enable_model_drag_source(Gtk.gdk.BUTTON1_MASK,
+        msglist.get_selection().set_mode(gtk.SELECTION_MULTIPLE)
+        msglist.enable_model_drag_source(gtk.gdk.BUTTON1_MASK,
                                          [("text/d-rats_message", 0, 0)],
-                                         Gtk.gdk.ACTION_DEFAULT|
-                                         Gtk.gdk.ACTION_MOVE)
+                                         gtk.gdk.ACTION_DEFAULT|
+                                         gtk.gdk.ACTION_MOVE)
         msglist.connect("drag-data-get", self._dragged_from)
 
-        col = Gtk.TreeViewColumn("", Gtk.CellRendererPixbuf(), pixbuf=0)
+        col = gtk.TreeViewColumn("", gtk.CellRendererPixbuf(), pixbuf=0)
         msglist.append_column(col)
 
         def bold_if_unread(col, rend, model, iter, cnum):
@@ -595,37 +591,37 @@ class MessageList(MainWindowElement):
                 val = val.replace(">", "&gt;")
                 rend.set_property("markup", "<b>%s</b>" % val)
 
-        r = Gtk.CellRendererText()
+        r = gtk.CellRendererText()
         r.set_property("ellipsize", pango.ELLIPSIZE_END)
-        col = Gtk.TreeViewColumn(_("Sender"), r, text=ML_COL_SEND)
+        col = gtk.TreeViewColumn(_("Sender"), r, text=ML_COL_SEND)
         col.set_cell_data_func(r, bold_if_unread, ML_COL_SEND)
         col.set_sort_column_id(ML_COL_SEND)
-        col.set_sizing(Gtk.TREE_VIEW_COLUMN_AUTOSIZE)
+        col.set_sizing(gtk.TREE_VIEW_COLUMN_AUTOSIZE)
         col.set_resizable(True)
         msglist.append_column(col)
 
-        r = Gtk.CellRendererText()
+        r = gtk.CellRendererText()
         r.set_property("ellipsize", pango.ELLIPSIZE_END)
-        col = Gtk.TreeViewColumn(_("Recipient"), r, text=ML_COL_RECP)
+        col = gtk.TreeViewColumn(_("Recipient"), r, text=ML_COL_RECP)
         col.set_cell_data_func(r, bold_if_unread, ML_COL_RECP)
         col.set_sort_column_id(ML_COL_RECP)
-        col.set_sizing(Gtk.TREE_VIEW_COLUMN_AUTOSIZE)
+        col.set_sizing(gtk.TREE_VIEW_COLUMN_AUTOSIZE)
         col.set_resizable(True)
         msglist.append_column(col)
 
-        r = Gtk.CellRendererText()
+        r = gtk.CellRendererText()
         r.set_property("ellipsize", pango.ELLIPSIZE_END)
-        col = Gtk.TreeViewColumn(_("Subject"), r, text=ML_COL_SUBJ)
+        col = gtk.TreeViewColumn(_("Subject"), r, text=ML_COL_SUBJ)
         col.set_cell_data_func(r, bold_if_unread, ML_COL_SUBJ)
         col.set_expand(True)
         col.set_sort_column_id(ML_COL_SUBJ)
-        col.set_sizing(Gtk.TREE_VIEW_COLUMN_AUTOSIZE)
+        col.set_sizing(gtk.TREE_VIEW_COLUMN_AUTOSIZE)
         col.set_resizable(True)
         msglist.append_column(col)
 
-        r = Gtk.CellRendererText()
+        r = gtk.CellRendererText()
         r.set_property("ellipsize", pango.ELLIPSIZE_END)
-        col = Gtk.TreeViewColumn(_("Type"), r, text=ML_COL_TYPE)
+        col = gtk.TreeViewColumn(_("Type"), r, text=ML_COL_TYPE)
         col.set_cell_data_func(r, bold_if_unread, ML_COL_TYPE)
         col.set_sort_column_id(ML_COL_TYPE)
         col.set_resizable(True)
@@ -639,16 +635,16 @@ class MessageList(MainWindowElement):
             else:
                 rend.set_property("markup", "<b>%s</b>" % stamp)
 
-        r = Gtk.CellRendererText()
+        r = gtk.CellRendererText()
         r.set_property("ellipsize", pango.ELLIPSIZE_END)
-        col = Gtk.TreeViewColumn(_("Date"), r, text=ML_COL_DATE)
+        col = gtk.TreeViewColumn(_("Date"), r, text=ML_COL_DATE)
         col.set_cell_data_func(r, render_date)
         col.set_sort_column_id(ML_COL_DATE)
         col.set_resizable(True)
         msglist.append_column(col)
 
         msglist.connect("row-activated", self._open_msg)
-        self.store.set_sort_column_id(ML_COL_DATE, Gtk.SORT_DESCENDING)
+        self.store.set_sort_column_id(ML_COL_DATE, gtk.SORT_DESCENDING)
 
         self.message_pixbuf = self._config.ship_img("message.png")
         self.unread_pixbuf = self._config.ship_img("msg-markunread.png")
@@ -737,7 +733,7 @@ class MessageList(MainWindowElement):
             # Same folder, or duplicate message id
             return path
 
-        print(("Moving %s -> %s" % (path, newfn)))
+        print "Moving %s -> %s" % (path, newfn)
         shutil.copy(path, newfn)
         info.delete(path)
 
@@ -780,13 +776,13 @@ class MessagesTab(MainWindowTab):
     
         if msgtype is None:
             parent = self._wtree.get_widget("mainwindow")
-            d = inputdialog.ChoiceDialog(list(forms.keys()),
+            d = inputdialog.ChoiceDialog(forms.keys(),
                                          title=_("Choose a form"),
                                          parent=parent)
             r = d.run()
             msgtype = d.choice.get_active_text()
             d.destroy()
-            if r != Gtk.RESPONSE_OK:
+            if r != gtk.RESPONSE_OK:
                 return
 
         current = self._messages.current_info.name()
@@ -804,7 +800,7 @@ class MessagesTab(MainWindowTab):
         form.save_to(newfn)
 
         def close_msg_cb(response, info):
-            if response == int(Gtk.RESPONSE_CLOSE):
+            if response == int(gtk.RESPONSE_CLOSE):
                 info.delete(newfn)
             if self._messages.current_info == info:
                 self._messages.refresh()
@@ -841,7 +837,7 @@ class MessagesTab(MainWindowTab):
                 return
     
             if len(sel) > 1:
-                print("FIXME: Warn about multiple reply")
+                print "FIXME: Warn about multiple reply"
                 return
     
             fn = sel[0]
@@ -865,14 +861,14 @@ class MessagesTab(MainWindowTab):
                     nform.set_field_value(df, xf(oldval))
                 else:
                     nform.set_field_value(df, oldval)
-        except Exception as e:
+        except Exception, e:
             log_exception()
-            print(("Failed to do reply: %s" % e))
+            print "Failed to do reply: %s" % e
             return
 
         if ";" in oform.get_path_dst():
             rpath = ";".join(reversed(oform.get_path()[:-1]))
-            print(("rpath: %s (%s)" % (rpath, oform.get_path())))
+            print "rpath: %s (%s)" % (rpath, oform.get_path())
             nform.set_path_dst(rpath)
         else:
             nform.set_path_dst(oform.get_path_src())
@@ -887,8 +883,8 @@ class MessagesTab(MainWindowTab):
 
         def close_msg_cb(response, info):
             if self._messages.current_info == info:
-                print(("Respone was %i (%i)" % (response, Gtk.RESPONSE_CANCEL)))
-                if response in [Gtk.RESPONSE_CANCEL, Gtk.RESPONSE_CLOSE]:
+                print "Respone was %i (%i)" % (response, gtk.RESPONSE_CANCEL)
+                if response in [gtk.RESPONSE_CANCEL, gtk.RESPONSE_CLOSE]:
                     info.delete(newfn)
                     self._folders.select_folder(current)
                 else:
@@ -901,8 +897,8 @@ class MessagesTab(MainWindowTab):
         if fn:
             try:
                 os.remove(fn)
-            except Exception as e:
-                print(("Unable to delete %s: %s" % (fn, e)))
+            except Exception, e:
+                print "Unable to delete %s: %s" % (fn, e)
             self._messages.refresh()
         else:
             if self._messages.current_info.name() == _("Trash"):
@@ -918,7 +914,7 @@ class MessagesTab(MainWindowTab):
                 return
     
             if len(sel) > 1:
-                print("FIXME: Warn about multiple send")
+                print "FIXME: Warn about multiple send"
                 return
     
             fn = sel[0]
@@ -930,7 +926,7 @@ class MessagesTab(MainWindowTab):
 
         stations = []
         ports = self.emit("get-station-list")
-        for slist in list(ports.values()):
+        for slist in ports.values():
             stations += slist
 
         if recip in stations:
@@ -975,7 +971,7 @@ class MessagesTab(MainWindowTab):
             return
 
         if len(sel) > 1:
-            print("FIXME: Warn about multiple send")
+            print "FIXME: Warn about multiple send"
             return
         elif len(sel) == 0:
             return
@@ -993,9 +989,9 @@ class MessagesTab(MainWindowTab):
         self.emit("trigger-msg-router", account)
 
     def _make_sndrcv_menu(self):
-        menu = Gtk.Menu()
+        menu = gtk.Menu()
 
-        mi = Gtk.MenuItem("Outbox")
+        mi = gtk.MenuItem("Outbox")
         try:
             mi.set_tooltip_text("Send messages in the Outbox")
         except AttributeError:
@@ -1004,7 +1000,7 @@ class MessagesTab(MainWindowTab):
         mi.show()
         menu.append(mi)
 
-        mi = Gtk.MenuItem("WL2K")
+        mi = gtk.MenuItem("WL2K")
         try:
             mi.set_tooltip_text("Check Winlink messages")
         except AttributeError:
@@ -1016,7 +1012,7 @@ class MessagesTab(MainWindowTab):
         for section in self._config.options("incoming_email"):
             info = self._config.get("incoming_email", section).split(",")
             lab = "%s on %s" % (info[1], info[0])
-            mi = Gtk.MenuItem(lab)
+            mi = gtk.MenuItem(lab)
             try:
                 mi.set_tooltip_text("Check for new mail on this account")
             except AttributeError:
@@ -1028,13 +1024,13 @@ class MessagesTab(MainWindowTab):
         return menu
 
     def _make_new_menu(self):
-        menu = Gtk.Menu()
+        menu = gtk.Menu()
 
         td = self._config.form_source_dir()
         for i in sorted(glob(os.path.join(td, "*.xml"))):
             msgtype = os.path.basename(i).replace(".xml", "")
             label = msgtype.replace("_", " ")
-            mi = Gtk.MenuItem(label)
+            mi = gtk.MenuItem(label)
             try:
                 mi.set_tooltip_text("Create a new %s form" % label)
             except AttributeError:
@@ -1079,11 +1075,11 @@ class MessagesTab(MainWindowTab):
 
         c = 0
         for i, l, f in buttons:
-            icon = Gtk.Image()
+            icon = gtk.Image()
             icon.set_from_pixbuf(self._config.ship_img(i))
             icon.show()
-            if i in menus:
-                item = Gtk.MenuToolButton(icon, l)
+            if menus.has_key(i):
+                item = gtk.MenuToolButton(icon, l)
                 item.set_menu(menus[i])
                 try:
                     item.set_arrow_tooltip_text("%s %s %s" % (_("More"),
@@ -1092,10 +1088,10 @@ class MessagesTab(MainWindowTab):
                 except AttributeError:
                     pass
             else:
-                item = Gtk.ToolButton(icon, l)
+                item = gtk.ToolButton(icon, l)
             item.show()
             item.connect("clicked", f)
-            if l in tips:
+            if tips.has_key(l):
                 try:
                     item.set_tooltip_text(tips[l])
                 except AttributeError:
@@ -1134,13 +1130,13 @@ class MessagesTab(MainWindowTab):
         if fn in files:
             sent = self._folders.get_folder(_("Sent"))
             newfn = sent.create_msg(os.path.basename(fn))
-            print(("Moving %s -> %s" % (fn, newfn)))
+            print "Moving %s -> %s" % (fn, newfn)
             shutil.copy(fn, newfn)
             outbox.delete(fn)
             self.refresh_if_folder(_("Outbox"))
             self.refresh_if_folder(_("Sent"))
         else:
-            print(("Form %s sent but not in outbox" % os.path.basename(fn)))
+            print "Form %s sent but not in outbox" % os.path.basename(fn)
 
     def get_shared_messages(self, for_station):
         """Return a list of (title, stamp, filename) forms destined

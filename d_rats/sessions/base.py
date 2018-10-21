@@ -1,5 +1,4 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
+#!/usr/bin/python
 #
 # Copyright 2009 Dan Smith <dsmith@danplanet.com>
 #
@@ -66,7 +65,7 @@ class Session(object):
         return self.inq.dequeue_all()
 
     def close(self, force=False):
-        print("Got close request")
+        print "Got close request"
         if force:
             self.state = ST_CLSD
 

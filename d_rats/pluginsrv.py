@@ -1,8 +1,6 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
+#!/usr/bin/python
 #
 # Copyright 2009 Dan Smith <dsmith@danplanet.com>
-# Updated 2018 Jonathan Kelley <jonkelley@gmail.com>
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -19,12 +17,12 @@
 
 import os
 import threading
-from xmlrpc.server import SimpleXMLRPCServer
+from SimpleXMLRPCServer import SimpleXMLRPCServer
 
 import gobject
 
-from . import signals
-from . import utils
+import signals
+import utils
 from d_rats.sessions import rpc
 
 class DRatsChatEvent(object):
@@ -77,7 +75,7 @@ class DRatsPluginProxy(gobject.GObject):
 
     def send_chat(self, port, message):
         """Send a chat @message on @port"""
-        print(("Sending chat on port %s: %s" % (port, message)))
+        print "Sending chat on port %s: %s" % (port, message)
         self.emit("user-send-chat", "CQCQCQ", port, message, False)
 
         return 0
@@ -85,7 +83,7 @@ class DRatsPluginProxy(gobject.GObject):
     def list_ports(self):
         """Return a list of port names"""
         slist = self.emit("get-station-list")
-        return list(slist.keys())
+        return slist.keys()
 
     def send_file(self, station, filename, port=None):
         """Send a file to @station specified by @filename on optional port.
@@ -97,7 +95,7 @@ class DRatsPluginProxy(gobject.GObject):
 
         sname = os.path.basename(filename)
 
-        print(("Sending file %s to %s on port %s" % (filename, station, port)))
+        print "Sending file %s to %s on port %s" % (filename, station, port)
         self.emit("user-send-file", station, port, filename, sname)
 
         return 0
@@ -132,7 +130,7 @@ class DRatsPluginProxy(gobject.GObject):
     def get_result(self, ident):
         """Get the result of job @ident.  Returns a structure, empty until
         completion"""
-        if ident in self.__persist:
+        if self.__persist.has_key(ident):
             result = self.__persist[ident]
             del self.__persist[ident]
         else:
@@ -144,7 +142,7 @@ class DRatsPluginProxy(gobject.GObject):
         """Wait for a chat message for @timeout seconds.  Optional filter
         @src_station avoids returning until a chat message from that
         station is received"""
-
+        
         ev = DRatsChatEvent(src_station)
         self.__events["chat"].append(ev)
         ev.wait(timeout)
@@ -170,7 +168,7 @@ class DRatsPluginServer(SimpleXMLRPCServer):
         self.__thread = None
 
         self.__proxy = DRatsPluginProxy()
-
+            
         self.register_function(self.__proxy.send_chat, "send_chat")
         self.register_function(self.__proxy.list_ports, "list_ports")
         self.register_function(self.__proxy.send_file, "send_file")
@@ -182,8 +180,8 @@ class DRatsPluginServer(SimpleXMLRPCServer):
         self.__thread = threading.Thread(target=self.serve_forever)
         self.__thread.setDaemon(True)
         self.__thread.start()
-        print("Started serve_forever() thread")
-
+        print "Started serve_forever() thread"
+                               
     def incoming_chat_message(self, *args):
         self.__proxy.incoming_chat_message(*args)
 

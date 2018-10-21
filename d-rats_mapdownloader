@@ -1,9 +1,6 @@
 #!/usr/bin/python
 
-
-import gi
-gi.require_version("Gtk", "3.0")
-from gi.repository import Gtk
+import gtk
 import gobject
 import threading
 import time
@@ -27,21 +24,21 @@ for x in range(ZOOM_MIN, ZOOM_MAX+1):
     dist = distance.distance((x1, y1), (x2, y1)).miles * 5
     ZOOMS["%.1f (" %dist + _("max zoom") + " %i)" % x] = x
 
-class MapDownloader(Gtk.Window):
+class MapDownloader(gtk.Window):
     def make_info(self):
         text = """
 This is the D-RATS map download utility.  It will attempt to fetch all of the required tiles for a given center location and desired diameter. The diameter is determined by the zoom level limit.  All zoom levels below the one selected are fetched.  D-RATS defaults to zoom level 14, so it is recommended that you choose at least that level to fetch.  This operation fetches a lot of small files and can take quite a long time."""
 
-        l = Gtk.Label(text)
+        l = gtk.Label(text)
         l.set_line_wrap(True)
         l.show()
 
         return l
 
     def make_val(self, key, label):
-        box = Gtk.HBox(True, 2)
+        box = gtk.HBox(True, 2)
 
-        l = Gtk.Label(label)
+        l = gtk.Label(label)
         l.show()
 
         e = miscwidgets.LatLonEntry()
@@ -61,18 +58,18 @@ This is the D-RATS map download utility.  It will attempt to fetch all of the re
         max = ZOOM_MAX
         default = 14
 
-        box = Gtk.HBox(True, 2)
+        box = gtk.HBox(True, 2)
 
-        l = Gtk.Label(label)
+        l = gtk.Label(label)
         l.show()
 
         def byval(x, y):
             try:
                 return int(float(x.split(" ")[0]) - float(y.split(" ")[0]))
-            except Exception as e:
+            except Exception, e:
                 return 0
 
-        choices = sorted(list(ZOOMS.keys()), cmp=byval)
+        choices = sorted(ZOOMS.keys(), cmp=byval)
         c = miscwidgets.make_choice(choices, False, choices[2])
         c.show()
 
@@ -86,9 +83,9 @@ This is the D-RATS map download utility.  It will attempt to fetch all of the re
         return box
 
     def build_bounds(self):
-        frame = Gtk.Frame("Bounds")
+        frame = gtk.Frame("Bounds")
 
-        box = Gtk.VBox(True, 2)
+        box = gtk.VBox(True, 2)
 
         self.val_keys = { "lat" : _("Latitude"),
                           "lon" : _("Longitude"),
@@ -132,7 +129,7 @@ This is the D-RATS map download utility.  It will attempt to fetch all of the re
             if self.enabled:
                 self.download_zoom(tick, zoom + 1, *i)
 
-        print("Downloading %i:%i,%i" % (zoom, x, y))
+        print "Downloading %i:%i,%i" % (zoom, x, y)
         t = mapdisplay.MapTile(0, 0, zoom)
         t.x = x
         t.y = y
@@ -150,7 +147,7 @@ This is the D-RATS map download utility.  It will attempt to fetch all of the re
         center = mapdisplay.MapTile(lat, lon, zoom)
 
         self.count = 0
-
+        
         # The number of tiles $levels below zoom is 4^($levels)
         # Each zoom level has a tile as well, so there are
         # 4^$level under each zoom level, not counting the last
@@ -186,14 +183,14 @@ This is the D-RATS map download utility.  It will attempt to fetch all of the re
         self.enabled = False
 
     def show_field_error(self, field):
-        d = Gtk.MessageDialog(buttons=Gtk.BUTTONS_OK, parent=self)
+        d = gtk.MessageDialog(buttons=gtk.BUTTONS_OK, parent=self)
         d.set_property("text", _("Invalid value for") + " `%s'" % field)
 
         d.run()
         d.destroy()
 
     def show_range_error(self, field):
-        d = Gtk.MessageDialog(buttons=Gtk.BUTTONS_OK, parent=self)
+        d = gtk.MessageDialog(buttons=gtk.BUTTONS_OK, parent=self)
         d.set_property("text", _("Invalid range for") + " %s" % field)
         d.run()
         d.destroy()
@@ -201,27 +198,27 @@ This is the D-RATS map download utility.  It will attempt to fetch all of the re
     def do_start(self, widget, data=None):
         vals = {}
 
-        for k,e in list(self.vals.items()):
+        for k,e in self.vals.items():
             try:
                 if "zoom" in k:
                     dia = e.get_active_text()
                     vals[k] = ZOOMS[dia]
                 else:
                     vals[k] = e.value()
-            except ValueError as e:
+            except ValueError, e:
                 self.show_field_error(self.val_keys[k])
                 return
 
-        print("Zoom is %i" % vals["zoom"])
+        print "Zoom is %i" % vals["zoom"]
 
         self.start_button.set_sensitive(False)
         self.stop_button.set_sensitive(True)
 
-        print("Starting")
+        print "Starting"
         self.thread = threading.Thread(target=self.download_thread, kwargs=vals)
         self.thread.setDaemon(True)
-        self.thread.start()
-        print("Started")
+        self.thread.start()        
+        print "Started"
 
     def do_stop(self, widget, data=None):
         self.start_button.set_sensitive(True)
@@ -231,14 +228,14 @@ This is the D-RATS map download utility.  It will attempt to fetch all of the re
         self.thread.join()
 
     def make_control_buttons(self):
-        box = Gtk.HBox(True, 2)
+        box = gtk.HBox(True, 2)
 
-        self.start_button = Gtk.Button(_("Start"))
+        self.start_button = gtk.Button(_("Start"))
         self.start_button.set_size_request(75, 30)
         self.start_button.connect("clicked", self.do_start)
         self.start_button.show()
 
-        self.stop_button = Gtk.Button(_("Stop"))
+        self.stop_button = gtk.Button(_("Stop"))
         self.stop_button.set_size_request(75, 30)
         self.stop_button.set_sensitive(False)
         self.stop_button.connect("clicked", self.do_stop)
@@ -250,16 +247,16 @@ This is the D-RATS map download utility.  It will attempt to fetch all of the re
         box.show()
 
         return box
-
+    
     def build_controls(self):
-        frame = Gtk.Frame(_("Controls"))
+        frame = gtk.Frame(_("Controls"))
 
-        box = Gtk.VBox(False, 2)
+        box = gtk.VBox(False, 2)
 
-        self.progbar = Gtk.ProgressBar()
+        self.progbar = gtk.ProgressBar()
         self.progbar.show()
 
-        self.status = Gtk.Label("")
+        self.status = gtk.Label("")
         self.status.show()
 
         box.pack_start(self.progbar, 0,0,0)
@@ -274,7 +271,7 @@ This is the D-RATS map download utility.  It will attempt to fetch all of the re
         return frame
 
     def build_gui(self):
-        box = Gtk.VBox(False, 2)
+        box = gtk.VBox(False, 2)
 
         box.pack_start(self.make_info())
         box.pack_start(self.build_bounds())
@@ -285,12 +282,12 @@ This is the D-RATS map download utility.  It will attempt to fetch all of the re
         return box
 
     def __init__(self, title=_("Map Download Utility")):
-        Gtk.Window.__init__(self, Gtk.WINDOW_TOPLEVEL)
+        gtk.Window.__init__(self, gtk.WINDOW_TOPLEVEL)
 
         self.set_title(title)
 
         self.vals = {}
-        self.enabled = False
+        self.enabled = False        
         self.thread = None
         self.completed = False
 
@@ -300,7 +297,7 @@ if __name__=="__main__":
     gobject.threads_init()
 
     def stop(*args):
-        Gtk.main_quit()
+        gtk.main_quit()
 
     w = MapDownloader()
     w.connect("destroy", stop)
@@ -308,4 +305,4 @@ if __name__=="__main__":
 
     w.show()
 
-    Gtk.main()
+    gtk.main()

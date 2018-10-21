@@ -1,9 +1,8 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
+#!/usr/bin/python
 
 import os
 import math
-import urllib.request, urllib.parse, urllib.error
+import urllib
 import time
 import random
 import shutil
@@ -11,25 +10,22 @@ import tempfile
 import threading
 import copy
 
-import gi
-gi.require_version("Gtk", "3.0")
-from gi.repository import Gtk
-
+import gtk
 import gobject
 
-from . import mainapp
-from . import platform
-from . import miscwidgets
-from . import inputdialog
-from . import utils
-from . import geocode_ui
-from . import map_sources
-from . import map_source_editor
-from . import signals
+import mainapp
+import platform
+import miscwidgets
+import inputdialog
+import utils
+import geocode_ui
+import map_sources
+import map_source_editor
+import signals
 
-from .ui.main_common import ask_for_confirmation
+from ui.main_common import ask_for_confirmation
 
-from .gps import GPSPosition, distance, value_with_units, DPRS_TO_APRS
+from gps import GPSPosition, distance, value_with_units, DPRS_TO_APRS
 
 CROSSHAIR = "+"
 
@@ -75,7 +71,7 @@ def fetch_url(url, local):
     else:
         proxies = None
 
-    data = urllib.request.urlopen(url, proxies=proxies)
+    data = urllib.urlopen(url, proxies=proxies)
     local_file = file(local, "wb")
     d = data.read()
     local_file.write(d)
@@ -93,11 +89,11 @@ class MarkerEditDialog(inputdialog.FieldDialog):
                 self.icons.append((icon, sym))
 
         self.add_field(_("Group"), miscwidgets.make_choice([], True))
-        self.add_field(_("Name"), Gtk.Entry())
+        self.add_field(_("Name"), gtk.Entry())
         self.add_field(_("Latitude"), miscwidgets.LatLonEntry())
         self.add_field(_("Longitude"), miscwidgets.LatLonEntry())
-        self.add_field(_("Lookup"), Gtk.Button("By Address"))
-        self.add_field(_("Comment"), Gtk.Entry())
+        self.add_field(_("Lookup"), gtk.Button("By Address"))
+        self.add_field(_("Comment"), gtk.Entry())
         self.add_field(_("Icon"), miscwidgets.make_pixbuf_choice(self.icons))
 
         self._point = None
@@ -129,20 +125,20 @@ class MarkerEditDialog(inputdialog.FieldDialog):
                 iidx = symlist.index(point.get_aprs_symbol())
                 iconsel.set_active(iidx)
             except ValueError:
-                print(("No such symbol `%s'" % point.get_aprs_symbol()))
+                print "No such symbol `%s'" % point.get_aprs_symbol()
 
         else:
             iconsel.set_sensitive(False)
 
         self._point = point
-
+                       
     def get_point(self):
         name = self.get_field(_("Name")).get_text()
         lat = self.get_field(_("Latitude")).value()
         lon = self.get_field(_("Longitude")).value()
         comment = self.get_field(_("Comment")).get_text()
         idx = self.get_field(_("Icon")).get_active()
-
+        
         self._point.set_name(name)
         self._point.set_latitude(lat)
         self._point.set_longitude(lon)
@@ -214,8 +210,8 @@ class MapTile(object):
                 try:
                     fetch_url(url, self._local_path())
                     return True
-                except Exception as e:
-                    print(("[%i] Failed to fetch `%s': %s" % (i, url, e)))
+                except Exception, e:
+                    print "[%i] Failed to fetch `%s': %s" % (i, url, e)
 
             return False
         else:
@@ -228,7 +224,7 @@ class MapTile(object):
             fname = None
 
         gobject.idle_add(cb, fname, *args)
-
+        
     def threaded_fetch(self, cb, *args):
         _args = (cb,) + args
         t = threading.Thread(target=self._thread, args=_args)
@@ -290,7 +286,7 @@ class MapTile(object):
 class LoadContext(object):
     pass
 
-class MapWidget(Gtk.DrawingArea):
+class MapWidget(gtk.DrawingArea):
     __gsignals__ = {
         "redraw-markers" : (gobject.SIGNAL_RUN_LAST,
                             gobject.TYPE_NONE,
@@ -343,7 +339,7 @@ class MapWidget(Gtk.DrawingArea):
     def latlon2xy(self, lat, lon):
         y = 1- ((lat - self.lat_min) / (self.lat_max - self.lat_min))
         x = 1- ((lon - self.lon_min) / (self.lon_max - self.lon_min))
-
+        
         x *= (self.tilesize * self.width)
         y *= (self.tilesize * self.height)
 
@@ -355,7 +351,7 @@ class MapWidget(Gtk.DrawingArea):
 
         lon = 1 - (float(x) / (self.tilesize * self.width))
         lat = 1 - (float(y) / (self.tilesize * self.height))
-
+        
         lat = (lat * (self.lat_max - self.lat_min)) + self.lat_min
         lon = (lon * (self.lon_max - self.lon_min)) + self.lon_min
 
@@ -393,7 +389,7 @@ class MapWidget(Gtk.DrawingArea):
         topleft = center + (-2, -2)
         botright = center + (2, 2)
         (self.lat_min, _, _, self.lon_min) = botright.tile_edges()
-        (_, self.lon_max, self.lat_max, _) = topleft.tile_edges()
+        (_, self.lon_max, self.lat_max, _) = topleft.tile_edges()        
 
         # I have no idea why, but for some reason we can calculate the
         # longitude (x) just fine, but not the latitude (y).  The result
@@ -414,14 +410,14 @@ class MapWidget(Gtk.DrawingArea):
         x, y = self.latlon2xy(n, w)
         self.lat_fudge = ((self.height / 2) * self.tilesize) - y
         if False:
-            print("------ Bounds Calculation ------")
-            print(("Center tile should be at %i,%i" % (\
+            print "------ Bounds Calculation ------"
+            print "Center tile should be at %i,%i" % (\
                 (self.height/2) * self.tilesize,
-                (self.width/2) * self.tilesize)))
-            print(("We calculate it based on Lat,Lon to be %i, %i" % (x, y)))
-            print("--------------------------------")
-        print(("Latitude Fudge Factor: %i (zoom %i)" % (self.lat_fudge,
-                                                       self.zoom)))
+                (self.width/2) * self.tilesize)
+            print "We calculate it based on Lat,Lon to be %i, %i" % (x, y)
+            print "--------------------------------"
+        print "Latitude Fudge Factor: %i (zoom %i)" % (self.lat_fudge,
+                                                       self.zoom)
 
     def broken_tile(self):
         if self.__broken_tile:
@@ -450,9 +446,9 @@ class MapWidget(Gtk.DrawingArea):
             "xx             xx   XXXX   X    X   X   X    X  "
             ]
 
-        # return Gtk.gdk.pixbuf_new_from_xpm_data(broken)
-        pm = Gtk.gdk.pixmap_create_from_xpm_d(self.window, None, broken)[0]
-        pb = Gtk.gdk.Pixbuf(Gtk.gdk.COLORSPACE_RGB,
+        # return gtk.gdk.pixbuf_new_from_xpm_data(broken)
+        pm = gtk.gdk.pixmap_create_from_xpm_d(self.window, None, broken)[0]
+        pb = gtk.gdk.Pixbuf(gtk.gdk.COLORSPACE_RGB,
                             False,
                             8,
                             self.tilesize, self.tilesize)
@@ -463,7 +459,7 @@ class MapWidget(Gtk.DrawingArea):
         pb.get_from_drawable(pm, pm.get_colormap(), 0, 0, x, y, -1, -1)
 
         self.__broken_tile = pb
-
+        
         return pb
 
     def draw_tile(self, path, x, y, ctx=None):
@@ -474,8 +470,8 @@ class MapWidget(Gtk.DrawingArea):
         gc = self.pixmap.new_gc()
         if path:
             try:
-                pb = Gtk.gdk.pixbuf_new_from_file(path)
-            except Exception as e:
+                pb = gtk.gdk.pixbuf_new_from_file(path)
+            except Exception, e:
                 utils.log_exception()
                 pb = self.broken_tile()
         else:
@@ -516,10 +512,10 @@ class MapWidget(Gtk.DrawingArea):
             return
 
         try:
-            self.pixmap = Gtk.gdk.Pixmap(self.window,
+            self.pixmap = gtk.gdk.Pixmap(self.window,
                                          self.width * self.tilesize,
                                          self.height * self.tilesize)
-        except Exception as e:
+        except Exception, e:
             # Window is not loaded, thus can't load tiles
             return
 
@@ -532,7 +528,7 @@ class MapWidget(Gtk.DrawingArea):
                     message = _("Retrieving")
                 else:
                     message = _("Loading")
-
+               
                 if tile.is_local():
                     path = tile._local_path()
                     self.draw_tile(tile._local_path(),
@@ -566,13 +562,13 @@ class MapWidget(Gtk.DrawingArea):
             width = bounds[2] - bounds[0]
             height = bounds[3] - bounds[1]
 
-        pb = Gtk.gdk.Pixbuf(Gtk.gdk.COLORSPACE_RGB, False, 8, width, height)
+        pb = gtk.gdk.Pixbuf(gtk.gdk.COLORSPACE_RGB, False, 8, width, height)
         pb.get_from_drawable(self.pixmap, self.pixmap.get_colormap(),
                              x, y, 0, 0, width, height)
         pb.save(filename, "png")
 
     def __init__(self, width, height, tilesize=256, status=None):
-        Gtk.DrawingArea.__init__(self)
+        gtk.DrawingArea.__init__(self)
 
         self.__broken_tile = None
 
@@ -618,7 +614,7 @@ class MapWidget(Gtk.DrawingArea):
         shift = 15
         tick = 5
 
-        #rect = Gtk.gdk.Rectangle(x-pixels,y-shift-tick,x,y)
+        #rect = gtk.gdk.Rectangle(x-pixels,y-shift-tick,x,y)
         #self.window.invalidate_rect(rect, True)
 
         (lat_a, lon_a) = self.xy2latlon(self.tilesize, self.tilesize)
@@ -639,7 +635,7 @@ class MapWidget(Gtk.DrawingArea):
 
         pl = self.create_pango_layout("")
         pl.set_markup("%s" % dist)
-        self.window.draw_layout(gc, x-pixels, y-shift, pl)
+        self.window.draw_layout(gc, x-pixels, y-shift, pl)        
 
     def point_is_visible(self, lat, lon):
         for i in self.map_tiles:
@@ -648,7 +644,7 @@ class MapWidget(Gtk.DrawingArea):
 
         return False
 
-class MapWindow(Gtk.Window):
+class MapWindow(gtk.Window):
     __gsignals__ = {
         "reload-sources" : (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, ()),
         "user-send-chat" : signals.USER_SEND_CHAT,
@@ -666,28 +662,28 @@ class MapWindow(Gtk.Window):
         frame.set_label(_("Zoom") + " (%i)" % int(adj.value))
 
     def make_zoom_controls(self):
-        box = Gtk.HBox(False, 3)
+        box = gtk.HBox(False, 3)
         box.set_border_width(3)
         box.show()
 
-        l = Gtk.Label(_("Min"))
+        l = gtk.Label(_("Min"))
         l.show()
         box.pack_start(l, 0,0,0)
 
-        adj = Gtk.Adjustment(value=14,
+        adj = gtk.Adjustment(value=14,
                              lower=2,
                              upper=17,
                              step_incr=1,
                              page_incr=3)
-        sb = Gtk.HScrollbar(adj)
+        sb = gtk.HScrollbar(adj)
         sb.show()
         box.pack_start(sb, 1,1,1)
 
-        l = Gtk.Label(_("Max"))
+        l = gtk.Label(_("Max"))
         l.show()
         box.pack_start(l, 0,0,0)
 
-        frame = Gtk.Frame(_("Zoom"))
+        frame = gtk.Frame(_("Zoom"))
         frame.set_label_align(0.5, 0.5)
         frame.set_size_request(150, 50)
         frame.show()
@@ -724,14 +720,14 @@ class MapWindow(Gtk.Window):
 
             src.save()
             break
-
+                
         self.map.queue_draw()
 
     def marker_mh(self, _action, id, group):
         action = _action.get_name()
 
         if action == "delete":
-            print(("Deleting %s/%s" % (group, id)))
+            print "Deleting %s/%s" % (group, id)
             for source in self.map_sources:
                 if source.get_name() == group:
                     if not source.get_mutable():
@@ -775,7 +771,7 @@ class MapWindow(Gtk.Window):
   </popup>
 </ui>
 """
-        ag = Gtk.ActionGroup("menu")
+        ag = gtk.ActionGroup("menu")
 
         try:
             id, = store.get(iter, 1)
@@ -783,23 +779,23 @@ class MapWindow(Gtk.Window):
         except TypeError:
             id = group = None
 
-        edit = Gtk.Action("edit", _("Edit"), None, None)
+        edit = gtk.Action("edit", _("Edit"), None, None)
         edit.connect("activate", self.marker_mh, id, group)
         if not id:
             edit.set_sensitive(False)
         ag.add_action(edit)
 
-        delete = Gtk.Action("delete", _("Delete"), None, None)
+        delete = gtk.Action("delete", _("Delete"), None, None)
         delete.connect("activate", self.marker_mh, id, group)
         ag.add_action(delete)
 
-        center = Gtk.Action("center", _("Center on this"), None, None)
+        center = gtk.Action("center", _("Center on this"), None, None)
         center.connect("activate", self.marker_mh, id, group)
         # This isn't implemented right now, because I'm lazy
         center.set_sensitive(False)
         ag.add_action(center)
 
-        uim = Gtk.UIManager()
+        uim = gtk.UIManager()
         uim.insert_action_group(ag, 0)
         uim.add_ui_from_string(menu_xml)
 
@@ -842,7 +838,7 @@ class MapWindow(Gtk.Window):
             if not parent:
                 parent = iter
             group = model.get_value(parent, 1)
-            if group in self.colors:
+            if self.colors.has_key(group):
                 rend.set_property("foreground", self.colors[group])
 
         c = self.marker_list._view.get_column(1)
@@ -873,8 +869,8 @@ class MapWindow(Gtk.Window):
             r = c.get_cell_renderers()[0]
             c.set_cell_data_func(r, render_dist, col)
 
-        sw = Gtk.ScrolledWindow()
-        sw.set_policy(Gtk.POLICY_AUTOMATIC, Gtk.POLICY_AUTOMATIC)
+        sw = gtk.ScrolledWindow()
+        sw.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
         sw.add(self.marker_list.packable())
         sw.set_size_request(-1, 150)
         sw.show()
@@ -910,7 +906,7 @@ class MapWindow(Gtk.Window):
         def toggle(cb, mw):
             mw.tracking_enabled = cb.get_active()
 
-        cb = Gtk.CheckButton(_("Track center"))
+        cb = gtk.CheckButton(_("Track center"))
         cb.connect("toggled", toggle, self)
 
         cb.show()
@@ -918,16 +914,16 @@ class MapWindow(Gtk.Window):
         return cb
 
     def clear_map_cache(self):
-        d = Gtk.MessageDialog(buttons=Gtk.BUTTONS_YES_NO)
+        d = gtk.MessageDialog(buttons=gtk.BUTTONS_YES_NO)
         d.set_property("text", _("Are you sure you want to clear your map cache?"))
         r = d.run()
         d.destroy()
 
-        if r == Gtk.RESPONSE_YES:
+        if r == gtk.RESPONSE_YES:
             dir = os.path.join(platform.get_platform().config_dir(), "maps")
             shutil.rmtree(dir, True)
             self.map.queue_draw()
-
+        
     def printable_map(self, bounds=None):
         p = platform.get_platform()
 
@@ -959,7 +955,7 @@ class MapWindow(Gtk.Window):
         f.write(html)
         f.close()
 
-        p.open_html_file(hf)
+        p.open_html_file(hf)        
 
     def save_map(self, bounds=None):
         p = platform.get_platform()
@@ -1031,11 +1027,11 @@ class MapWindow(Gtk.Window):
                    ('savevis', None, _('Save Image (visible area)'), "<Control><Alt>S", None, self.mh),
                    ]
 
-        uim = Gtk.UIManager()
-        self.menu_ag = Gtk.ActionGroup("MenuBar")
+        uim = gtk.UIManager()
+        self.menu_ag = gtk.ActionGroup("MenuBar")
 
         self.menu_ag.add_actions(actions)
-
+        
         uim.insert_action_group(self.menu_ag, 0)
         menuid = uim.add_ui_from_string(menu_xml)
 
@@ -1044,7 +1040,7 @@ class MapWindow(Gtk.Window):
         return uim.get_widget("/MenuBar")
 
     def make_controls(self):
-        vbox = Gtk.VBox(False, 2)
+        vbox = gtk.VBox(False, 2)
 
         vbox.pack_start(self.make_zoom_controls(), 0,0,0)
         vbox.pack_start(self.make_track(), 0,0,0)
@@ -1054,7 +1050,7 @@ class MapWindow(Gtk.Window):
         return vbox
 
     def make_bottom_pane(self):
-        box = Gtk.HBox(False, 2)
+        box = gtk.HBox(False, 2)
 
         box.pack_start(self.make_marker_list(), 1,1,1)
         box.pack_start(self.make_controls(), 0,0,0)
@@ -1097,7 +1093,7 @@ class MapWindow(Gtk.Window):
         def do_address(button, latw, lonw, namew):
             dlg = geocode_ui.AddressAssistant()
             r = dlg.run()
-            if r == Gtk.RESPONSE_OK:
+            if r == gtk.RESPONSE_OK:
                 if not namew.get_text():
                     namew.set_text(dlg.place)
                 latw.set_text("%.5f" % dlg.lat)
@@ -1113,12 +1109,12 @@ class MapWindow(Gtk.Window):
         d.set_groups(sources, group)
         d.set_point(point)
         r = d.run()
-        if r == Gtk.RESPONSE_OK:
+        if r == gtk.RESPONSE_OK:
             point = d.get_point()
             group = d.get_group()
         d.destroy()
 
-        if r == Gtk.RESPONSE_OK:
+        if r == gtk.RESPONSE_OK:
             return point, group
         else:
             return None, None
@@ -1126,14 +1122,14 @@ class MapWindow(Gtk.Window):
     def prompt_to_send_loc(self, _lat, _lon):
         d = inputdialog.FieldDialog(title=_("Broadcast Location"))
 
-        d.add_field(_("Callsign"), Gtk.Entry(8))
-        d.add_field(_("Description"), Gtk.Entry(20))
+        d.add_field(_("Callsign"), gtk.Entry(8))
+        d.add_field(_("Description"), gtk.Entry(20))
         d.add_field(_("Latitude"), miscwidgets.LatLonEntry())
         d.add_field(_("Longitude"), miscwidgets.LatLonEntry())
         d.get_field(_("Latitude")).set_text("%.4f" % _lat)
         d.get_field(_("Longitude")).set_text("%.4f" % _lon)
 
-        while d.run() == Gtk.RESPONSE_OK:
+        while d.run() == gtk.RESPONSE_OK:
             try:
                 call = d.get_field(_("Callsign")).get_text()
                 desc = d.get_field(_("Description")).get_text()
@@ -1143,15 +1139,15 @@ class MapWindow(Gtk.Window):
                 fix = GPSPosition(lat=lat, lon=lon, station=call)
                 fix.comment = desc
 
-                for port in list(self.emit("get-station-list").keys()):
+                for port in self.emit("get-station-list").keys():
                     self.emit("user-send-chat",
                               "CQCQCQ", port,
                               fix.to_NMEA_GGA(), True)
-
+                    
                 break
-            except Exception as e:
+            except Exception, e:
                 utils.log_exception()
-                ed = Gtk.MessageDialog(buttons=Gtk.BUTTONS_OK, parent=d)
+                ed = gtk.MessageDialog(buttons=gtk.BUTTONS_OK, parent=d)
                 ed.set_property("text", _("Invalid value") + ": %s" % e)
                 ed.run()
                 ed.destroy()
@@ -1176,7 +1172,7 @@ class MapWindow(Gtk.Window):
             return cap.replace(" ", "_")
 
         xml = ""
-        for action in [_an(x) for x in list(self._popup_items.keys())]:
+        for action in [_an(x) for x in self._popup_items.keys()]:
             xml += "<menuitem action='%s'/>\n" % action
 
         xml = """
@@ -1188,21 +1184,21 @@ class MapWindow(Gtk.Window):
   </popup>
 </ui>
 """ % xml
-        ag = Gtk.ActionGroup("menu")
+        ag = gtk.ActionGroup("menu")
 
-        t = Gtk.Action("title",
+        t = gtk.Action("title",
                        "%.4f,%.4f" % (vals["lat"], vals["lon"]),
                        None,
                        None)
         t.set_sensitive(False)
         ag.add_action(t)
 
-        for name, handler in list(self._popup_items.items()):
-            action = Gtk.Action(_an(name), name, None, None)
+        for name, handler in self._popup_items.items():
+            action = gtk.Action(_an(name), name, None, None)
             action.connect("activate", handler, vals)
             ag.add_action(action)
 
-        uim = Gtk.UIManager()
+        uim = gtk.UIManager()
         uim.insert_action_group(ag, 0)
         uim.add_ui_from_string(xml)
 
@@ -1218,7 +1214,7 @@ class MapWindow(Gtk.Window):
 
         lat, lon = self.map.xy2latlon(mx, my)
 
-        print(("Button %i at %i,%i" % (event.button, mx, my)))
+        print "Button %i at %i,%i" % (event.button, mx, my)
         if event.button == 3:
             vals = { "lat" : lat,
                      "lon" : lon,
@@ -1227,13 +1223,13 @@ class MapWindow(Gtk.Window):
             menu = self.make_popup(vals)
             if menu:
                 menu.popup(None, None, None, event.button, event.time)
-        elif event.type == Gtk.gdk.BUTTON_PRESS:
-            print(("Clicked: %.4f,%.4f" % (lat, lon)))
+        elif event.type == gtk.gdk.BUTTON_PRESS:
+            print "Clicked: %.4f,%.4f" % (lat, lon)
             # The crosshair marker has been missing since 0.3.0
             #self.set_marker(GPSPosition(station=CROSSHAIR,
             #                            lat=lat, lon=lon))
-        elif event.type == Gtk.gdk._2BUTTON_PRESS:
-            print(("Recenter on %.4f, %.4f" % (lat,lon)))
+        elif event.type == gtk.gdk._2BUTTON_PRESS:
+            print "Recenter on %.4f, %.4f" % (lat,lon)
 
             self.recenter(lat, lon)
 
@@ -1287,13 +1283,13 @@ class MapWindow(Gtk.Window):
 
                     text += "\n<b>Info</b>: %s" % point.get_comment()
 
-                    label = Gtk.Label()
+                    label = gtk.Label()
                     label.set_markup(text)
                     label.show()
                     for child in self.info_window.get_children():
                         self.info_window.remove(child)
                     self.info_window.add(label)
-
+                    
                     posx, posy = self.get_position()
                     posx += mx + 10
                     posy += my - 10
@@ -1353,12 +1349,12 @@ class MapWindow(Gtk.Window):
                                       point.get_longitude(),
                                       center.distance_from(this),
                                       center.bearing_to(this))
-        except Exception as e:
+        except Exception, e:
             if str(e) == "Item not found":
                 # this is evil
-                print("Adding point instead of updating")
+                print "Adding point instead of updating"
                 return self.add_point(source, point)
-
+                
         self.add_point_visible(point)
         self.map.queue_draw()
 
@@ -1413,7 +1409,7 @@ class MapWindow(Gtk.Window):
     def maybe_recenter_on_updated_point(self, source, point):
         if point.get_name() == self.center_mark and \
                 self.tracking_enabled:
-            print("Center updated")
+            print "Center updated"
             self.recenter(point.get_latitude(), point.get_longitude())
         self.update_point(source, point)
 
@@ -1434,7 +1430,7 @@ class MapWindow(Gtk.Window):
                             point.get_icon())
 
     def __init__(self, config, *args):
-        Gtk.Window.__init__(self, *args)
+        gtk.Window.__init__(self, *args)
 
         self.config = config
 
@@ -1452,17 +1448,17 @@ class MapWindow(Gtk.Window):
         self.map = MapWidget(tiles, tiles, status=self.status)
         self.map.show()
         self.map.connect("redraw-markers", self.redraw_markers)
-        self.map.connect("new-tiles-loaded",
+        self.map.connect("new-tiles-loaded", 
                          lambda m: self.update_points_visible())
 
-        box = Gtk.VBox(False, 2)
+        box = gtk.VBox(False, 2)
 
         self.menubar = self.make_menu()
         self.menubar.show()
         box.pack_start(self.menubar, 0,0,0)
         self.add_accel_group(self._accel_group)
 
-        self.sw = Gtk.ScrolledWindow()
+        self.sw = gtk.ScrolledWindow()
         self.sw.add_with_viewport(self.map)
         self.sw.show()
 
@@ -1474,7 +1470,7 @@ class MapWindow(Gtk.Window):
             px = ha.get_value() + ha.page_size
             py = va.get_value() + va.page_size
 
-            rect = Gtk.gdk.Rectangle(int(ha.get_value()), int(va.get_value()),
+            rect = gtk.gdk.Rectangle(int(ha.get_value()), int(va.get_value()),
                                      int(py), int(py))
             mw.map.window.invalidate_rect(rect, True)
 
@@ -1496,26 +1492,26 @@ class MapWindow(Gtk.Window):
 
         self.__last_motion = None
 
-        self.map.add_events(Gtk.gdk.POINTER_MOTION_MASK)
+        self.map.add_events(gtk.gdk.POINTER_MOTION_MASK)
         self.map.connect("motion-notify-event", self.mouse_move_event)
         self.sw.connect("button-press-event", self.mouse_click_event)
 
         self.sw.connect('realize', self.scroll_to_center)
 
-        hbox = Gtk.HBox(False, 2)
+        hbox = gtk.HBox(False, 2)
 
-        self.sb_coords = Gtk.Statusbar()
+        self.sb_coords = gtk.Statusbar()
         self.sb_coords.show()
         self.sb_coords.set_has_resize_grip(False)
 
-        self.sb_center = Gtk.Statusbar()
+        self.sb_center = gtk.Statusbar()
         self.sb_center.show()
         self.sb_center.set_has_resize_grip(False)
 
-        self.sb_gps = Gtk.Statusbar()
+        self.sb_gps = gtk.Statusbar()
         self.sb_gps.show()
 
-        self.sb_prog = Gtk.ProgressBar()
+        self.sb_prog = gtk.ProgressBar()
         self.sb_prog.set_size_request(150, -1)
         self.sb_prog.show()
 
@@ -1558,10 +1554,10 @@ class MapWindow(Gtk.Window):
                 return
 
             for source in self.map_sources:
-                print(("%s,%s" % (source.get_name(), group)))
+                print "%s,%s" % (source.get_name(), group)
                 if source.get_name() == group:
-                    print(("Adding new point %s to %s" % (point.get_name(),
-                                                         source.get_name())))
+                    print "Adding new point %s to %s" % (point.get_name(),
+                                                         source.get_name())
                     source.add_point(point)
                     source.save()
                     return
@@ -1571,7 +1567,7 @@ class MapWindow(Gtk.Window):
                  _("does not exist.  Do you want to create it?"))
             if not ask_for_confirmation(q):
                 return
-
+                                            
             s = map_sources.MapFileSource.open_source_by_name(self.config,
                                                               group,
                                                               True)
@@ -1586,11 +1582,11 @@ class MapWindow(Gtk.Window):
                                    self.prompt_to_send_loc(vals["lat"],
                                                            vals["lon"]))
 
-        self.info_window = Gtk.Window(Gtk.WINDOW_POPUP)
-        self.info_window.set_type_hint(Gtk.gdk.WINDOW_TYPE_HINT_MENU)
+        self.info_window = gtk.Window(gtk.WINDOW_POPUP)
+        self.info_window.set_type_hint(gtk.gdk.WINDOW_TYPE_HINT_MENU)
         self.info_window.set_decorated(False)
-        self.info_window.modify_bg(Gtk.STATE_NORMAL,
-                                   Gtk.gdk.color_parse("yellow"))
+        self.info_window.modify_bg(gtk.STATE_NORMAL,
+                                   gtk.gdk.color_parse("yellow"))
 
     def add_popup_handler(self, name, handler):
         self._popup_items[name] = handler
@@ -1604,7 +1600,7 @@ class MapWindow(Gtk.Window):
 if __name__ == "__main__":
 
     import sys
-    from . import gps
+    import gps
 
     if len(sys.argv) == 3:
         m = MapWindow()
@@ -1626,22 +1622,22 @@ if __name__ == "__main__":
     m.show()
 
     try:
-        Gtk.main()
+        gtk.main()
     except:
         pass
 
 
-#    area = Gtk.DrawingArea()
+#    area = gtk.DrawingArea()
 #    area.set_size_request(768, 768)
 #
-#    w = Gtk.Window(Gtk.WINDOW_TOPLEVEL)
+#    w = gtk.Window(gtk.WINDOW_TOPLEVEL)
 #    w.add(area)
 #    area.show()
 #    w.show()
 #
 #    def expose(area, event):
 #        for i in range(1,4):
-#            img = Gtk.gdk.pixbuf_new_from_file("/tmp/tile%i.png" % i)
+#            img = gtk.gdk.pixbuf_new_from_file("/tmp/tile%i.png" % i)
 #            area.window.draw_pixbuf(area.get_style().black_gc,
 #                                    img,
 #                                    0, 0, 256 * (i-1), 0, 256, 256)

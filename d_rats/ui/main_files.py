@@ -1,5 +1,4 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
+#!/usr/bin/python
 #
 # Copyright 2009 Dan Smith <dsmith@danplanet.com>
 #
@@ -22,10 +21,7 @@ from glob import glob
 from datetime import datetime
 
 import gobject
-import gi
-gi.require_version("Gtk", "3.0")
-from gi.repository import Gtk
-
+import gtk
 
 from d_rats.ui.main_common import MainWindowElement, MainWindowTab
 from d_rats.ui.main_common import ask_for_confirmation, set_toolbar_buttons
@@ -44,11 +40,11 @@ class FileView(object):
         self._view = view
         self._path = path
 
-        self._store = Gtk.ListStore(gobject.TYPE_OBJECT,
+        self._store = gtk.ListStore(gobject.TYPE_OBJECT,
                                     gobject.TYPE_STRING,
                                     gobject.TYPE_INT,
                                     gobject.TYPE_INT)
-        self._store.set_sort_column_id(1, Gtk.SORT_ASCENDING)
+        self._store.set_sort_column_id(1, gtk.SORT_ASCENDING)
         view.set_model(self._store)
 
         self._file_icon = config.ship_img("file.png")
@@ -84,20 +80,20 @@ class LocalFileView(FileView):
         for file in files:
             if os.path.isdir(file):
                 continue
-            print(("Adding local file `%s'" % file))
+            print "Adding local file `%s'" % file
             try:
                 stat = os.stat(file)
                 ts = stat.st_mtime
                 sz = stat.st_size
                 nm = os.path.basename(file)
                 self._store.append((self._file_icon, nm, sz, ts))
-            except Exception as e:
-                print(("Failed to add local file: %s" % e))
+            except Exception, e:
+                print "Failed to add local file: %s" % e
 
 class RemoteFileView(FileView):
     def _file_list_cb(self, job, state, result):
         if state != "complete":
-            print("Incomplete job")
+            print "Incomplete job"
             return
 
         unit_decoder = { "B" : 0,
@@ -105,7 +101,7 @@ class RemoteFileView(FileView):
                          "MB": 20 }
 
         # FIXME: This might need to be in the idle loop
-        for k,v in list(result.items()):
+        for k,v in result.items():
             if "B (" in v:
                 size, units, date, _time = v.split(" ")
                 try:
@@ -114,8 +110,8 @@ class RemoteFileView(FileView):
                     stamp = "%s %s" % (date, _time)
                     ts = time.mktime(time.strptime(stamp,
                                                    "(%Y-%m-%d %H:%M:%S)"))
-                except Exception as e:
-                    print(("Unable to parse file info: %s" % e))
+                except Exception, e:
+                    print "Unable to parse file info: %s" % e
                     ts = time.time()
                     size = 0
 
@@ -125,7 +121,7 @@ class RemoteFileView(FileView):
 
     def refresh(self):
         self._store.clear()
-
+        
         job = rpc.RPCFileListJob(self.get_path(), "File list request")
         job.connect("state-change", self._file_list_cb)
 
@@ -149,7 +145,7 @@ class FilesTab(MainWindowTab):
     def _stop_throb(self):
         throbber, = self._getw("remote_throb")
         pix = self._config.ship_img(THROB_IMAGE)
-        throbber.set_from_pixbuf(pix)
+        throbber.set_from_pixbuf(pix)        
 
     def _end_list_job(self, job, state, *args):
         if not self._remote:
@@ -193,7 +189,7 @@ class FilesTab(MainWindowTab):
 
         throbber, = self._getw("remote_throb")
         img = self._config.ship_obj_fn(os.path.join("images", THROB_IMAGE))
-        anim = Gtk.gdk.PixbufAnimation(img)
+        anim = gtk.gdk.PixbufAnimation(img)
         throbber.set_from_animation(anim)
 
         job = self._remote.refresh()
@@ -285,7 +281,7 @@ class FilesTab(MainWindowTab):
         d = inputdialog.TextInputDialog()
         d.label.set_text(_("Password for %s (blank if none):" % station))
         d.text.set_visibility(False)
-        if d.run() != Gtk.RESPONSE_OK:
+        if d.run() != gtk.RESPONSE_OK:
             return
         passwd = d.text.get_text()
         d.destroy()
@@ -314,10 +310,10 @@ class FilesTab(MainWindowTab):
         def populate_tb(tb, buttons):
             c = 0
             for i, l, f, d in buttons:
-                icon = Gtk.Image()
+                icon = gtk.Image()
                 icon.set_from_pixbuf(i)
                 icon.show()
-                item = Gtk.ToolButton(icon, l)
+                item = gtk.ToolButton(icon, l)
                 item.connect("clicked", f, d)
                 try:
                     item.set_tooltip_text(l)
@@ -352,7 +348,7 @@ class FilesTab(MainWindowTab):
              (dnload, _("Download"), self._download, self._remote),
              (delete, _("Delete"), self._delete, self._remote),
              ]
-
+        
         populate_tb(rtb, rbuttons)
 
     def _setup_file_view(self, view):
@@ -369,21 +365,21 @@ class FilesTab(MainWindowTab):
                 s = "%.1f KB" % (sz / 1024.0)
             rend.set_property("text", s)
 
-        col = Gtk.TreeViewColumn("", Gtk.CellRendererPixbuf(), pixbuf=0)
+        col = gtk.TreeViewColumn("", gtk.CellRendererPixbuf(), pixbuf=0)
         view.append_column(col)
 
-        col = Gtk.TreeViewColumn(_("Filename"), Gtk.CellRendererText(), text=1)
+        col = gtk.TreeViewColumn(_("Filename"), gtk.CellRendererText(), text=1)
         col.set_sort_column_id(1)
         view.append_column(col)
 
-        r = Gtk.CellRendererText()
-        col = Gtk.TreeViewColumn(_("Size"), r, text=2)
+        r = gtk.CellRendererText()
+        col = gtk.TreeViewColumn(_("Size"), r, text=2)
         col.set_sort_column_id(2)
         col.set_cell_data_func(r, render_size)
         view.append_column(col)
 
-        r = Gtk.CellRendererText()
-        col = Gtk.TreeViewColumn(_("Date"), r, text=3)
+        r = gtk.CellRendererText()
+        col = gtk.TreeViewColumn(_("Date"), r, text=3)
         col.set_sort_column_id(2)
         col.set_cell_data_func(r, render_date)
         view.append_column(col)
@@ -404,7 +400,7 @@ class FilesTab(MainWindowTab):
         pstore.clear()
 
         if stationlist:
-            for port, stations in list(stationlist.items()):
+            for port, stations in stationlist.items():
                 _ports.append(port)
                 for station in stations:
                     _stations.append(str(station))
@@ -449,7 +445,7 @@ class FilesTab(MainWindowTab):
 
     def file_sent(self, _fn):
         fn = os.path.basename(_fn)
-        if self._remote and fn in self._remote.outstanding:
+        if self._remote and self._remote.outstanding.has_key(fn):
             size = self._remote.outstanding[fn]
             del self._remote.outstanding[fn]
             self._remote.add_explicit(fn, size, time.time())

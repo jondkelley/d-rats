@@ -1,5 +1,4 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
+#!/usr/bin/python
 #
 # Copyright 2008 Dan Smith <dsmith@danplanet.com>
 #
@@ -43,7 +42,7 @@ class UnknownRPCCall(Exception):
 
 def encode_dict(source):
     elements = []
-    for k, v in list(source.items()):
+    for k, v in source.items():
         if not isinstance(k, str):
             raise Exception("Cannot encode non-string dict key")
 
@@ -118,7 +117,7 @@ class RPCFileListJob(RPCJob):
             self._args[item] = ""
 
     def get_file_list(self):
-        return list(self._args.keys())
+        return self._args.keys()
 
     def do(self, rpcactions):
         return rpcactions.RPC_file_list(self)
@@ -262,7 +261,7 @@ class RPCSession(gobject.GObject, stateless.StatelessSession):
         return frame
 
     def __job_state(self, job, state, _result, id):
-        print("Job state: %s for %i: %s" % (state, id, _result))
+        print "Job state: %s for %i: %s" % (state, id, _result)
 
         if state == "running":
             return
@@ -275,8 +274,8 @@ class RPCSession(gobject.GObject, stateless.StatelessSession):
         if frame.type == self.T_RPCREQ:
             try:
                 job = self.__decode_rpccall(frame)
-            except UnknownRPCCall as e:
-                print("Unable to execute RPC from %s: %s" % (frame.s_station, e))
+            except UnknownRPCCall, e:
+                print "Unable to execute RPC from %s: %s" % (frame.s_station, e)
                 return
 
             job.connect("state-change", self.__job_state, frame.seq)
@@ -285,30 +284,30 @@ class RPCSession(gobject.GObject, stateless.StatelessSession):
                 job.set_state("complete", result)
 
         elif frame.type == self.T_RPCACK:
-            if frame.seq in self.__jobs:
+            if self.__jobs.has_key(frame.seq):
                 ts, att, job = self.__jobs[frame.seq]
                 del self.__jobs[frame.seq]
                 job.set_state("complete", decode_dict(frame.data))
             else:
-                print("Unknown job %i" % frame.seq)
+                print "Unknown job %i" % frame.seq
 
         else:
-            print("Unknown RPC frame type %i" % frame.type)
+            print "Unknown RPC frame type %i" % frame.type
 
     def __send_job(self, job, id):
-        print("Sending job `%s' to %s" % (job.get_desc(), job.get_dest()))
+        print "Sending job `%s' to %s" % (job.get_desc(), job.get_dest())
         frame = self.__job_to_frame(job, id)
         job.frame = frame
         self._sm.outgoing(self, frame)
-        print("sent")
+        print "sent"
 
     def __worker(self):
-        for id, (ts, att, job) in list(self.__jobs.items()):
+        for id, (ts, att, job) in self.__jobs.items():
             if job.frame and not job.frame.sent_event.isSet():
                 # Reset timer until the block is sent
                 self.__jobs[id] = (time.time(), att, job)
             elif (time.time() - ts) > self.__t_retry:
-                print("Cancelling job %i due to timeout" % id)
+                print "Cancelling job %i due to timeout" % id
                 del self.__jobs[id]
                 job.set_state("timeout")
 
@@ -345,7 +344,7 @@ class RPCActionSet(gobject.GObject):
 
     def __proxy_emit(self, signal):
         def handler(obj, *args):
-            print("Proxy emit %s: %s" % (signal, args))
+            print "Proxy emit %s: %s" % (signal, args)
             gobject.idle_add(self.emit, signal, *args)
 
         return handler
@@ -362,8 +361,8 @@ class RPCActionSet(gobject.GObject):
         try:
             fix = self.emit("get-current-position", rqcall)
             result["rc"] = "OK"
-        except Exception as e:
-            print("Exception while getting position of %s: " % rqcall)
+        except Exception, e:
+            print "Exception while getting position of %s: " % rqcall
             log_exception()
             fix = None
             result["rc"] = "No data for station '%s'" % job.get_station()
@@ -372,7 +371,7 @@ class RPCActionSet(gobject.GObject):
             self.emit("user-send-chat",
                       "CQCQCQ", self.__port, fix.to_NMEA_GGA(), True)
             
-        print("[RPC] Position request for `%s'" % job.get_station())
+        print "[RPC] Position request for `%s'" % job.get_station()
     
         return result
     
@@ -428,7 +427,7 @@ class RPCActionSet(gobject.GObject):
 
         dir = self.__config.get("prefs", "download_dir")
         path = os.path.join(dir, job.get_file())
-        print("Remote requested %s" % path)
+        print "Remote requested %s" % path
         if os.path.exists(path):
             result["rc"] = "OK"
             self.emit("rpc-send-file",
@@ -474,7 +473,7 @@ class RPCActionSet(gobject.GObject):
         try:
             os.remove(path)
             result["rc"] = "File %s deleted" % job.get_file()
-        except Exception as e:
+        except Exception, e:
             result["rc"] = "Unable to delete %s: %s" % (job.get_file(), e)
 
         return result
@@ -507,12 +506,9 @@ class RPCActionSet(gobject.GObject):
         result["os"] = self.__config.platform.os_version_string()
         result["pyver"] = ".".join([str(x) for x in sys.version_info[:3]])
         try:
-            import gi
-gi.require_version("Gtk", "3.0")
-from gi.repository import Gtk
-
-            result["pygtkver"] = ".".join([str(x) for x in Gtk.pygtk_version])
-            result["gtkver"] = ".".join([str(x) for x in Gtk.gtk_version])
+            import gtk
+            result["pygtkver"] = ".".join([str(x) for x in gtk.pygtk_version])
+            result["gtkver"] = ".".join([str(x) for x in gtk.gtk_version])
         except ImportError:
             result["pygtkver"] = result["gtkver"] = "Unknown"
 

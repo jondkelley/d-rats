@@ -1,5 +1,4 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
+
 import struct
 
 import gobject
@@ -65,3 +64,5 @@ class SniffSession(stateless.StatelessSession, gobject.GObject):
         self.emit("incoming_frame",
                   frame.s_station, frame.d_station,
                   "%s %s" % (hdr, msg))
+
+

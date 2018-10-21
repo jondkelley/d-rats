@@ -1,8 +1,6 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
+#!/usr/bin/python
 #
 # Copyright 2008 Dan Smith <dsmith@danplanet.com>
-# Updated 2018 Jonathan Kelley <jonkelley@gmail.com>
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -20,11 +18,11 @@
 import struct
 import zlib
 import base64
-from . import yencode
+import yencode
 
 import threading
 
-from . import utils
+import utils
 
 ENCODED_HEADER = "[SOB]"
 ENCODED_TRAILER = "[EOB]"
@@ -33,11 +31,11 @@ def update_crc(c, crc):
     for _ in range(0,8):
         c <<= 1
 
-        if (c & 0o400) != 0:
+        if (c & 0400) != 0:
             v = 1
         else:
             v = 0
-
+            
         if (crc & 0x8000):
             crc <<= 1
             crc += v
@@ -89,7 +87,7 @@ class DDT2Frame(object):
 
     def get_xmit_bps(self):
         if not self._xmit_e:
-            print("Block not sent, can't determine BPS!")
+            print "Block not sent, can't determine BPS!"
             return 0
 
         if self._xmit_s == self._xmit_e:
@@ -108,7 +106,7 @@ class DDT2Frame(object):
             self.magic = (~self.magic) & 0xFF
 
         length = len(data)
-
+        
         s_station = self.s_station.ljust(8, "~")
         d_station = self.d_station.ljust(8, "~")
 
@@ -145,7 +143,7 @@ class DDT2Frame(object):
         elif magic == 0x22:
             self.compress = False
         else:
-            print(("Magic 0x%X not recognized" % magic))
+            print "Magic 0x%X not recognized" % magic
             return False
 
         header = val[:25]
@@ -171,7 +169,7 @@ class DDT2Frame(object):
         self.d_station = self.d_station.replace("~", "")
 
         if _checksum != checksum:
-            print(("Checksum failed: %s != %s" % (checksum, _checksum)))
+            print "Checksum failed: %s != %s" % (checksum, _checksum)
             return False
 
         if self.compress:
@@ -222,14 +220,14 @@ class DDT2EncodedFrame(DDT2Frame):
             h = val.index(ENCODED_HEADER) + len(ENCODED_TRAILER)
             t = val.rindex(ENCODED_TRAILER)
             payload = val[h:t]
-        except Exception as e:
-            print(("Block has no header/trailer: %s" % e))
+        except Exception, e:
+            print "Block has no header/trailer: %s" % e
             return False
 
         try:
             decoded = decode(payload)
-        except Exception as e:
-            print(("Unable to decode frame: %s" % e))
+        except Exception, e:
+            print "Unable to decode frame: %s" % e
             return False
 
         return DDT2Frame.unpack(self, decoded)
@@ -252,23 +250,23 @@ def test_symmetric(compress=True):
     fin.set_compress(compress)
     p = fin.get_packed()
 
-    print(p)
+    print p
 
     fout = DDT2EncodedFrame()
     fout.unpack(p)
 
     #print fout.__dict__
-    print(fout)
+    print fout
 
 def test_crap():
     f = DDT2EncodedFrame()
     try:
         if f.unpack("[SOB]foobar[EOB]"):
-            print("FAIL")
+            print "FAIL"
         else:
-            print("PASS")
-    except Exception as e:
-        print("PASS")
+            print "PASS"
+    except Exception, e:
+        print "PASS"
 
 if __name__ == "__main__":
     test_symmetric()

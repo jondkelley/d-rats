@@ -1,8 +1,5 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 #
 # Copyright 2008 Dan Smith <dsmith@danplanet.com>
-# Updated 2018 Jonathan Kelley <jonkelley@gmail.com>
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -27,18 +24,15 @@ import base64
 import libxml2
 import libxslt
 
-import gi
-gi.require_version("Gtk", "3.0")
-from gi.repository import Gtk
-
+import gtk
 import gobject
 import pango
 
-from .miscwidgets import make_choice, KeyedListWidget
-from .utils import run_or_error
-from .ui.main_common import ask_for_confirmation
-from . import platform
-from . import spell
+from miscwidgets import make_choice, KeyedListWidget
+from utils import run_or_error
+from ui.main_common import ask_for_confirmation
+import platform
+import spell
 
 test = """
 <xml>
@@ -72,9 +66,9 @@ RESPONSE_REPLY    = -902
 RESPONSE_DELETE   = -903
 RESPONSE_SEND_VIA = -904
 
-style = Gtk.Style()
+style = gtk.Style()
 for i in [style.fg, style.bg, style.base]:
-            i[Gtk.STATE_INSENSITIVE] = i[Gtk.STATE_NORMAL]
+            i[gtk.STATE_INSENSITIVE] = i[gtk.STATE_NORMAL]
 STYLE_BRIGHT_INSENSITIVE = style
 del style
 del i
@@ -105,22 +99,22 @@ def xml_unescape(string):
             try:
                 semi = string[i:].index(";") + i + 1
             except:
-                print("XML Error: & with no ;")
+                print "XML Error: & with no ;"
                 i += 1
                 continue
 
             esc = string[i:semi]
 
             if not esc:
-                print("No escape: %i:%i" % (i, semi))
+                print "No escape: %i:%i" % (i, semi)
                 i += 1
                 continue
 
-            if string[i:semi] in d:
+            if d.has_key(string[i:semi]):
                 out += d[esc]
             else:
-                print("XML Error: No such escape: `%s'" % esc)
-
+                print "XML Error: No such escape: `%s'" % esc
+                
             i += len(esc)
 
     return out
@@ -136,9 +130,9 @@ class HTMLFormWriter(FormWriter):
         self.xslpath = os.path.join(xsl_dir, "%s.xsl" % type)
         if not os.path.exists(self.xslpath):
             self.xslpath = os.path.join(xsl_dir, "default.xsl")
-
+        
     def writeDoc(self, doc, outfile):
-        print("Writing to %s" % outfile)
+        print "Writing to %s" % outfile
         styledoc = libxml2.parseFile(self.xslpath)
         style = libxslt.parseStylesheetDoc(styledoc)
         result = style.applyStylesheet(doc, None)
@@ -189,7 +183,7 @@ class FieldWidget(object):
             if child.type == "text":
                 child.unlinkNode()
 
-            child = child.__next__
+            child = child.next
 
         value = xml_escape(self.get_value())
         if value:
@@ -209,7 +203,7 @@ class TextWidget(FieldWidget):
         else:
             text = ""
 
-        self.widget = Gtk.Entry()
+        self.widget = gtk.Entry()
         self.widget.set_text(text)
         self.widget.show()
 
@@ -227,12 +221,12 @@ class ToggleWidget(FieldWidget):
             try:
                 status = eval(node.getContent().title())
             except:
-                print("Status of `%s' is invalid" % node.getContent())
+                print "Status of `%s' is invalid" % node.getContent()
                 status = False
         else:
             status = False
 
-        self.widget = Gtk.CheckButton("Yes")
+        self.widget = gtk.CheckButton("Yes")
         self.widget.set_active(status)
         self.widget.show()
 
@@ -249,28 +243,28 @@ class MultilineWidget(FieldWidget):
         else:
             text = ""
 
-        self.buffer = Gtk.TextBuffer()
+        self.buffer = gtk.TextBuffer()
         self.buffer.set_text(text)
-        self.widget = Gtk.TextView(self.buffer)
+        self.widget = gtk.TextView(self.buffer)
         self.widget.show()
         self.widget.set_size_request(175, 200)
-        self.widget.set_wrap_mode(Gtk.WRAP_WORD)
+        self.widget.set_wrap_mode(gtk.WRAP_WORD)
 
-        from . import mainapp
+        import mainapp
         config = mainapp.get_mainapp().config
         if config.getboolean("prefs", "check_spelling"):
             spell.prepare_TextBuffer(self.buffer)
 
     def make_container(self):
 
-        sw = Gtk.ScrolledWindow()
-        sw.set_policy(Gtk.POLICY_AUTOMATIC, Gtk.POLICY_AUTOMATIC)
+        sw = gtk.ScrolledWindow()
+        sw.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
         sw.add(self.widget)
         return sw
 
-        vbox = Gtk.VBox(False, 2)
+        vbox = gtk.VBox(False, 2)
 
-        label = Gtk.Label(self.caption)
+        label = gtk.Label(self.caption)
         vbox.pack_start(label, 0,0,0)
         vbox.pack_start(sw, 0,0,0)
 
@@ -302,14 +296,14 @@ class DateWidget(FieldWidget):
         months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun",
                   "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
         days = [str("%02i" % x) for x in range(1,32)]
-
+        
         years = [str(x) for x in range(int(y)-2, int(y)+2)]
 
         self.monthbox = make_choice(months, False, m)
         self.daybox = make_choice(days, False, d)
         self.yearbox = make_choice(years, False, y)
 
-        self.widget = Gtk.HBox(False, 2)
+        self.widget = gtk.HBox(False, 2)
         self.widget.pack_start(self.monthbox, 0,0,0)
         self.widget.pack_start(self.daybox, 0,0,0)
         self.widget.pack_start(self.yearbox, 0,0,0)
@@ -344,15 +338,15 @@ class TimeWidget(FieldWidget):
             m = int(time.strftime("%M", t))
             s = int(time.strftime("%S", t))
 
-        self.hour_a = Gtk.Adjustment(h, 0, 23, 1)
-        self.min_a = Gtk.Adjustment(m, 0, 59, 1, 10)
-        self.sec_a = Gtk.Adjustment(s, 0, 59, 1, 10)
+        self.hour_a = gtk.Adjustment(h, 0, 23, 1)
+        self.min_a = gtk.Adjustment(m, 0, 59, 1, 10)
+        self.sec_a = gtk.Adjustment(s, 0, 59, 1, 10)
 
-        self.hour = Gtk.SpinButton(self.hour_a)
-        self.min = Gtk.SpinButton(self.min_a)
-        self.sec = Gtk.SpinButton(self.sec_a)
+        self.hour = gtk.SpinButton(self.hour_a)
+        self.min = gtk.SpinButton(self.min_a)
+        self.sec = gtk.SpinButton(self.sec_a)
 
-        self.widget = Gtk.HBox(False, 2)
+        self.widget = gtk.HBox(False, 2)
         self.widget.pack_start(self.hour, 0,0,0)
         self.widget.pack_start(self.min, 0,0,0)
         self.widget.pack_start(self.sec, 0,0,0)
@@ -386,8 +380,8 @@ class NumericWidget(FieldWidget):
         except:
             initial = 0
 
-        self.adj = Gtk.Adjustment(initial, min, max, 1, 10)
-        self.widget = Gtk.SpinButton(self.adj)
+        self.adj = gtk.Adjustment(initial, min, max, 1, 10)
+        self.widget = gtk.SpinButton(self.adj)
         self.widget.show()
 
     def get_value(self):
@@ -411,7 +405,7 @@ class ChoiceWidget(FieldWidget):
 
     def __init__(self, node):
         FieldWidget.__init__(self, node)
-
+        
         self.choices = []
         self.default = None
 
@@ -420,7 +414,7 @@ class ChoiceWidget(FieldWidget):
             if child.type == "element":
                 self.parse_choice(child)
 
-            child = child.__next__
+            child = child.next
 
         self.widget = make_choice(self.choices, False, self.default)
         self.widget.show()
@@ -432,7 +426,7 @@ class ChoiceWidget(FieldWidget):
         value = self.get_value()
         if not value:
             return
-
+        
         child = self.node.children
         while child:
             if child.getContent() == value:
@@ -441,7 +435,7 @@ class ChoiceWidget(FieldWidget):
             else:
                 child.unsetProp("set")
 
-            child = child.__next__
+            child = child.next
 
 class MultiselectWidget(FieldWidget):
     def parse_choice(self, node):
@@ -452,25 +446,25 @@ class MultiselectWidget(FieldWidget):
             content = xml_unescape(node.children.getContent().strip())
             self.store.append(row=(node.prop("set") == "y", content))
             self.choices.append((node.prop("set") == "y", content))
-        except Exception as e:
-            print("Error: %s" % e)
+        except Exception, e:
+            print "Error: %s" % e
             pass
 
     def toggle(self, rend, path):
         self.store[path][0] = not self.store[path][0]
 
     def make_selector(self):
-        self.store = Gtk.ListStore(gobject.TYPE_BOOLEAN,
+        self.store = gtk.ListStore(gobject.TYPE_BOOLEAN,
                                    gobject.TYPE_STRING)
-        self.view = Gtk.TreeView(self.store)
+        self.view = gtk.TreeView(self.store)
 
-        rend = Gtk.CellRendererToggle()
+        rend = gtk.CellRendererToggle()
         rend.connect("toggled", self.toggle)
-        col = Gtk.TreeViewColumn("", rend, active=0)
+        col = gtk.TreeViewColumn("", rend, active=0)
         self.view.append_column(col)
 
-        rend = Gtk.CellRendererText()
-        col = Gtk.TreeViewColumn("", rend, text=1)
+        rend = gtk.CellRendererText()
+        col = gtk.TreeViewColumn("", rend, text=1)
         self.view.append_column(col)
 
         self.view.show()
@@ -489,17 +483,17 @@ class MultiselectWidget(FieldWidget):
         while child:
             if child.type == "element":
                 self.parse_choice(child)
-            child = child.__next__
+            child = child.next
 
     def make_container(self):
-        vbox = Gtk.VBox(False, 2)
+        vbox = gtk.VBox(False, 2)
 
-        sw = Gtk.ScrolledWindow()
-        sw.set_policy(Gtk.POLICY_AUTOMATIC, Gtk.POLICY_AUTOMATIC)
+        sw = gtk.ScrolledWindow()
+        sw.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
         sw.add(self.widget)
 
         if self.caption:
-            label = Gtk.Label(self.caption)
+            label = gtk.Label(self.caption)
             vbox.pack_start(label, 0,0,0)
             label.show()
         vbox.pack_start(sw, 0,0,0)
@@ -523,7 +517,7 @@ class MultiselectWidget(FieldWidget):
         child = self.node.children
         while child:
             choice = child.getContent().strip()
-            if choice not in list(vals.keys()):
+            if choice not in vals.keys():
                 vals[choice] = False
 
             if not child.hasProp("set"):
@@ -531,7 +525,7 @@ class MultiselectWidget(FieldWidget):
             else:
                 child.setProp("set", vals[choice] and "y" or "n")
 
-            child = child.__next__
+            child = child.next
 
 class LabelWidget(FieldWidget):
     def __init__(self, node):
@@ -542,10 +536,10 @@ class LabelWidget(FieldWidget):
         pass
 
     def make_container(self):
-        widget = Gtk.Label()
+        widget = gtk.Label()
         widget.set_markup("<b><span color='blue'>%s</span></b>" % self.caption)
-        color = Gtk.gdk.color_parse("blue")
-        #widget.modify_fg(Gtk.STATE_NORMAL, color)
+        color = gtk.gdk.color_parse("blue")
+        #widget.modify_fg(gtk.STATE_NORMAL, color)
         widget.show()
 
         return widget
@@ -578,12 +572,12 @@ class FormField(object):
         field.set_caption(caption)
         field.set_id(self.id)
 
-        return field
+        return field        
 
     def build_gui(self, node):
         self.caption = None
         self.entry = None
-
+        
         child = node.children
 
         while child:
@@ -592,7 +586,7 @@ class FormField(object):
             elif child.name == "entry":
                 ent_node = child
 
-            child = child.__next__
+            child = child.next
 
         self.caption = self.get_caption_string(cap_node)
         self.entry = self.build_entry(ent_node, self.caption)
@@ -633,13 +627,13 @@ class FormFile(object):
 
     def save_to(self, filename):
         f = file(filename, "w")
-        print(self.doc.serialize(), file=f)
+        print >>f, self.doc.serialize()
         f.close()
 
     def export_to_string(self):
         w = HTMLFormWriter(self.id, self.xsl_dir)
         return w.writeString(self.doc)
-
+        
     def get_xml(self):
         return self.doc.serialize()
 
@@ -650,7 +644,7 @@ class FormFile(object):
             raise Exception("%i forms in document" % len(forms))
 
         form = forms[0]
-
+        
         self.id = form.prop("id")
 
         titles = ctx.xpathEval("//form/title")
@@ -677,7 +671,7 @@ class FormFile(object):
         while child:
             if child.type == "text":
                 child.unlinkNode()
-            child = child.__next__
+            child = child.next
         node.addContent(content)
 
     def __get_xpath(self, path):
@@ -691,7 +685,7 @@ class FormFile(object):
         for element in self.__get_xpath("//form/path/e"):
             pathels.append(element.getContent().strip())
         return pathels
-
+    
     def __get_path(self):
         els = self.__get_xpath("//form/path")
         if not els:
@@ -755,7 +749,7 @@ class FormFile(object):
 
     def set_field_value(self, id, value):
         els = self.__get_xpath("//form/field[@id='%s']/entry" % id)
-        print("Setting %s to %s (%i)" % (id, value, len(els)))
+        print "Setting %s to %s (%i)" % (id, value, len(els))
         if len(els) == 1:
             if els[0].prop("type") == "multiline":
                 self.__set_content(els[0], value)
@@ -768,7 +762,7 @@ class FormFile(object):
                 val = self.get_field_value(field)
                 if val is not None:
                     return val
-            except Exception as e:
+            except Exception, e:
                 pass
         return "Unknown"
 
@@ -817,7 +811,7 @@ class FormFile(object):
     def add_attachment(self, name, data):
         try:
             att = self.get_attachment(name)
-        except Exception as e:
+        except Exception, e:
             att = None
 
         if att is not None:
@@ -836,7 +830,7 @@ class FormFile(object):
         if len(els) == 1:
             els[0].unlinkNode()
 
-class FormDialog(FormFile, Gtk.Dialog):
+class FormDialog(FormFile, gtk.Dialog):
     def save_to(self, *args):
         for f in self.fields:
             f.update_node()
@@ -849,9 +843,9 @@ class FormDialog(FormFile, Gtk.Dialog):
         for f in fields:
             try:
                 self.fields.append(FormField(f))
-            except Exception as e:
+            except Exception, e:
                 raise
-                print(e)
+                print e
 
     def export(self, outfile):
         for f in self.fields:
@@ -865,7 +859,7 @@ class FormDialog(FormFile, Gtk.Dialog):
             save_file = self._filename
 
         r = self.run()
-        if r != Gtk.RESPONSE_CANCEL:
+        if r != gtk.RESPONSE_CANCEL:
             self.save_to(save_file)
 
         return r
@@ -878,8 +872,8 @@ class FormDialog(FormFile, Gtk.Dialog):
 
         try:
             self.export(f)
-        except Exception as e:
-            ed = Gtk.MessageDialog(buttons=Gtk.BUTTONS_OK,
+        except Exception, e:
+            ed = gtk.MessageDialog(buttons=gtk.BUTTONS_OK,
                                    parent=self)
             ed.text = "Unable to open file"
             ed.format_secondary_text("Unable to open %s (%s)" % (f, e))
@@ -892,7 +886,7 @@ class FormDialog(FormFile, Gtk.Dialog):
         f.close()
         self.export(name)
 
-        print("Exported to temporary file: %s" % name)
+        print "Exported to temporary file: %s" % name
         platform.get_platform().open_html_file(name)
 
     def calc_check(self, buffer, checkwidget):
@@ -901,30 +895,30 @@ class FormDialog(FormFile, Gtk.Dialog):
         checkwidget.set_text("%i" % len(message.split()))
 
     def build_routing_widget(self):
-        tab = Gtk.Table(2, 2)
+        tab = gtk.Table(2, 2)
 
-        lab = Gtk.Label(_("Source Callsign"))
+        lab = gtk.Label(_("Source Callsign"))
         lab.show()
         tab.attach(lab, 0, 1, 0, 1, 0, 0, 2, 5)
 
-        lab = Gtk.Label(_("Destination Callsign"))
+        lab = gtk.Label(_("Destination Callsign"))
         lab.show()
         tab.attach(lab, 0, 1, 1, 2, 0, 0, 2, 5)
 
-        srcbox = Gtk.Entry()
+        srcbox = gtk.Entry()
         srcbox.set_text(self.get_path_src())
         srcbox.set_editable(False)
         srcbox.show()
         self._srcbox = srcbox
-        tab.attach(srcbox, 1, 2, 0, 1, Gtk.EXPAND|Gtk.FILL, 0)
+        tab.attach(srcbox, 1, 2, 0, 1, gtk.EXPAND|gtk.FILL, 0)
 
-        dstbox = Gtk.Entry()
+        dstbox = gtk.Entry()
         dstbox.set_text(self.get_path_dst())
         dstbox.show()
         self._dstbox = dstbox
-        tab.attach(dstbox, 1, 2, 1, 2, Gtk.EXPAND|Gtk.FILL, 0)
+        tab.attach(dstbox, 1, 2, 1, 2, gtk.EXPAND|gtk.FILL, 0)
 
-        exp = Gtk.Expander()
+        exp = gtk.Expander()
         exp.set_label(_("Routing Information"))
         exp.add(tab)
         tab.show()
@@ -936,19 +930,19 @@ class FormDialog(FormFile, Gtk.Dialog):
     def build_path_widget(self):
         pathels = self.get_path()
 
-        pathbox = Gtk.Entry()
+        pathbox = gtk.Entry()
         pathbox.set_text(";".join(pathels))
         pathbox.set_property("editable", False)
         pathbox.show()
 
-        expander = Gtk.Expander("Path")
+        expander = gtk.Expander("Path")
         expander.add(pathbox)
         expander.show()
 
         return expander
 
     def build_att_widget(self):
-        hbox = Gtk.HBox(False, 2)
+        hbox = gtk.HBox(False, 2)
 
         cols = [(gobject.TYPE_STRING, "KEY"),
                 (gobject.TYPE_STRING, _("Name")),
@@ -957,8 +951,8 @@ class FormDialog(FormFile, Gtk.Dialog):
         self.attbox.set_resizable(0, True)
         self.attbox.set_expander(0)
         self.attbox.show()
-        sw = Gtk.ScrolledWindow()
-        sw.set_policy(Gtk.POLICY_AUTOMATIC, Gtk.POLICY_AUTOMATIC)
+        sw = gtk.ScrolledWindow()
+        sw.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
         sw.add_with_viewport(self.attbox)
         sw.show()
 
@@ -966,7 +960,7 @@ class FormDialog(FormFile, Gtk.Dialog):
 
         def item_set(box, key):
             natt = len(self.attbox.get_keys())
-            print("Item %s set: %i\n" % (key, natt))
+            print "Item %s set: %i\n" % (key, natt)
             if natt:
                 msg = _("Attachments") + " (%i)" % natt
                 attexp.set_label("<span color='blue'>%s</span>" % msg)
@@ -974,8 +968,8 @@ class FormDialog(FormFile, Gtk.Dialog):
                 attexp.set_label(_("Attachments"))
 
         self.attbox.connect("item-set", item_set)
-
-        bbox = Gtk.VBox(False, 2)
+        
+        bbox = gtk.VBox(False, 2)
         bbox.show()
         hbox.pack_start(bbox, 0, 0, 0)
 
@@ -990,7 +984,7 @@ class FormDialog(FormFile, Gtk.Dialog):
                 self.add_attachment(name, data)
                 self.attbox.set_item(name, name, len(data))
 
-        add = Gtk.Button(_("Add"), Gtk.STOCK_ADD)
+        add = gtk.Button(_("Add"), gtk.STOCK_ADD)
         add.connect("clicked", but_add)
         add.show()
         bbox.pack_start(add, 0, 0, 0)
@@ -1002,10 +996,10 @@ class FormDialog(FormFile, Gtk.Dialog):
             self.attbox.del_item(name)
             item_set(None, name)
 
-        rem = Gtk.Button(_("Remove"), Gtk.STOCK_REMOVE)
+        rem = gtk.Button(_("Remove"), gtk.STOCK_REMOVE)
         rem.connect("clicked", but_rem)
         rem.show()
-        bbox.pack_start(rem, 0, 0, 0)
+        bbox.pack_start(rem, 0, 0, 0)        
 
         @run_or_error
         def but_sav(but):
@@ -1021,12 +1015,12 @@ class FormDialog(FormFile, Gtk.Dialog):
                 f.write(data)
                 f.close()
 
-        sav = Gtk.Button(_("Save"), Gtk.STOCK_SAVE)
+        sav = gtk.Button(_("Save"), gtk.STOCK_SAVE)
         sav.connect("clicked", but_sav)
         sav.show()
         bbox.pack_start(sav, 0, 0, 0)
 
-        attexp = Gtk.Expander(_("Attachments"))
+        attexp = gtk.Expander(_("Attachments"))
         attexp.set_use_markup(True)
         hbox.show()
         attexp.add(hbox)
@@ -1040,10 +1034,10 @@ class FormDialog(FormFile, Gtk.Dialog):
         return attexp
 
     def build_toolbar(self, editable):
-        tb = Gtk.Toolbar()
+        tb = gtk.Toolbar()
 
         def close(but, *args):
-            print("Closing")
+            print "Closing"
             if editable:
                 d = ask_for_confirmation("Close without saving?", self)
                 if not d:
@@ -1051,7 +1045,7 @@ class FormDialog(FormFile, Gtk.Dialog):
             w, h = self.get_size()
             self._config.set("state", "form_%s_x" % self.id, str(w))
             self._config.set("state", "form_%s_y" % self.id, str(h))
-            self.response(Gtk.RESPONSE_CLOSE)
+            self.response(gtk.RESPONSE_CLOSE)
             return False
         def save(but):
             self.response(RESPONSE_SAVE)
@@ -1066,9 +1060,9 @@ class FormDialog(FormFile, Gtk.Dialog):
 
         # We have to get in the way of the RESPONSE_DELETE_EVENT signal
         # to be able to catch the save
-        # http://faq.pyGtk.org/index.py?req=show&file=faq10.013.htp
+        # http://faq.pygtk.org/index.py?req=show&file=faq10.013.htp
         def reject_delete_response(dialog, response, *args):
-            if response == Gtk.RESPONSE_DELETE_EVENT:
+            if response == gtk.RESPONSE_DELETE_EVENT:
                 dialog.emit_stop_by_name("response")
 
         send_tip = "Place this message in the Outbox for sending"
@@ -1081,18 +1075,18 @@ class FormDialog(FormFile, Gtk.Dialog):
 
         if editable:
             buttons = [
-                (Gtk.STOCK_SAVE, "",            save_tip, save),
+                (gtk.STOCK_SAVE, "",            save_tip, save),
                 ("msg-send.png", _("Send"),     send_tip, send),
                 ("msg-send-via.png", _("Send via"), svia_tip, svia),
-                (Gtk.STOCK_PRINT, "",           prnt_tip, self.but_printable),
+                (gtk.STOCK_PRINT, "",           prnt_tip, self.but_printable),
                 ]
         else:
             buttons = [
                 ("msg-reply.png", _("Reply"),    rply_tip, reply),
                 #("msg-send.png",  _("Forward"),  send_tip, send),
                 ("msg-send-via.png",  _("Forward via"), svia_tip, svia),
-                (Gtk.STOCK_PRINT, "",            prnt_tip, self.but_printable),
-                (Gtk.STOCK_DELETE, "",           dele_tip, delete),
+                (gtk.STOCK_PRINT, "",            prnt_tip, self.but_printable),
+                (gtk.STOCK_DELETE, "",           dele_tip, delete),
                 ]
 
         #self.connect("destroy", close)
@@ -1102,12 +1096,12 @@ class FormDialog(FormFile, Gtk.Dialog):
         i = 0
         for img, lab, tip, func in buttons:
             if not lab:
-                ti = Gtk.ToolButton(img)
+                ti = gtk.ToolButton(img)
             else:
-                icon = Gtk.Image()
+                icon = gtk.Image()
                 icon.set_from_pixbuf(self._config.ship_img(img))
                 icon.show()
-                ti = Gtk.ToolButton(icon, lab)
+                ti = gtk.ToolButton(icon, lab)
             ti.show()
             try:
                 ti.set_tooltip_text(tip)
@@ -1123,32 +1117,32 @@ class FormDialog(FormFile, Gtk.Dialog):
     def build_gui(self, editable=True):
         self.vbox.pack_start(self.build_toolbar(editable), 0, 0, 0)
 
-        tlabel = Gtk.Label()
+        tlabel = gtk.Label()
         tlabel.set_markup("<big><b>%s</b></big>" % self.title_text)
         tlabel.show()
 
         if self.logo_path:
-            image = Gtk.Image()
+            image = gtk.Image()
             try:
                 base = self._config.get("settings", "form_logo_dir")
-                print("Logo path: %s" % os.path.join(base, self.logo_path))
+                print "Logo path: %s" % os.path.join(base, self.logo_path)
                 image.set_from_file(os.path.join(base, self.logo_path))
                 self.vbox.pack_start(image, 0,0,0)
                 image.show()
-            except Exception as e:
-                print("Unable to load or display logo %s: %s" % (self.logo_path,
-                                                                 e))
+            except Exception, e:
+                print "Unable to load or display logo %s: %s" % (self.logo_path,
+                                                                 e)
         self.vbox.pack_start(tlabel, 0,0,0)
 
         self.vbox.pack_start(self.build_routing_widget(), 0, 0, 0)
 
-        #field_box = Gtk.VBox(False, 2)
-        field_box = Gtk.Table(len(self.fields), 2)
+        #field_box = gtk.VBox(False, 2)
+        field_box = gtk.Table(len(self.fields), 2)
         row = 0
 
-        sw = Gtk.ScrolledWindow()
-        sw.set_policy(Gtk.POLICY_NEVER,
-                      Gtk.POLICY_AUTOMATIC)
+        sw = gtk.ScrolledWindow()
+        sw.set_policy(gtk.POLICY_NEVER,
+                      gtk.POLICY_AUTOMATIC)
         sw.add_with_viewport(field_box)
         field_box.show()
         sw.show()
@@ -1170,24 +1164,24 @@ class FormDialog(FormFile, Gtk.Dialog):
                 f.entry.widget.set_property("editable", False)
             elif f.id == "_auto_position":
                 if not f.entry.widget.get_text():
-                    from . import mainapp # Dirty hack
+                    import mainapp # Dirty hack
                     pos = mainapp.get_mainapp().get_position()
                     f.entry.widget.set_text(pos.coordinates())
-
-            l = Gtk.Label(f.caption)
+            
+            l = gtk.Label(f.caption)
             l.show()
             w = f.get_widget()
             if f.entry.vertical:
-                field_box.attach(l, 0, 2, row, row+1, Gtk.SHRINK, Gtk.SHRINK)
+                field_box.attach(l, 0, 2, row, row+1, gtk.SHRINK, gtk.SHRINK)
                 row += 1
                 field_box.attach(w, 0, 2, row, row+1)
             elif f.entry.nolabel:
-                field_box.attach(w, 0, 2, row, row+1, Gtk.SHRINK, Gtk.SHRINK)
+                field_box.attach(w, 0, 2, row, row+1, gtk.SHRINK, gtk.SHRINK)
             else:
-                field_box.attach(l, 0, 1, row, row+1, Gtk.SHRINK, Gtk.SHRINK, 5)
+                field_box.attach(l, 0, 1, row, row+1, gtk.SHRINK, gtk.SHRINK, 5)
                 field_box.attach(w, 1, 2, row, row+1, yoptions=0)
             row += 1
-
+            
 
         self.vbox.pack_start(self.build_att_widget(), 0, 0, 0)
         self.vbox.pack_start(self.build_path_widget(), 0, 0, 0)
@@ -1201,15 +1195,15 @@ class FormDialog(FormFile, Gtk.Dialog):
         self.set_editable(editable)
 
     def __init__(self, title, filename, buttons=None, parent=None):
-        self._buttons = (Gtk.STOCK_CANCEL, Gtk.RESPONSE_CANCEL,
-                         Gtk.STOCK_SAVE, Gtk.RESPONSE_OK)
+        self._buttons = (gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL,
+                         gtk.STOCK_SAVE, gtk.RESPONSE_OK)
         if buttons:
             self._buttons += buttons
 
-        Gtk.Dialog.__init__(self, buttons=(), parent=parent)
+        gtk.Dialog.__init__(self, buttons=(), parent=parent)
         FormFile.__init__(self, filename)
 
-        from . import mainapp
+        import mainapp
         self._config = mainapp.get_mainapp().config
 
         self.process_fields(self.doc)
@@ -1218,14 +1212,14 @@ class FormDialog(FormFile, Gtk.Dialog):
         try:
             x = self._config.getint("state", "form_%s_x" % self.id)
             y = self._config.getint("state", "form_%s_y" % self.id)
-        except Exception as e:
-            print("Unable to get form_%s_*: %s" % (self.id, e))
+        except Exception, e:
+            print "Unable to get form_%s_*: %s" % (self.id, e)
             x = 300
             y = 500
 
         self.set_default_size(x, y)
 
-        print("Form ID: %s" % self.id)
+        print "Form ID: %s" % self.id
 
     def update_dst(self):
         dst = self._dstbox.get_text()
@@ -1238,7 +1232,7 @@ class FormDialog(FormFile, Gtk.Dialog):
         self.build_gui()
         self.set_size_request(380, 450)
 
-        r = Gtk.Dialog.run(self)
+        r = gtk.Dialog.run(self)
         self.update_dst()
 
         return r
@@ -1246,7 +1240,7 @@ class FormDialog(FormFile, Gtk.Dialog):
     def set_editable(self, editable):
         for field in self.fields:
             field.set_editable(editable)
-
+        
 if __name__ == "__main__":
     f = file(sys.argv[1])
     xml = f.read()
@@ -1254,8 +1248,8 @@ if __name__ == "__main__":
     form.run()
     form.destroy()
     try:
-        Gtk.main()
+        gtk.main()
     except:
         pass
 
-    print(form.get_text())
+    print form.get_text()

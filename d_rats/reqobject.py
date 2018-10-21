@@ -1,8 +1,6 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
+#!/usr/bin/python
 #
 # Copyright 2008 Dan Smith <dsmith@danplanet.com>
-# Updated 2018 Jonathan Kelley <jonkelley@gmail.com>
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -17,22 +15,19 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import gi
-gi.require_version("Gtk", "3.0")
-from gi.repository import Gtk
-
+import gtk
 import gobject
 
-from . import miscwidgets
+import miscwidgets
 
-class RequestRemoteObjectUI(Gtk.Dialog):
+class RequestRemoteObjectUI(gtk.Dialog):
     def __init__(self, rpcsession, station, parent=None):
-        Gtk.Dialog.__init__(self,
+        gtk.Dialog.__init__(self,
                             title="Request remote object",
-                            buttons=("Retrieve", Gtk.RESPONSE_OK,
-                                     Gtk.STOCK_CANCEL, Gtk.RESPONSE_CANCEL),
+                            buttons=("Retrieve", gtk.RESPONSE_OK,
+                                     gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL),
                             parent=parent)
-
+        
         self.__list = miscwidgets.KeyedListWidget(\
             [(gobject.TYPE_STRING, "_ID"),
              (gobject.TYPE_STRING, "Name"),
@@ -40,8 +35,8 @@ class RequestRemoteObjectUI(Gtk.Dialog):
         self.__list.set_resizable(0, True)
         self.__list.show()
 
-        sw = Gtk.ScrolledWindow()
-        sw.set_policy(Gtk.POLICY_AUTOMATIC, Gtk.POLICY_AUTOMATIC)
+        sw = gtk.ScrolledWindow()
+        sw.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
         sw.add_with_viewport(self.__list)
         sw.show()
 
@@ -56,6 +51,6 @@ class RequestRemoteObjectUI(Gtk.Dialog):
     def get_selected_item(self):
         try:
             return self.__list.get_item(self.__list.get_selected())[1]
-        except Exception as e:
-            print(("Unable to get selected item: %s" % e))
+        except Exception, e:
+            print "Unable to get selected item: %s" % e
             return None

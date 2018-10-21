@@ -1,8 +1,6 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
+#!/usr/bin/python
 #
 # Copyright 2010 Dan Smith <dsmith@danplanet.com>
-# Updated 2018 Jonathan Kelley <jonkelley@gmail.com>
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -20,7 +18,7 @@
 import os
 from glob import glob
 
-import socketserver
+import SocketServer
 import threading
 import smtpd
 import asyncore
@@ -48,11 +46,11 @@ class TCPServerThread(threading.Thread):
 
     def run(self):
         self.__server.serve_forever()
-        print(("%s Exiting" % self.name))
+        print "%s Exiting" % self.name
 
     def stop(self):
         self.__server.shutdown()
-        print(("%s Shutdown" % self.name))
+        print "%s Shutdown" % self.name
 
 class POP3Exception(Exception):
     pass
@@ -60,7 +58,7 @@ class POP3Exception(Exception):
 class POP3Exit(Exception):
     pass
 
-class POP3Handler(socketserver.StreamRequestHandler):
+class POP3Handler(SocketServer.StreamRequestHandler):
     def _say(self, what, error=False):
         if error:
             c = "-ERR"
@@ -68,7 +66,7 @@ class POP3Handler(socketserver.StreamRequestHandler):
             c = "+OK"
 
         self.wfile.write(c + " %s\r\n" % what)
-        print(("[POP3] %s %s" % (c, what)))
+        print "[POP3] %s %s" % (c, what)
 
     def _handle_user(self, args):
         self._say("username %s accepted" % args)
@@ -87,7 +85,7 @@ class POP3Handler(socketserver.StreamRequestHandler):
         msgs = self.get_messages(self._user)
         index = 1
         for msg in msgs:
-            print(("%i %i" % (index, len(str(msg)))))
+            print "%i %i" % (index, len(str(msg)))
             self.wfile.write("%i %i \r\n" % (index, len(str(msg))))
             index += 1
         self.wfile.write(".\r\n")
@@ -113,10 +111,10 @@ class POP3Handler(socketserver.StreamRequestHandler):
 
         self._say("OK %i octets" % len(mstr))
         self.wfile.write(mstr + "\r\n.\r\n")
-
+        
     def _handle_top(self, args):
         msgno, lines = args.split(" ", 1)
-
+        
         msgno = int(msgno) - 1
         lines = int(lines)
 
@@ -155,15 +153,15 @@ class POP3Handler(socketserver.StreamRequestHandler):
         except:
             cmd = data
             args = ""
-
+            
         cmd = cmd.upper()
 
-        print(("[POP3] %s %s" % (cmd, args)))
+        print "[POP3] %s %s" % (cmd, args)
 
         if cmd == "QUIT":
             raise POP3Exit("Goodbye")
 
-        if cmd not in list(dispatch.keys()):
+        if cmd not in dispatch.keys():
             self._say("Unsupported command `%s'" % cmd, True)
             return
 
@@ -183,13 +181,13 @@ class POP3Handler(socketserver.StreamRequestHandler):
         while True:
             try:
                 self._handle()
-            except POP3Exit as e:
+            except POP3Exit, e:
                 self._say(e)
                 break
-            except POP3Exception as e:
+            except POP3Exception, e:
                 self._say(e, True)
                 break
-            except Exception as e:
+            except Exception, e:
                 utils.log_exception()
                 self._say("Internal error", True)
                 break
@@ -197,7 +195,7 @@ class POP3Handler(socketserver.StreamRequestHandler):
 class DRATS_POP3Handler(POP3Handler):
     def __init__(self, config, *args):
         self.__config = config
-        print("DRATS handler")
+        print "DRATS handler"
         self.__msgcache = []
         POP3Handler.__init__(self, *args)
 
@@ -247,7 +245,7 @@ class DRATS_POP3Handler(POP3Handler):
         else:
             raise POP3Exception("Already deleted")
 
-class DRATS_POP3Server(socketserver.TCPServer):
+class DRATS_POP3Server(SocketServer.TCPServer):
     allow_reuse_address = True
 
     def finish_request(self, request, client_address):
@@ -262,7 +260,7 @@ class DRATS_POP3ServerThread(TCPServerThread):
 
     def __init__(self, config):
         port = config.getint("settings", "msg_pop3_port")
-        print(("[POP3] Starting server on port %i" % port))
+        print "[POP3] Starting server on port %i" % port
         TCPServerThread.__init__(self, config, DRATS_POP3Server,
                                  ("0.0.0.0", port), DRATS_POP3Handler)
         self.setDaemon(True)
@@ -288,13 +286,13 @@ class DRATS_SMTPServer(smtpd.SMTPServer):
         if recip.lower().endswith("@d-rats.com"):
             recip, host = recip.upper().split("@", 1)
 
-        print(("Sender is %s" % sender))
-        print(("Recip  is %s" % recip))
+        print "Sender is %s" % sender
+        print "Recip  is %s" % recip
 
         mid = mkmsgid(self.__config.get("user", "callsign"))
         ffn = os.path.join(self.__config.form_store_dir(),
                            "Outbox", "%s.xml" % mid)
-        print(("Storing mail at %s" % ffn))
+        print "Storing mail at %s" % ffn
 
         form = emailgw.create_form_from_mail(self.__config, msg, ffn)
         form.set_path_src(sender)
@@ -311,16 +309,16 @@ class DRATS_SMTPServerThread(threading.Thread):
         self.__server = None
 
     def run(self):
-        print("[SMTP] Starting server")
+        print "[SMTP] Starting server"
         self.__server = DRATS_SMTPServer(self.__config)
         asyncore.loop(timeout=1)
-        print("[SMTP] Stopped")
+        print "[SMTP] Stopped"
 
     def stop(self):
         if self.__server:
             self.__server.close()
         self.join()
-
+        
 
 if __name__ == "__main__":
     s = DRATS_POP3Server(("localhost", 9090), DRATS_POP3Handler)

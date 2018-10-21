@@ -1,8 +1,5 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 #
 # Copyright 2008 Dan Smith <dsmith@danplanet.com>
-# Updated 2018 Jonathan Kelley <jonkelley@gmail.com>
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -17,18 +14,15 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import gi
-gi.require_version("Gtk", "3.0")
-from gi.repository import Gtk
-
+import gtk
 import gobject
 import pango
 
 import os
 
-from . import platform
+import platform
 
-class KeyedListWidget(Gtk.HBox):
+class KeyedListWidget(gtk.HBox):
     __gsignals__ = {
         "item-selected" : (gobject.SIGNAL_RUN_LAST,
                            gobject.TYPE_NONE,
@@ -66,26 +60,26 @@ class KeyedListWidget(Gtk.HBox):
 
     def _make_view(self):
         colnum = -1
-
+    
         for typ, cap in self.columns:
             colnum += 1
             if colnum == 0:
                 continue # Key column
-
+    
             if typ in [gobject.TYPE_STRING, gobject.TYPE_INT, gobject.TYPE_FLOAT]:
-                rend = Gtk.CellRendererText()
+                rend = gtk.CellRendererText()
                 rend.set_property("ellipsize", pango.ELLIPSIZE_END)
-                column = Gtk.TreeViewColumn(cap, rend, text=colnum)
+                column = gtk.TreeViewColumn(cap, rend, text=colnum)
             elif typ in [gobject.TYPE_BOOLEAN]:
-                rend = Gtk.CellRendererToggle()
+                rend = gtk.CellRendererToggle()
                 rend.connect("toggled", self._toggle, colnum)
-                column = Gtk.TreeViewColumn(cap, rend, active=colnum)
+                column = gtk.TreeViewColumn(cap, rend, active=colnum)
             else:
                 raise Exception("Unsupported type %s" % typ)
-
+            
             column.set_sort_column_id(colnum)
             self.__view.append_column(column)
-
+    
         self.__view.connect("button_press_event", self._mouse)
 
     def set_item(self, key, *values):
@@ -97,11 +91,11 @@ class KeyedListWidget(Gtk.HBox):
                 self.__store.remove(iter)
                 return
             iter = self.__store.iter_next(iter)
-
+    
         self.__store.append(row=(key,) + values)
 
         self.emit("item-set", key)
-
+    
     def get_item(self, key):
         iter = self.__store.get_iter_first()
         while iter:
@@ -109,9 +103,9 @@ class KeyedListWidget(Gtk.HBox):
             if vals[0] == key:
                 return vals
             iter = self.__store.iter_next(iter)
-
+    
         return None
-
+    
     def del_item(self, key):
         iter = self.__store.get_iter_first()
         while iter:
@@ -121,18 +115,18 @@ class KeyedListWidget(Gtk.HBox):
                 return True
 
             iter = self.__store.iter_next(iter)
-
+    
         return False
-
+    
     def has_item(self, key):
         return self.get_item(key) is not None
-
+    
     def get_selected(self):
         try:
             (store, iter) = self.__view.get_selection().get_selected()
             return store.get(iter, 0)[0]
-        except Exception as e:
-            print(("Unable to find selected: %s" % e))
+        except Exception, e:
+            print "Unable to find selected: %s" % e
             return None
 
     def select_item(self, key):
@@ -151,7 +145,7 @@ class KeyedListWidget(Gtk.HBox):
             iter = self.__store.iter_next(iter)
 
         return False
-
+        
     def get_keys(self):
         keys = []
         iter = self.__store.get_iter_first()
@@ -163,17 +157,17 @@ class KeyedListWidget(Gtk.HBox):
         return keys
 
     def __init__(self, columns):
-        Gtk.HBox.__init__(self, True, 0)
-
+        gtk.HBox.__init__(self, True, 0)
+    
         self.columns = columns
-
+    
         types = tuple([x for x,y in columns])
-
-        self.__store = Gtk.ListStore(*types)
-        self.__view = Gtk.TreeView(self.__store)
-
+    
+        self.__store = gtk.ListStore(*types)
+        self.__view = gtk.TreeView(self.__store)
+    
         self.pack_start(self.__view, 1, 1, 1)
-
+    
         self.__toggle_connected = False
 
         self._make_view()
@@ -182,8 +176,8 @@ class KeyedListWidget(Gtk.HBox):
     def connect(self, signame, *args):
         if signame == "item-toggled":
             self.__toggle_connected = True
-
-        Gtk.HBox.connect(self, signame, *args)
+        
+        gtk.HBox.connect(self, signame, *args)
 
     def set_editable(self, column, is_editable):
         col = self.__view.get_column(column)
@@ -193,8 +187,8 @@ class KeyedListWidget(Gtk.HBox):
 
     def set_sort_column(self, column, value=None):
         self.__view.get_model().set_sort_column_id(column,
-                                                   Gtk.SORT_ASCENDING)
-
+                                                   gtk.SORT_ASCENDING)
+    
     def set_resizable(self, column, resizable, ellipsize=False):
         col = self.__view.get_column(column)
         col.set_resizable(resizable)
@@ -202,7 +196,7 @@ class KeyedListWidget(Gtk.HBox):
         rend.set_property("ellipsize",
                           ellipsize and pango.ELLIPSIZE_END \
                               or pango.ELLIPSIZE_NONE)
-
+        
     def set_expander(self, column):
         col = self.__view.get_column(column)
         self.__view.set_expander_column(col)
@@ -211,23 +205,23 @@ class KeyedListWidget(Gtk.HBox):
         def render_password(foo, rend, model, iter):
             val = model.get(iter, column+1)[0]
             rend.set_property("text", "*" * len(val));
-
+        
         col = self.__view.get_column(column)
         rnd = col.get_cell_renderers()[0]
         col.set_cell_data_func(rnd, render_password)
+        
 
-
-class ListWidget(Gtk.HBox):
+class ListWidget(gtk.HBox):
     __gsignals__ = {
         "click-on-list" : (gobject.SIGNAL_RUN_LAST,
                            gobject.TYPE_NONE,
-                           (Gtk.TreeView, Gtk.gdk.Event)),
+                           (gtk.TreeView, gtk.gdk.Event)),
         "item-toggled" : (gobject.SIGNAL_RUN_LAST,
                           gobject.TYPE_NONE,
                           (gobject.TYPE_PYOBJECT,)),
         }
 
-    store_type = Gtk.ListStore
+    store_type = gtk.ListStore
 
     def mouse_cb(self, view, event):
         self.emit("click-on-list", view, event)
@@ -242,7 +236,7 @@ class ListWidget(Gtk.HBox):
         self.emit("item-toggled", vals)
 
     def make_view(self, columns):
-        self._view = Gtk.TreeView(self._store)
+        self._view = gtk.TreeView(self._store)
 
         for _type, _col in columns:
             if _col.startswith("__"):
@@ -252,14 +246,14 @@ class ListWidget(Gtk.HBox):
             if _type == gobject.TYPE_STRING or \
                     _type == gobject.TYPE_INT or \
                     _type == gobject.TYPE_FLOAT:
-                rend = Gtk.CellRendererText()
-                column = Gtk.TreeViewColumn(_col, rend, text=index)
+                rend = gtk.CellRendererText()
+                column = gtk.TreeViewColumn(_col, rend, text=index)
                 column.set_resizable(True)
                 rend.set_property("ellipsize", pango.ELLIPSIZE_END)
             elif _type == gobject.TYPE_BOOLEAN:
-                rend = Gtk.CellRendererToggle()
+                rend = gtk.CellRendererToggle()
                 rend.connect("toggled", self._toggle, index)
-                column = Gtk.TreeViewColumn(_col, rend, active=index)
+                column = gtk.TreeViewColumn(_col, rend, active=index)
             else:
                 raise Exception("Unknown column type (%i)" % index)
 
@@ -269,12 +263,12 @@ class ListWidget(Gtk.HBox):
         self._view.connect("button_press_event", self.mouse_cb)
 
     def __init__(self, columns, parent=True):
-        Gtk.HBox.__init__(self)
+        gtk.HBox.__init__(self)
 
         # pylint: disable-msg=W0612
         col_types = tuple([x for x, y in columns])
         self._ncols = len(col_types)
-
+        
         self._store = self.store_type(*col_types)
         self._view = None
         self.make_view(columns)
@@ -317,8 +311,8 @@ class ListWidget(Gtk.HBox):
         try:
             (lst, iter) = self._view.get_selection().get_selected()
             lst.remove(iter)
-        except Exception as e:
-            print(("Unable to remove selected: %s" % e))
+        except Exception, e:
+            print "Unable to remove selected: %s" % e
 
     def get_selected(self, take_default=False):
         (lst, iter) = self._view.get_selection().get_selected()
@@ -339,7 +333,7 @@ class ListWidget(Gtk.HBox):
                 target = lst.get_iter(pos-1)
             elif delta < 0:
                 target = lst.get_iter(pos+1)
-        except Exception as e:
+        except Exception, e:
             return False
 
         if target:
@@ -362,7 +356,7 @@ class ListWidget(Gtk.HBox):
             self.add_item(*i)
 
 class TreeWidget(ListWidget):
-    store_type = Gtk.TreeStore
+    store_type = gtk.TreeStore
 
     # pylint: disable-msg=W0613
     def _toggle(self, render, path, column):
@@ -425,7 +419,7 @@ class TreeWidget(ListWidget):
 
     def _set_values(self, parent, vals):
         if isinstance(vals, dict):
-            for key, val in list(vals.items()):
+            for key, val in vals.items():
                 iter = self._store.append(parent)
                 self._store.set(iter, self._key, key)
                 self._set_values(iter, val)
@@ -435,7 +429,7 @@ class TreeWidget(ListWidget):
         elif isinstance(vals, tuple):
             self._add_item(parent, *vals)
         else:
-            print(("Unknown type: %s" % vals))
+            print "Unknown type: %s" % vals
 
     def set_values(self, vals):
         self._store.clear()
@@ -454,8 +448,8 @@ class TreeWidget(ListWidget):
             if onlyone:
                 break
             iter = self._store.iter_next(iter)
-
-        return l
+            
+        return l            
 
     def get_values(self, parent=None):
         if parent:
@@ -502,26 +496,26 @@ class TreeWidget(ListWidget):
         else:
             raise Exception("Item not found")
 
-class ProgressDialog(Gtk.Window):
+class ProgressDialog(gtk.Window):
     def __init__(self, title, parent=None):
-        Gtk.Window.__init__(self, Gtk.WINDOW_TOPLEVEL)
+        gtk.Window.__init__(self, gtk.WINDOW_TOPLEVEL)
         self.set_modal(True)
-        self.set_type_hint(Gtk.gdk.WINDOW_TYPE_HINT_DIALOG)
+        self.set_type_hint(gtk.gdk.WINDOW_TYPE_HINT_DIALOG)
         self.set_title(title)
         if parent:
             self.set_transient_for(parent)
 
         self.set_resizable(False)
 
-        vbox = Gtk.VBox(False, 2)
+        vbox = gtk.VBox(False, 2)
 
-        self.label = Gtk.Label("")
+        self.label = gtk.Label("")
         self.label.set_size_request(100, 50)
         self.label.show()
 
-        self.pbar = Gtk.ProgressBar()
+        self.pbar = gtk.ProgressBar()
         self.pbar.show()
-
+        
         vbox.pack_start(self.label, 0, 0, 0)
         vbox.pack_start(self.pbar, 0, 0, 0)
 
@@ -533,19 +527,19 @@ class ProgressDialog(Gtk.Window):
         self.label.set_text(text)
         self.queue_draw()
 
-        while Gtk.events_pending():
-            Gtk.main_iteration_do(False)
+        while gtk.events_pending():
+            gtk.main_iteration_do(False)
 
     def set_fraction(self, frac):
         self.pbar.set_fraction(frac)
         self.queue_draw()
 
-        while Gtk.events_pending():
-            Gtk.main_iteration_do(False)
+        while gtk.events_pending():
+            gtk.main_iteration_do(False)
 
-class LatLonEntry(Gtk.Entry):
+class LatLonEntry(gtk.Entry):
     def __init__(self, *args):
-        Gtk.Entry.__init__(self, *args)
+        gtk.Entry.__init__(self, *args)
 
         self.connect("changed", self.format)
 
@@ -554,7 +548,7 @@ class LatLonEntry(Gtk.Entry):
         if string is None:
             return
 
-        deg = "\\u00b0"
+        deg = u"\u00b0"
 
         while " " in string:
             if "." in string:
@@ -576,7 +570,7 @@ class LatLonEntry(Gtk.Entry):
     def parse_dm(self, string):
         string = string.strip()
         string = string.replace('  ', ' ')
-
+        
         (_degrees, _minutes) = string.split(' ', 2)
 
         degrees = int(_degrees)
@@ -585,7 +579,7 @@ class LatLonEntry(Gtk.Entry):
         return degrees + (minutes / 60.0)
 
     def parse_dms(self, string):
-        string = string.replace("\\u00b0", " ")
+        string = string.replace(u"\u00b0", " ")
         string = string.replace('"', ' ')
         string = string.replace("'", ' ')
         string = string.replace('  ', ' ')
@@ -615,7 +609,7 @@ class LatLonEntry(Gtk.Entry):
         degrees = int(deg)
         minutes = int(mns)
         seconds = float(sec)
-
+        
         return degrees + (minutes / 60.0) + (seconds / 3600.0)
 
     def value(self):
@@ -629,8 +623,8 @@ class LatLonEntry(Gtk.Entry):
             except:
                 try:
                     return self.parse_dms(string)
-                except Exception as e:
-                    print(("DMS: %s" % e))
+                except Exception, e:
+                    print "DMS: %s" % e
 
         raise Exception("Invalid format")
 
@@ -641,11 +635,11 @@ class LatLonEntry(Gtk.Entry):
         except:
             return False
 
-class YesNoDialog(Gtk.Dialog):
+class YesNoDialog(gtk.Dialog):
     def __init__(self, title="", parent=None, buttons=None):
-        Gtk.Dialog.__init__(self, title=title, parent=parent, buttons=buttons)
+        gtk.Dialog.__init__(self, title=title, parent=parent, buttons=buttons)
 
-        self._label = Gtk.Label("")
+        self._label = gtk.Label("")
         self._label.show()
 
         # pylint: disable-msg=E1101
@@ -656,9 +650,9 @@ class YesNoDialog(Gtk.Dialog):
 
 def make_choice(options, editable=True, default=None):
     if editable:
-        sel = Gtk.combo_box_entry_new_text()
+        sel = gtk.combo_box_entry_new_text()
     else:
-        sel = Gtk.combo_box_new_text()
+        sel = gtk.combo_box_new_text()
 
     for opt in options:
         sel.append_text(opt)
@@ -672,7 +666,7 @@ def make_choice(options, editable=True, default=None):
 
     return sel
 
-class FilenameBox(Gtk.HBox):
+class FilenameBox(gtk.HBox):
     __gsignals__ = {
         "filename-changed" : (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, ()),
         }
@@ -694,15 +688,15 @@ class FilenameBox(Gtk.HBox):
         self.emit("filename_changed")
 
     def __init__(self, find_dir=False, types=[]):
-        Gtk.HBox.__init__(self, False, 0)
+        gtk.HBox.__init__(self, False, 0)
 
         self.types = types
 
-        self.filename = Gtk.Entry()
+        self.filename = gtk.Entry()
         self.filename.show()
         self.pack_start(self.filename, 1, 1, 1)
 
-        browse = Gtk.Button("...")
+        browse = gtk.Button("...")
         browse.show()
         self.pack_start(browse, 0, 0, 0)
 
@@ -719,14 +713,14 @@ class FilenameBox(Gtk.HBox):
         self.filename.set_sensitive(mutable)
 
 def make_pixbuf_choice(options, default=None):
-    store = Gtk.ListStore(Gtk.gdk.Pixbuf, gobject.TYPE_STRING)
-    box = Gtk.ComboBox(store)
+    store = gtk.ListStore(gtk.gdk.Pixbuf, gobject.TYPE_STRING)
+    box = gtk.ComboBox(store)
 
-    cell = Gtk.CellRendererPixbuf()
+    cell = gtk.CellRendererPixbuf()
     box.pack_start(cell, True)
     box.add_attribute(cell, "pixbuf", 0)
 
-    cell = Gtk.CellRendererText()
+    cell = gtk.CellRendererText()
     box.pack_start(cell, True)
     box.add_attribute(cell, "text", 1)
 
@@ -743,13 +737,13 @@ def make_pixbuf_choice(options, default=None):
     return box
 
 def test():
-    win = Gtk.Window(Gtk.WINDOW_TOPLEVEL)
+    win = gtk.Window(gtk.WINDOW_TOPLEVEL)
     lst = ListWidget([(gobject.TYPE_STRING, "Foo"),
                     (gobject.TYPE_BOOLEAN, "Bar")])
 
     lst.add_item("Test1", True)
     lst.set_values([("Test2", True), ("Test3", False)])
-
+    
     lst.show()
     win.add(lst)
     win.show()
@@ -757,13 +751,13 @@ def test():
     win1 = ProgressDialog("foo")
     win1.show()
 
-    win2 = Gtk.Window(Gtk.WINDOW_TOPLEVEL)
+    win2 = gtk.Window(gtk.WINDOW_TOPLEVEL)
     lle = LatLonEntry()
     lle.show()
     win2.add(lle)
     win2.show()
 
-    win3 = Gtk.Window(Gtk.WINDOW_TOPLEVEL)
+    win3 = gtk.Window(gtk.WINDOW_TOPLEVEL)
     lst = TreeWidget([(gobject.TYPE_STRING, "Id"),
                       (gobject.TYPE_STRING, "Value")],
                      1)
@@ -778,19 +772,19 @@ def test():
 
     def print_val(entry):
         if entry.validate():
-            print(("Valid: %s" % entry.value()))
+            print "Valid: %s" % entry.value()
         else:
-            print("Invalid")
+            print "Invalid"
     lle.connect("activate", print_val)
 
     lle.set_text("45 13 12")
 
     try:
-        Gtk.main()
+        gtk.main()
     except KeyboardInterrupt:
         pass
 
-    print((lst.get_values()))
+    print lst.get_values()
 
 if __name__ == "__main__":
     test()

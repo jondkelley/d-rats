@@ -1,8 +1,6 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
+#!/usr/bin/python
 #
 # Copyright 2008 Dan Smith <dsmith@danplanet.com>
-# Updated 2018 Jonathan Kelley <jonkelley@gmail.com>
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -18,7 +16,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import libxml2
-import urllib.request, urllib.parse, urllib.error
+import urllib
 import tempfile
 import datetime
 
@@ -26,7 +24,7 @@ try:
     from hashlib import md5
 except ImportError:
     print("Installing hashlib replacement hack")
-    from .utils import ExternalHash as md5
+    from utils import ExternalHash as md5
 
 def ev_cmp_exp(ev1, ev2):
     if ev1.expires < ev2.expires:
@@ -70,10 +68,10 @@ class CAPEvent(object):
                 content = datetime.datetime.strptime(content,
                                                      "%Y-%m-%dT%H:%M:%S")
 
-            if child.name in list(self.__dict__.keys()):
+            if child.name in self.__dict__.keys():
                 self.__dict__[child.name] = content
 
-            child = child.__next__
+            child = child.next
 
     def __str__(self):
         return "%s (%s): %s..." % (self.headline,
@@ -113,10 +111,10 @@ class CAPParser(object):
                         self.events.append(ev)
                         hashes.append(hash.digest())
 
-                except Exception as e:
-                    print(("Unable to parse CAP node: %s (%s)" % (child.name, e)))
+                except Exception, e:
+                    print("Unable to parse CAP node: %s (%s)" % (child.name, e))
 
-            child = child.__next__
+            child = child.next
 
         self.events.sort(ev_cmp_eff)
 
@@ -142,7 +140,7 @@ class CAPParserURL(CAPParser):
         name = tmpf.name
         tmpf.close()
 
-        urllib.request.urlretrieve(url, name)
+        urllib.urlretrieve(url, name)
 
         CAPParser.__init__(self, name)
 
@@ -156,7 +154,8 @@ if __name__ == "__main__":
 
     c = 0
     for i in cp.events_expiring_after(epoch):
-        print((i.report()))
+        print(i.report())
         c += 1
 
-    print(("%i events" % c))
+    print("%i events" % c)
+        

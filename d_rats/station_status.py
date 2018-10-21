@@ -1,8 +1,6 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
+#!/usr/bin/python
 #
 # Copyright 2008 Dan Smith <dsmith@danplanet.com>
-# Updated 2018 Jonathan Kelley <jonkelley@gmail.com>
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -34,13 +32,13 @@ __STATUS_MSGS = {
 
 def get_status_msgs():
     d = {}
-    for k,v in list(__STATUS_MSGS.items()):
+    for k,v in __STATUS_MSGS.items():
         d[k] = _(v)
     return d
 
 def get_status_vals():
     d = {}
-    for k,v in list(__STATUS_MSGS.items()):
+    for k,v in __STATUS_MSGS.items():
         d[_(v)] = k
     return d
 
