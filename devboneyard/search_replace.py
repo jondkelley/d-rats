@@ -11,6 +11,7 @@ def findReplace(directory, find, replace, filePattern="*.py"):
     :param replace: string to replace with
     :param filePattern: a pattern using gnmatch.filter with some form of glob
                         support, *.py works fine
+    """
     for path, dirs, files in os.walk(os.path.abspath(directory)):
         for filename in fnmatch.filter(files, filePattern):
             filepath = os.path.join(path, filename)
@@ -21,4 +22,4 @@ def findReplace(directory, find, replace, filePattern="*.py"):
                 f.write(s)
 
 
-findReplace(".", "__-__UGLY__-__", "__-__beautiful__-__", "*.py")
+findReplace(".", "import gtk", ".", "*.py")
