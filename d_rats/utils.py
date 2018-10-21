@@ -65,8 +65,8 @@ def hexprint(data):
 
     if (len(data) % line_sz) != 0:
         lines += 1
-        print(line_sz, lines, data)
-        #data += "\x00" * ((lines * line_sz) - len(data))
+        #print(line_sz, lines, data)
+        data += "\x00" * ((lines * line_sz) - len(data))
 
     for i in range(0, (len(data)//line_sz)):
 
