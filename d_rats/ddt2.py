@@ -20,11 +20,11 @@
 import struct
 import zlib
 import base64
-from . import yencode
+from d_rats import yencode
 
 import threading
 
-from . import utils
+from d_rats import utils
 
 ENCODED_HEADER = "[SOB]"
 ENCODED_TRAILER = "[EOB]"
@@ -50,8 +50,8 @@ def update_crc(c, crc):
 
 def calc_checksum(data):
     checksum = 0
-    for i in data:
-        checksum = update_crc(ord(i), checksum)
+    for i in str(data):
+        checksum = update_crc(ord(str(i)), checksum)
 
     checksum = update_crc(0, checksum)
     checksum = update_crc(0, checksum)
@@ -102,7 +102,7 @@ class DDT2Frame(object):
 
     def get_packed(self):
         if self.compress:
-            data = zlib.compress(self.data, 9)
+            data = zlib.compress(bytes(self.data, encoding='utf-8'), 9)
         else:
             data = self.data
             self.magic = (~self.magic) & 0xFF
@@ -119,10 +119,12 @@ class DDT2Frame(object):
                           self.type,
                           0,
                           length,
-                          s_station,
-                          d_station)
+                          bytes(s_station, encoding='utf-8'),
+                          bytes(d_station, encoding='utf-8')
+                          )
 
-        checksum = calc_checksum(val + data)
+        datab = bytes(str(data), encoding='utf-8')
+        checksum = calc_checksum(val + datab)
 
         val = struct.pack(self.format,
                           self.magic,
@@ -131,12 +133,16 @@ class DDT2Frame(object):
                           self.type,
                           checksum,
                           length,
-                          s_station,
-                          d_station)
+                          bytes(s_station, encoding='utf-8'),
+                          bytes(d_station, encoding='utf-8')
+                          )
+
 
         self._xmit_z = len(val) + len(data)
 
-        return val + data
+
+        datab = bytes(str(data), encoding='utf-8')
+        return val + datab
 
     def unpack(self, val):
         magic = ord(val[0])
